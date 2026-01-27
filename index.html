@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Score GPS – Cicé-Blossac (simple)</title>
+  <title>Score GPS – Parcours golf</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -41,11 +41,21 @@
       color: #555;
     }
 
+    .course-chooser {
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .course-chooser select {
+      padding: 4px 6px;
+      font-size: 0.9rem;
+    }
+
     .meta {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 4px;
       font-size: 0.9rem;
     }
 
@@ -162,8 +172,17 @@
 <body>
   <div class="app">
     <header>
-      <h1>Garden Golf de Cicé-Blossac</h1>
-      <div class="subtitle">Parcours 18 trous, départs blancs / jaunes (coordonnées GPS fictives).</div>
+      <h1 id="course-name">Parcours de golf</h1>
+      <div class="subtitle">Score trou par trou, GPS et distances blancs / jaunes.</div>
+
+      <div class="course-chooser">
+        <label for="course-select">Parcours :</label>
+        <select id="course-select">
+          <option value="cice">Cicé-Blossac</option>
+          <option value="rennes">Rennes Saint-Jacques</option>
+        </select>
+      </div>
+
       <div class="meta">
         <span>Total blanc : <strong id="total-white">0</strong> m</span>
         <span>Total jaune : <strong id="total-yellow">0</strong> m</span>
@@ -204,200 +223,239 @@
   </div>
 
   <script>
-  const course = {
-    name: "Garden Golf de Cicé-Blossac",
-    holes: [
-      { number: 1,  par: 4, white: 352, yellow: 352, greenLat: 48.0001, greenLon: -1.0001 },
-      { number: 2,  par: 5, white: 490, yellow: 490, greenLat: 48.0002, greenLon: -1.0002 },
-      { number: 3,  par: 3, white: 173, yellow: 173, greenLat: 48.0003, greenLon: -1.0003 },
-      { number: 4,  par: 4, white: 337, yellow: 337, greenLat: 48.0004, greenLon: -1.0004 },
-      { number: 5,  par: 4, white: 382, yellow: 382, greenLat: 48.0005, greenLon: -1.0005 },
-      { number: 6,  par: 3, white: 185, yellow: 174, greenLat: 48.0006, greenLon: -1.0006 },
-      { number: 7,  par: 5, white: 484, yellow: 484, greenLat: 48.0007, greenLon: -1.0007 },
-      { number: 8,  par: 4, white: 299, yellow: 299, greenLat: 48.0008, greenLon: -1.0008 },
-      { number: 9,  par: 4, white: 369, yellow: 369, greenLat: 48.0009, greenLon: -1.0009 },
-      { number: 10, par: 4, white: 317, yellow: 317, greenLat: 48.0010, greenLon: -1.0010 },
-      { number: 11, par: 3, white: 154, yellow: 144, greenLat: 48.0011, greenLon: -1.0011 },
-      { number: 12, par: 4, white: 319, yellow: 319, greenLat: 48.0012, greenLon: -1.0012 },
-      { number: 13, par: 5, white: 446, yellow: 446, greenLat: 48.0013, greenLon: -1.0013 },
-      { number: 14, par: 3, white: 187, yellow: 173, greenLat: 48.0014, greenLon: -1.0014 },
-      { number: 15, par: 4, white: 349, yellow: 349, greenLat: 48.0015, greenLon: -1.0015 },
-      { number: 16, par: 5, white: 523, yellow: 523, greenLat: 48.0016, greenLon: -1.0016 },
-      { number: 17, par: 4, white: 390, yellow: 390, greenLat: 48.0017, greenLon: -1.0017 },
-      { number: 18, par: 4, white: 371, yellow: 351, greenLat: 48.0018, greenLon: -1.0018 }
-    ]
-  };
+    const courses = {
+      cice: {
+        name: "Garden Golf de Cicé-Blossac",
+        holes: [
+          { number: 1,  par: 4, white: 347, yellow: 336, greenLat: 48.0001, greenLon: -1.0001 },
+          { number: 2,  par: 5, white: 489, yellow: 478, greenLat: 48.0002, greenLon: -1.0002 },
+          { number: 3,  par: 3, white: 176, yellow: 161, greenLat: 48.0003, greenLon: -1.0003 },
+          { number: 4,  par: 4, white: 341, yellow: 330, greenLat: 48.0004, greenLon: -1.0004 },
+          { number: 5,  par: 4, white: 380, yellow: 372, greenLat: 48.0005, greenLon: -1.0005 },
+          { number: 6,  par: 3, white: 179, yellow: 169, greenLat: 48.0006, greenLon: -1.0006 },
+          { number: 7,  par: 5, white: 485, yellow: 474, greenLat: 48.0007, greenLon: -1.0007 },
+          { number: 8,  par: 4, white: 307, yellow: 298, greenLat: 48.0008, greenLon: -1.0008 },
+          { number: 9,  par: 4, white: 372, yellow: 302, greenLat: 48.0009, greenLon: -1.0009 },
+          { number: 10, par: 4, white: 320, yellow: 311, greenLat: 48.0010, greenLon: -1.0010 },
+          { number: 11, par: 3, white: 143, yellow: 137, greenLat: 48.0011, greenLon: -1.0011 },
+          { number: 12, par: 4, white: 318, yellow: 305, greenLat: 48.0012, greenLon: -1.0012 },
+          { number: 13, par: 5, white: 446, yellow: 436, greenLat: 48.0013, greenLon: -1.0013 },
+          { number: 14, par: 3, white: 189, yellow: 172, greenLat: 48.0014, greenLon: -1.0014 },
+          { number: 15, par: 4, white: 353, yellow: 343, greenLat: 48.0015, greenLon: -1.0015 },
+          { number: 16, par: 5, white: 518, yellow: 505, greenLat: 48.0016, greenLon: -1.0016 },
+          { number: 17, par: 4, white: 394, yellow: 383, greenLat: 48.0017, greenLon: -1.0017 },
+          { number: 18, par: 4, white: 360, yellow: 313, greenLat: 48.0018, greenLon: -1.0018 }
+        ]
+      },
 
-  let currentHoleIndex = 0;
-  const scores = new Array(course.holes.length).fill(null);
+      rennes: {
+        name: "Golf de Rennes Saint-Jacques",
+        holes: [
+          // Blanc / Jaune d’après ta carte (image 2)
+          { number: 1,  par: 4, white: 434, yellow: 419, greenLat: 48.1001, greenLon: -1.8001 },
+          { number: 2,  par: 4, white: 337, yellow: 305, greenLat: 48.1002, greenLon: -1.8002 },
+          { number: 3,  par: 4, white: 369, yellow: 339, greenLat: 48.1003, greenLon: -1.8003 },
+          { number: 4,  par: 3, white: 157, yellow: 134, greenLat: 48.1004, greenLon: -1.8004 },
+          { number: 5,  par: 5, white: 456, yellow: 433, greenLat: 48.1005, greenLon: -1.8005 },
+          { number: 6,  par: 4, white: 370, yellow: 336, greenLat: 48.1006, greenLon: -1.8006 },
+          { number: 7,  par: 4, white: 365, yellow: 365, greenLat: 48.1007, greenLon: -1.8007 },
+          { number: 8,  par: 4, white: 332, yellow: 332, greenLat: 48.1008, greenLon: -1.8008 },
+          { number: 9,  par: 3, white: 170, yellow: 170, greenLat: 48.1009, greenLon: -1.8009 },
+          { number: 10, par: 4, white: 351, yellow: 351, greenLat: 48.1010, greenLon: -1.8010 },
+          { number: 11, par: 3, white: 183, yellow: 155, greenLat: 48.1011, greenLon: -1.8011 },
+          { number: 12, par: 4, white: 358, yellow: 358, greenLat: 48.1012, greenLon: -1.8012 },
+          { number: 13, par: 4, white: 356, yellow: 330, greenLat: 48.1013, greenLon: -1.8013 },
+          { number: 14, par: 5, white: 461, yellow: 439, greenLat: 48.1014, greenLon: -1.8014 },
+          { number: 15, par: 3, white: 309, yellow: 278, greenLat: 48.1015, greenLon: -1.8015 },
+          { number: 16, par: 4, white: 342, yellow: 342, greenLat: 48.1016, greenLon: -1.8016 },
+          { number: 17, par: 3, white: 156, yellow: 126, greenLat: 48.1017, greenLon: -1.8017 },
+          { number: 18, par: 5, white: 497, yellow: 426, greenLat: 48.1018, greenLon: -1.8018 }
+        ]
+      }
+    };
 
-  const holeTitleEl   = document.getElementById("hole-title");
-  const holeParEl     = document.getElementById("hole-par");
-  const holeWhiteEl   = document.getElementById("hole-white");
-  const holeYellowEl  = document.getElementById("hole-yellow");
-  const totalWhiteEl  = document.getElementById("total-white");
-  const totalYellowEl = document.getElementById("total-yellow");
-  const scoreInputEl  = document.getElementById("score-input");
-  const prevBtn       = document.getElementById("prev-hole");
-  const nextBtn       = document.getElementById("next-hole");
-  const gpsStatusEl   = document.getElementById("gps-status");
-  const gpsCoordsEl   = document.getElementById("gps-coords");
-  const gpsDistanceEl = document.getElementById("gps-distance");
-  const totalScoreEl  = document.getElementById("total-score");
-  const totalParEl    = document.getElementById("total-par");
-  const scoreVsParEl  = document.getElementById("score-vs-par");
+    let currentCourseKey = "cice";
+    let course = courses[currentCourseKey];
+    let currentHoleIndex = 0;
+    const scores = new Array(18).fill(null);
 
-  function initCourseTotals() {
-    let totalWhite = 0;
-    let totalYellow = 0;
-    let totalPar = 0;
-    course.holes.forEach(hole => {
-      totalWhite += hole.white;
-      totalYellow += hole.yellow;
-      totalPar += hole.par;
+    const courseNameEl   = document.getElementById("course-name");
+    const courseSelectEl = document.getElementById("course-select");
+    const holeTitleEl    = document.getElementById("hole-title");
+    const holeParEl      = document.getElementById("hole-par");
+    const holeWhiteEl    = document.getElementById("hole-white");
+    const holeYellowEl   = document.getElementById("hole-yellow");
+    const totalWhiteEl   = document.getElementById("total-white");
+    const totalYellowEl  = document.getElementById("total-yellow");
+    const scoreInputEl   = document.getElementById("score-input");
+    const prevBtn        = document.getElementById("prev-hole");
+    const nextBtn        = document.getElementById("next-hole");
+    const gpsStatusEl    = document.getElementById("gps-status");
+    const gpsCoordsEl    = document.getElementById("gps-coords");
+    const gpsDistanceEl  = document.getElementById("gps-distance");
+    const totalScoreEl   = document.getElementById("total-score");
+    const totalParEl     = document.getElementById("total-par");
+    const scoreVsParEl   = document.getElementById("score-vs-par");
+
+    function initCourseTotals() {
+      let totalWhite = 0;
+      let totalYellow = 0;
+      let totalPar = 0;
+      course.holes.forEach(hole => {
+        totalWhite += hole.white;
+        totalYellow += hole.yellow;
+        totalPar += hole.par;
+      });
+      courseNameEl.textContent = course.name;
+      totalWhiteEl.textContent = totalWhite;
+      totalYellowEl.textContent = totalYellow;
+      totalParEl.textContent = totalPar;
+    }
+
+    function formatScoreVsPar(diff) {
+      if (diff === 0) return "E";
+      return diff > 0 ? "+" + diff : diff.toString();
+    }
+
+    function updateTotals() {
+      let sumScores = 0;
+      let sumPar = 0;
+
+      course.holes.forEach((hole, idx) => {
+        const s = scores[idx];
+        if (typeof s === "number" && !isNaN(s)) {
+          sumScores += s;
+          sumPar += hole.par;
+        }
+      });
+
+      totalScoreEl.textContent = sumScores;
+      const diff = sumScores - sumPar;
+      scoreVsParEl.textContent = formatScoreVsPar(diff);
+    }
+
+    function renderHole() {
+      const hole = course.holes[currentHoleIndex];
+      holeTitleEl.textContent  = "Trou " + hole.number;
+      holeParEl.textContent    = "Par " + hole.par;
+      holeWhiteEl.textContent  = "Blanc : " + hole.white + " m";
+      holeYellowEl.textContent = "Jaune : " + hole.yellow + " m";
+
+      const existingScore = scores[currentHoleIndex];
+      scoreInputEl.value = existingScore != null ? existingScore : "";
+
+      prevBtn.disabled = currentHoleIndex === 0;
+      nextBtn.disabled = currentHoleIndex === course.holes.length - 1;
+
+      gpsStatusEl.textContent   = "";
+      gpsCoordsEl.textContent   = "";
+      gpsDistanceEl.textContent = "";
+    }
+
+    scoreInputEl.addEventListener("input", () => {
+      const value = parseInt(scoreInputEl.value, 10);
+      if (!isNaN(value)) {
+        scores[currentHoleIndex] = value;
+      } else {
+        scores[currentHoleIndex] = null;
+      }
+      updateTotals();
     });
-    totalWhiteEl.textContent  = totalWhite;
-    totalYellowEl.textContent = totalYellow;
-    totalParEl.textContent    = totalPar;
-  }
 
-  function formatScoreVsPar(diff) {
-    if (diff === 0) return "E";
-    return diff > 0 ? "+" + diff : diff.toString();
-  }
-
-  // Calcule le cumul des coups et des coups par rapport au par, trou par trou.[web:137][web:143]
-  function updateTotals() {
-    let sumScores = 0;
-    let sumPar = 0;
-
-    course.holes.forEach((hole, idx) => {
-      const s = scores[idx];
-      if (typeof s === "number" && !isNaN(s)) {
-        sumScores += s;
-        sumPar += hole.par;
+    prevBtn.addEventListener("click", () => {
+      if (currentHoleIndex > 0) {
+        currentHoleIndex--;
+        renderHole();
       }
     });
 
-    totalScoreEl.textContent = sumScores;
+    nextBtn.addEventListener("click", () => {
+      if (currentHoleIndex < course.holes.length - 1) {
+        currentHoleIndex++;
+        renderHole();
+      }
+    });
 
-    const diff = sumScores - sumPar;
-    scoreVsParEl.textContent = formatScoreVsPar(diff);
-  }
-
-  function renderHole() {
-    const hole = course.holes[currentHoleIndex];
-    holeTitleEl.textContent  = "Trou " + hole.number;
-    holeParEl.textContent    = "Par " + hole.par;
-    holeWhiteEl.textContent  = "Blanc : " + hole.white + " m";
-    holeYellowEl.textContent = "Jaune : " + hole.yellow + " m";
-
-    const existingScore = scores[currentHoleIndex];
-    scoreInputEl.value = existingScore != null ? existingScore : "";
-
-    prevBtn.disabled = currentHoleIndex === 0;
-    nextBtn.disabled = currentHoleIndex === course.holes.length - 1;
-
-    gpsStatusEl.textContent   = "";
-    gpsCoordsEl.textContent   = "";
-    gpsDistanceEl.textContent = "";
-  }
-
-  scoreInputEl.addEventListener("input", () => {
-    const value = parseInt(scoreInputEl.value, 10);
-    if (!isNaN(value)) {
-      scores[currentHoleIndex] = value;
-    } else {
-      scores[currentHoleIndex] = null;
-    }
-    updateTotals();
-  });
-
-  prevBtn.addEventListener("click", () => {
-    if (currentHoleIndex > 0) {
-      currentHoleIndex--;
+    courseSelectEl.addEventListener("change", () => {
+      currentCourseKey = courseSelectEl.value;
+      course = courses[currentCourseKey];
+      currentHoleIndex = 0;
+      scores.fill(null);
+      initCourseTotals();
       renderHole();
-    }
-  });
+      updateTotals();
+    });
 
-  nextBtn.addEventListener("click", () => {
-    if (currentHoleIndex < course.holes.length - 1) {
-      currentHoleIndex++;
-      renderHole();
-    }
-  });
+    function distanceInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const toRad = (deg) => deg * Math.PI / 180;
 
-  function distanceInMeters(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = (deg) => deg * Math.PI / 180;
-
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  function updateGpsAndDistance() {
-    const hole = course.holes[currentHoleIndex];
-
-    if (!navigator.geolocation) {
-      gpsStatusEl.textContent = "La géolocalisation n’est pas supportée sur cet appareil.";
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-      return;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
 
-    gpsStatusEl.textContent = "Recherche de ta position...";
-    gpsCoordsEl.textContent = "";
-    gpsDistanceEl.textContent = "";
+    function updateGpsAndDistance() {
+      const hole = course.holes[currentHoleIndex];
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        gpsStatusEl.textContent = "Position trouvée (précision ~" + Math.round(accuracy) + " m).";
-        gpsCoordsEl.textContent =
-          "Ta position : Lat " + latitude.toFixed(6) +
-          " | Lon " + longitude.toFixed(6);
-
-        const d = distanceInMeters(
-          latitude,
-          longitude,
-          hole.greenLat,
-          hole.greenLon
-        );
-
-        gpsDistanceEl.textContent =
-          "Distance au green (approx.) : " + Math.round(d) + " m";
-      },
-      (error) => {
-        let msg = "Erreur de géolocalisation.";
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = "Permission de localisation refusée.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = "Position non disponible.";
-        } else if (error.code === error.TIMEOUT) {
-          msg = "Délai dépassé pour la localisation.";
-        }
-        gpsStatusEl.textContent = msg;
+      if (!navigator.geolocation) {
+        gpsStatusEl.textContent = "La géolocalisation n’est pas supportée sur cet appareil.";
         gpsCoordsEl.textContent = "";
         gpsDistanceEl.textContent = "";
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        return;
       }
-    );
-  }
 
-  initCourseTotals();
-  renderHole();
-  updateTotals();
-</script>
+      gpsStatusEl.textContent = "Recherche de ta position...";
+      gpsCoordsEl.textContent = "";
+      gpsDistanceEl.textContent = "";
 
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+          gpsStatusEl.textContent = "Position trouvée (précision ~" + Math.round(accuracy) + " m).";
+          gpsCoordsEl.textContent =
+            "Ta position : Lat " + latitude.toFixed(6) +
+            " | Lon " + longitude.toFixed(6);
+
+          const d = distanceInMeters(
+            latitude,
+            longitude,
+            hole.greenLat,
+            hole.greenLon
+          );
+
+          gpsDistanceEl.textContent =
+            "Distance au green (approx.) : " + Math.round(d) + " m";
+        },
+        (error) => {
+          let msg = "Erreur de géolocalisation.";
+          if (error.code === error.PERMISSION_DENIED) {
+            msg = "Permission de localisation refusée.";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            msg = "Position non disponible.";
+          } else if (error.code === error.TIMEOUT) {
+            msg = "Délai dépassé pour la localisation.";
+          }
+          gpsStatusEl.textContent = msg;
+          gpsCoordsEl.textContent = "";
+          gpsDistanceEl.textContent = "";
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    initCourseTotals();
+    renderHole();
+    updateTotals();
+  </script>
 </body>
 </html>
