@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Score GPS – Cicé-Blossac (simple)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      padding: 16px;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 16px;
+    }
+
+    header {
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    .meta span {
+      background: #eef3ff;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .hole-panel {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fafafa;
+      border: 1px solid #ddd;
+    }
+
+    .hole-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .hole-par {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .hole-distances {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .hole-distances span {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e9f2ff;
+    }
+
+    .score-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .score-row input[type="number"] {
+      width: 4rem;
+      padding: 4px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .nav-buttons {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #ddeeff;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .gps-block {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+      font-size: 0.9rem;
+    }
+
+    .gps-block p {
+      margin-top: 6px;
+    }
+
+    .gps-status {
+      color: #555;
+    }
+
+    .gps-distance {
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .totals {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .totals strong {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Garden Golf de Cicé-Blossac</h1>
+      <div class="subtitle">Parcours 18 trous, départs blancs / jaunes (coordonnées GPS fictives).</div>
+      <div class="meta">
+        <span>Total blanc : <strong id="total-white">0</strong> m</span>
+        <span>Total jaune : <strong id="total-yellow">0</strong> m</span>
+      </div>
+    </header>
+
+    <section class="hole-panel">
+      <div class="hole-title" id="hole-title">Trou 1</div>
+      <div class="hole-par" id="hole-par">Par 4</div>
+      <div class="hole-distances">
+        <span id="hole-white">Blanc : 0 m</span>
+        <span id="hole-yellow">Jaune : 0 m</span>
+      </div>
+
+      <div class="score-row">
+        <label for="score-input">Score :</label>
+        <input id="score-input" type="number" min="1" inputmode="numeric">
+      </div>
+
+      <div class="nav-buttons">
+        <button type="button" id="prev-hole">◀ Trou précédent</button>
+        <button type="button" id="next-hole">Trou suivant ▶</button>
+      </div>
+    </section>
+
+    <section class="gps-block">
+      <button type="button" onclick="updateGpsAndDistance()">Ma position + distance au green</button>
+      <p class="gps-status" id="gps-status"></p>
+      <p class="gps-status" id="gps-coords"></p>
+      <p class="gps-distance" id="gps-distance"></p>
+    </section>
+
+    <section class="totals">
+      <div>Score total cumulé : <strong id="total-score">0</strong></div>
+      <div>Par total : <strong id="total-par">0</strong></div>
+      <div>Score par rapport au par : <strong id="score-vs-par">E</strong></div>
+    </section>
+  </div>
+
+  <script>
+  const course = {
+    name: "Garden Golf de Cicé-Blossac",
+    holes: [
+      { number: 1,  par: 4, white: 352, yellow: 352, greenLat: 48.0001, greenLon: -1.0001 },
+      { number: 2,  par: 5, white: 490, yellow: 490, greenLat: 48.0002, greenLon: -1.0002 },
+      { number: 3,  par: 3, white: 173, yellow: 173, greenLat: 48.0003, greenLon: -1.0003 },
+      { number: 4,  par: 4, white: 337, yellow: 337, greenLat: 48.0004, greenLon: -1.0004 },
+      { number: 5,  par: 4, white: 382, yellow: 382, greenLat: 48.0005, greenLon: -1.0005 },
+      { number: 6,  par: 3, white: 185, yellow: 174, greenLat: 48.0006, greenLon: -1.0006 },
+      { number: 7,  par: 5, white: 484, yellow: 484, greenLat: 48.0007, greenLon: -1.0007 },
+      { number: 8,  par: 4, white: 299, yellow: 299, greenLat: 48.0008, greenLon: -1.0008 },
+      { number: 9,  par: 4, white: 369, yellow: 369, greenLat: 48.0009, greenLon: -1.0009 },
+      { number: 10, par: 4, white: 317, yellow: 317, greenLat: 48.0010, greenLon: -1.0010 },
+      { number: 11, par: 3, white: 154, yellow: 144, greenLat: 48.0011, greenLon: -1.0011 },
+      { number: 12, par: 4, white: 319, yellow: 319, greenLat: 48.0012, greenLon: -1.0012 },
+      { number: 13, par: 5, white: 446, yellow: 446, greenLat: 48.0013, greenLon: -1.0013 },
+      { number: 14, par: 3, white: 187, yellow: 173, greenLat: 48.0014, greenLon: -1.0014 },
+      { number: 15, par: 4, white: 349, yellow: 349, greenLat: 48.0015, greenLon: -1.0015 },
+      { number: 16, par: 5, white: 523, yellow: 523, greenLat: 48.0016, greenLon: -1.0016 },
+      { number: 17, par: 4, white: 390, yellow: 390, greenLat: 48.0017, greenLon: -1.0017 },
+      { number: 18, par: 4, white: 371, yellow: 351, greenLat: 48.0018, greenLon: -1.0018 }
+    ]
+  };
+
+  let currentHoleIndex = 0;
+  const scores = new Array(course.holes.length).fill(null);
+
+  const holeTitleEl   = document.getElementById("hole-title");
+  const holeParEl     = document.getElementById("hole-par");
+  const holeWhiteEl   = document.getElementById("hole-white");
+  const holeYellowEl  = document.getElementById("hole-yellow");
+  const totalWhiteEl  = document.getElementById("total-white");
+  const totalYellowEl = document.getElementById("total-yellow");
+  const scoreInputEl  = document.getElementById("score-input");
+  const prevBtn       = document.getElementById("prev-hole");
+  const nextBtn       = document.getElementById("next-hole");
+  const gpsStatusEl   = document.getElementById("gps-status");
+  const gpsCoordsEl   = document.getElementById("gps-coords");
+  const gpsDistanceEl = document.getElementById("gps-distance");
+  const totalScoreEl  = document.getElementById("total-score");
+  const totalParEl    = document.getElementById("total-par");
+  const scoreVsParEl  = document.getElementById("score-vs-par");
+
+  function initCourseTotals() {
+    let totalWhite = 0;
+    let totalYellow = 0;
+    let totalPar = 0;
+    course.holes.forEach(hole => {
+      totalWhite += hole.white;
+      totalYellow += hole.yellow;
+      totalPar += hole.par;
+    });
+    totalWhiteEl.textContent  = totalWhite;
+    totalYellowEl.textContent = totalYellow;
+    totalParEl.textContent    = totalPar;
+  }
+
+  function formatScoreVsPar(diff) {
+    if (diff === 0) return "E";
+    return diff > 0 ? "+" + diff : diff.toString();
+  }
+
+  // Calcule le cumul des coups et des coups par rapport au par, trou par trou.[web:137][web:143]
+  function updateTotals() {
+    let sumScores = 0;
+    let sumPar = 0;
+
+    course.holes.forEach((hole, idx) => {
+      const s = scores[idx];
+      if (typeof s === "number" && !isNaN(s)) {
+        sumScores += s;
+        sumPar += hole.par;
+      }
+    });
+
+    totalScoreEl.textContent = sumScores;
+
+    const diff = sumScores - sumPar;
+    scoreVsParEl.textContent = formatScoreVsPar(diff);
+  }
+
+  function renderHole() {
+    const hole = course.holes[currentHoleIndex];
+    holeTitleEl.textContent  = "Trou " + hole.number;
+    holeParEl.textContent    = "Par " + hole.par;
+    holeWhiteEl.textContent  = "Blanc : " + hole.white + " m";
+    holeYellowEl.textContent = "Jaune : " + hole.yellow + " m";
+
+    const existingScore = scores[currentHoleIndex];
+    scoreInputEl.value = existingScore != null ? existingScore : "";
+
+    prevBtn.disabled = currentHoleIndex === 0;
+    nextBtn.disabled = currentHoleIndex === course.holes.length - 1;
+
+    gpsStatusEl.textContent   = "";
+    gpsCoordsEl.textContent   = "";
+    gpsDistanceEl.textContent = "";
+  }
+
+  scoreInputEl.addEventListener("input", () => {
+    const value = parseInt(scoreInputEl.value, 10);
+    if (!isNaN(value)) {
+      scores[currentHoleIndex] = value;
+    } else {
+      scores[currentHoleIndex] = null;
+    }
+    updateTotals();
+  });
+
+  prevBtn.addEventListener("click", () => {
+    if (currentHoleIndex > 0) {
+      currentHoleIndex--;
+      renderHole();
+    }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (currentHoleIndex < course.holes.length - 1) {
+      currentHoleIndex++;
+      renderHole();
+    }
+  });
+
+  function distanceInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = (deg) => deg * Math.PI / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function updateGpsAndDistance() {
+    const hole = course.holes[currentHoleIndex];
+
+    if (!navigator.geolocation) {
+      gpsStatusEl.textContent = "La géolocalisation n’est pas supportée sur cet appareil.";
+      gpsCoordsEl.textContent = "";
+      gpsDistanceEl.textContent = "";
+      return;
+    }
+
+    gpsStatusEl.textContent = "Recherche de ta position...";
+    gpsCoordsEl.textContent = "";
+    gpsDistanceEl.textContent = "";
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        gpsStatusEl.textContent = "Position trouvée (précision ~" + Math.round(accuracy) + " m).";
+        gpsCoordsEl.textContent =
+          "Ta position : Lat " + latitude.toFixed(6) +
+          " | Lon " + longitude.toFixed(6);
+
+        const d = distanceInMeters(
+          latitude,
+          longitude,
+          hole.greenLat,
+          hole.greenLon
+        );
+
+        gpsDistanceEl.textContent =
+          "Distance au green (approx.) : " + Math.round(d) + " m";
+      },
+      (error) => {
+        let msg = "Erreur de géolocalisation.";
+        if (error.code === error.PERMISSION_DENIED) {
+          msg = "Permission de localisation refusée.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = "Position non disponible.";
+        } else if (error.code === error.TIMEOUT) {
+          msg = "Délai dépassé pour la localisation.";
+        }
+        gpsStatusEl.textContent = msg;
+        gpsCoordsEl.textContent = "";
+        gpsDistanceEl.textContent = "";
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  initCourseTotals();
+  renderHole();
+  updateTotals();
+</script>
+
+</body>
+</html>
