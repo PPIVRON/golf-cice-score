@@ -2,278 +2,264 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Score GPS – Parcours golf</title>
+  <title>Golf Scorecard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    * {
-      box-sizing: border-box;
+    body {
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
+      background-color: #f5f5f5;
     }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
-      padding: 16px;
-    }
-
-    .app {
+    .container {
       max-width: 600px;
       margin: 0 auto;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      padding: 16px;
+      padding: 15px;
+      background-color: #ffffff;
     }
-
-    header {
-      margin-bottom: 16px;
+    h1, h2 {
+      text-align: center;
+      margin: 10px 0;
     }
-
-    h1 {
-      font-size: clamp(1.4rem, 2.4vw, 2rem);
-      margin-bottom: 4px;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-      color: #555;
-    }
-
-    .course-chooser {
-      margin: 8px 0;
-      font-size: 0.9rem;
-    }
-
-    .course-chooser select {
-      padding: 4px 6px;
-      font-size: 0.9rem;
-    }
-
-    .meta {
+    .course-select {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-      font-size: 0.9rem;
+      justify-content: center;
+      margin-bottom: 10px;
     }
-
-    .meta span {
-      background: #eef3ff;
-      padding: 4px 8px;
-      border-radius: 999px;
+    .course-select label {
+      margin-right: 5px;
     }
-
-    .hole-panel {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 8px;
-      background: #fafafa;
-      border: 1px solid #ddd;
+    .hole-info {
+      text-align: center;
+      margin-bottom: 10px;
     }
-
-    .hole-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 4px;
+    .hole-info div {
+      margin: 3px 0;
     }
-
-    .hole-par {
-      font-size: 0.9rem;
-      color: #555;
+    .navigation {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .navigation button {
+      margin: 0 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    .gps-section {
+      margin-top: 15px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      font-size: 14px;
+    }
+    .gps-section button {
       margin-bottom: 8px;
     }
-
-    .hole-distances {
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-    }
-
-    .hole-distances span {
-      display: inline-block;
-      margin-right: 8px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #e9f2ff;
-    }
-
-    .score-row {
-      margin-top: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-    }
-
-    .score-row input[type="number"] {
-      width: 4rem;
-      padding: 4px;
-      font-size: 0.95rem;
+    .score-section {
+      margin-top: 10px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
       text-align: center;
     }
-
-    .nav-buttons {
-      margin-top: 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
+    .score-section input {
+      width: 60px;
+      font-size: 16px;
+      text-align: center;
     }
-
-    button {
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      background: #ddeeff;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .gps-block {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid #ddd;
-      font-size: 0.9rem;
-    }
-
-    .gps-block p {
-      margin-top: 6px;
-    }
-
-    .gps-status {
-      color: #555;
-    }
-
-    .gps-distance {
-      font-weight: 600;
-      margin-top: 4px;
-    }
-
     .totals {
-      margin-top: 16px;
-      font-size: 0.95rem;
+      margin-top: 15px;
+      border-top: 1px solid #ccc;
       padding-top: 10px;
-      border-top: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      font-size: 14px;
+    }
+    .totals div {
+      margin: 3px 0;
     }
 
-    .totals strong {
-      font-weight: 600;
+    /* ---- MODAL ZOOM ---- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      position: relative;
+      margin: 3% auto;
+      max-width: 700px;
+      width: 90%;
+    }
+    #holeImage {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    #playerMarker {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: red;
+      border: 2px solid white;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .modal .close {
+      position: absolute;
+      top: 8px;
+      right: 18px;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      z-index: 10000;
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1 id="course-name">Parcours de golf</h1>
-      <div class="subtitle">Score trou par trou, GPS et distances blancs / jaunes.</div>
+  <div class="container">
+    <h1 id="course-name">Garden Golf de Cicé-Blossac</h1>
 
-      <div class="course-chooser">
-        <label for="course-select">Parcours :</label>
-        <select id="course-select">
-          <option value="cice">Cicé-Blossac</option>
-          <option value="rennes">Rennes Saint-Jacques</option>
-        </select>
-      </div>
+    <div class="course-select">
+      <label for="course-select">Parcours :</label>
+      <select id="course-select">
+        <option value="cice">Cicé-Blossac</option>
+        <option value="rennes">Rennes St-Jacques</option>
+      </select>
+    </div>
 
-      <div class="meta">
-        <span>Total blanc : <strong id="total-white">0</strong> m</span>
-        <span>Total jaune : <strong id="total-yellow">0</strong> m</span>
-      </div>
-    </header>
+    <div class="hole-info">
+      <h2 id="hole-title">Trou 1</h2>
+      <div id="hole-par"></div>
+      <div id="hole-white"></div>
+      <div id="hole-yellow"></div>
+    </div>
 
-    <section class="hole-panel">
-      <div class="hole-title" id="hole-title">Trou 1</div>
-      <div class="hole-par" id="hole-par">Par 4</div>
-      <div class="hole-distances">
-        <span id="hole-white">Blanc : 0 m</span>
-        <span id="hole-yellow">Jaune : 0 m</span>
-      </div>
+    <div class="navigation">
+      <button id="prev-hole">Trou précédent</button>
+      <button id="next-hole">Trou suivant</button>
+    </div>
 
-      <div class="score-row">
-        <label for="score-input">Score :</label>
-        <input id="score-input" type="number" min="1" inputmode="numeric">
-      </div>
+    <div class="gps-section">
+      <button id="gps-button">Ma position / distance au green</button>
+      <button id="zoomBtn">ZOOM</button>
+      <div id="gps-status"></div>
+      <div id="gps-coords"></div>
+      <div id="gps-distance"></div>
+    </div>
 
-      <div class="nav-buttons">
-        <button type="button" id="prev-hole">◀ Trou précédent</button>
-        <button type="button" id="next-hole">Trou suivant ▶</button>
-      </div>
-    </section>
+    <div class="score-section">
+      <label for="score-input">Score du trou :</label>
+      <input id="score-input" type="number" min="1">
+    </div>
 
-    <section class="gps-block">
-      <button type="button" onclick="updateGpsAndDistance()">Ma position + distance au green</button>
-      <p class="gps-status" id="gps-status"></p>
-      <p class="gps-status" id="gps-coords"></p>
-      <p class="gps-distance" id="gps-distance"></p>
-    </section>
+    <div class="totals">
+      <div>Longueur totale Blanc : <span id="total-white"></span> m</div>
+      <div>Longueur totale Jaune : <span id="total-yellow"></span> m</div>
+      <div>Score total : <span id="total-score">0</span></div>
+      <div>Par total : <span id="total-par">0</span></div>
+      <div>Score vs Par : <span id="score-vs-par">E</span></div>
+    </div>
+  </div>
 
-    <section class="totals">
-      <div>Score total cumulé : <strong id="total-score">0</strong></div>
-      <div>Par total : <strong id="total-par">0</strong></div>
-      <div>Score par rapport au par : <strong id="score-vs-par">E</strong></div>
-    </section>
+  <!-- MODAL ZOOM -->
+  <div id="zoomModal" class="modal">
+    <span class="close">&times;</span>
+    <div class="modal-content">
+      <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
+      <div id="playerMarker"></div>
+    </div>
   </div>
 
   <script>
+    /* ---------- DONNÉES PARCOURS ---------- */
+
     const courses = {
       cice: {
-    name: "Garden Golf de Cicé-Blossac",
-    holes: [
-      { number: 1,  par: 4, white: 347, yellow: 336, greenLat: 48.03784, greenLon: -1.76911 },
-      { number: 2,  par: 5, white: 489, yellow: 478, greenLat: 48.03467, greenLon: -1.76605 },
-      { number: 3,  par: 3, white: 176, yellow: 161, greenLat: 48.03543, greenLon: -1.76465 },
-      { number: 4,  par: 4, white: 341, yellow: 330, greenLat: 48.03724, greenLon: -1.76336 },
-      { number: 5,  par: 4, white: 380, yellow: 372, greenLat: 48.03388, greenLon: -1.76258 },
-      { number: 6,  par: 3, white: 179, yellow: 169, greenLat: 48.03161, greenLon: -1.76196 },
-      { number: 7,  par: 5, white: 485, yellow: 474, greenLat: 48.02864, greenLon: -1.76484 },
-      { number: 8,  par: 4, white: 307, yellow: 298, greenLat: 48.03098, greenLon: -1.76807 },
-      { number: 9,  par: 4, white: 372, yellow: 302, greenLat: 48.03416, greenLon: -1.77048 },
+        name: "Garden Golf de Cicé-Blossac",
+        holes: [
+          { number: 1,  par: 4, white: 347, yellow: 336, greenLat: 48.03784, greenLon: -1.76911 },
+          { number: 2,  par: 5, white: 489, yellow: 478, greenLat: 48.03467, greenLon: -1.76605 },
+          { number: 3,  par: 3, white: 176, yellow: 161, greenLat: 48.03543, greenLon: -1.76465 },
+          { number: 4,  par: 4, white: 341, yellow: 330, greenLat: 48.03724, greenLon: -1.76336 },
+          { number: 5,  par: 4, white: 380, yellow: 372, greenLat: 48.03388, greenLon: -1.76258 },
+          { number: 6,  par: 3, white: 179, yellow: 169, greenLat: 48.03161, greenLon: -1.76196 },
+          { number: 7,  par: 5, white: 485, yellow: 474, greenLat: 48.02864, greenLon: -1.76484 },
+          { number: 8,  par: 4, white: 307, yellow: 298, greenLat: 48.03098, greenLon: -1.76807 },
+          { number: 9,  par: 4, white: 372, yellow: 302, greenLat: 48.03416, greenLon: -1.77048 },
 
-      { number: 10, par: 4, white: 320, yellow: 311, greenLat: 48.03764, greenLon: -1.77241 },
-      { number: 11, par: 3, white: 143, yellow: 137, greenLat: 48.03852, greenLon: -1.77026 },
-      { number: 12, par: 4, white: 318, yellow: 305, greenLat: 48.03879, greenLon: -1.76565 },
-      { number: 13, par: 5, white: 446, yellow: 436, greenLat: 48.04115, greenLon: -1.76023 },
-      { number: 14, par: 3, white: 189, yellow: 172, greenLat: 48.04135, greenLon: -1.75739 },
-      { number: 15, par: 4, white: 353, yellow: 343, greenLat: 48.03853, greenLon: -1.75957 },
-      { number: 16, par: 5, white: 518, yellow: 505, greenLat: 48.03383, greenLon: -1.76199 },
-      { number: 17, par: 4, white: 394, yellow: 383, greenLat: 48.03127, greenLon: -1.76658 },
-      { number: 18, par: 4, white: 360, yellow: 313, greenLat: 48.03406, greenLon: -1.77102 }
-    ]
-  },
-
+          { number: 10, par: 4, white: 320, yellow: 311, greenLat: 48.03764, greenLon: -1.77241 },
+          { number: 11, par: 3, white: 143, yellow: 137, greenLat: 48.03852, greenLon: -1.77026 },
+          { number: 12, par: 4, white: 318, yellow: 305, greenLat: 48.03879, greenLon: -1.76565 },
+          { number: 13, par: 5, white: 446, yellow: 436, greenLat: 48.04115, greenLon: -1.76023 },
+          { number: 14, par: 3, white: 189, yellow: 172, greenLat: 48.04135, greenLon: -1.75739 },
+          { number: 15, par: 4, white: 353, yellow: 343, greenLat: 48.03853, greenLon: -1.75957 },
+          { number: 16, par: 5, white: 518, yellow: 505, greenLat: 48.03383, greenLon: -1.76199 },
+          { number: 17, par: 4, white: 394, yellow: 383, greenLat: 48.03127, greenLon: -1.76658 },
+          { number: 18, par: 4, white: 360, yellow: 313, greenLat: 48.03406, greenLon: -1.77102 }
+        ]
+      },
       rennes: {
-  name: "Golf de Rennes Saint-Jacques",
-  holes: [
-    { number: 1,  par: 4, white: 434, yellow: 419, greenLat: 48.06706, greenLon: -1.74132 },
-    { number: 2,  par: 4, white: 337, yellow: 305, greenLat: 48.06527, greenLon: -1.73851 },
-    { number: 3,  par: 4, white: 369, yellow: 339, greenLat: 48.06208, greenLon: -1.74027 },
-    { number: 4,  par: 3, white: 157, yellow: 134, greenLat: 48.06193, greenLon: -1.74231 },
-    { number: 5,  par: 5, white: 456, yellow: 433, greenLat: 48.06448, greenLon: -1.74757 },
-    { number: 6,  par: 4, white: 370, yellow: 336, greenLat: 48.06207, greenLon: -1.74506 },
-    { number: 7,  par: 4, white: 365, yellow: 365, greenLat: 48.06513, greenLon: -1.74491 },
-    { number: 8,  par: 4, white: 332, yellow: 332, greenLat: 48.06517, greenLon: -1.74823 },
-    { number: 9,  par: 3, white: 170, yellow: 170, greenLat: 48.06728, greenLon: -1.74937 },
+        name: "Golf de Rennes Saint-Jacques",
+        holes: [
+          { number: 1,  par: 4, white: 434, yellow: 419, greenLat: 48.06706, greenLon: -1.74132 },
+          { number: 2,  par: 4, white: 337, yellow: 305, greenLat: 48.06527, greenLon: -1.73851 },
+          { number: 3,  par: 4, white: 369, yellow: 339, greenLat: 48.06208, greenLon: -1.74027 },
+          { number: 4,  par: 3, white: 157, yellow: 134, greenLat: 48.06193, greenLon: -1.74231 },
+          { number: 5,  par: 5, white: 456, yellow: 433, greenLat: 48.06448, greenLon: -1.74757 },
+          { number: 6,  par: 4, white: 370, yellow: 336, greenLat: 48.06207, greenLon: -1.74506 },
+          { number: 7,  par: 4, white: 365, yellow: 365, greenLat: 48.06513, greenLon: -1.74491 },
+          { number: 8,  par: 4, white: 332, yellow: 332, greenLat: 48.06517, greenLon: -1.74823 },
+          { number: 9,  par: 3, white: 170, yellow: 170, greenLat: 48.06728, greenLon: -1.74937 },
 
-    { number: 10, par: 4, white: 351, yellow: 351, greenLat: 48.06691, greenLon: -1.74292 },
-    { number: 11, par: 3, white: 183, yellow: 155, greenLat: 48.06627, greenLon: -1.74060 },
-    { number: 12, par: 4, white: 358, yellow: 358, greenLat: 48.06237, greenLon: -1.74150 },
-    { number: 13, par: 4, white: 356, yellow: 330, greenLat: 48.06507, greenLon: -1.74018 },
-    { number: 14, par: 5, white: 461, yellow: 439, greenLat: 48.06158, greenLon: -1.74379 },
-    { number: 15, par: 3, white: 309, yellow: 278, greenLat: 48.06397, greenLon: -1.74437 },
-    { number: 16, par: 4, white: 342, yellow: 342, greenLat: 48.06562, greenLon: -1.74116 },
-    { number: 17, par: 3, white: 156, yellow: 126, greenLat: 48.06591, greenLon: -1.74351 },
-    { number: 18, par: 5, white: 497, yellow: 426, greenLat: 48.06714, greenLon: -1.74861 }
-  ]
-}
+          { number: 10, par: 4, white: 351, yellow: 351, greenLat: 48.06691, greenLon: -1.74292 },
+          { number: 11, par: 3, white: 183, yellow: 155, greenLat: 48.06627, greenLon: -1.74060 },
+          { number: 12, par: 4, white: 358, yellow: 358, greenLat: 48.06237, greenLon: -1.74150 },
+          { number: 13, par: 4, white: 356, yellow: 330, greenLat: 48.06507, greenLon: -1.74018 },
+          { number: 14, par: 5, white: 461, yellow: 439, greenLat: 48.06158, greenLon: -1.74379 },
+          { number: 15, par: 3, white: 309, yellow: 278, greenLat: 48.06397, greenLon: -1.74437 },
+          { number: 16, par: 4, white: 342, yellow: 342, greenLat: 48.06562, greenLon: -1.74116 },
+          { number: 17, par: 3, white: 156, yellow: 126, greenLat: 48.06591, greenLon: -1.74351 },
+          { number: 18, par: 5, white: 497, yellow: 426, greenLat: 48.06714, greenLon: -1.74861 }
+        ]
+      }
     };
+
+    /* ---------- CONFIG IMAGES TROUS (repères + positions sur l'image) ---------- */
+    // À compléter pour les autres trous au fur et à mesure.
+
+    const holeImageRefs = {
+      "cice-1": {
+        // repère 135 m
+        mark:  { lat: 48.03675, lon: -1.76950 },
+        // green trou 1
+        green: { lat: 48.03784, lon: -1.76911 },
+        // positions visuelles sur TROU1.jpg (0–1)
+        imgMark:  { x: 0.55, y: 0.60 },
+        imgGreen: { x: 0.63, y: 0.23 }
+      },
+      "cice-2": {
+        // point à ~164 m du green
+        mark:  { lat: 48.03816, lon: -1.76862 },
+        // green trou 2 (mêmes coordonnées que dans course.holes[1])
+        green: { lat: 48.03467, lon: -1.76605 },
+        // positions à ajuster sur TROU2.jpg
+        imgMark:  { x: 0.50, y: 0.65 },
+        imgGreen: { x: 0.60, y: 0.20 }
+      }
+      // plus tard :
+      // "cice-3": { mark: {...}, green: {...}, imgMark: {...}, imgGreen: {...} },
+      // etc.
+    };
+
+    /* ---------- VARIABLES GLOBALES ---------- */
 
     let currentCourseKey = "cice";
     let course = courses[currentCourseKey];
@@ -291,12 +277,21 @@
     const scoreInputEl   = document.getElementById("score-input");
     const prevBtn        = document.getElementById("prev-hole");
     const nextBtn        = document.getElementById("next-hole");
+    const gpsButtonEl    = document.getElementById("gps-button");
     const gpsStatusEl    = document.getElementById("gps-status");
     const gpsCoordsEl    = document.getElementById("gps-coords");
     const gpsDistanceEl  = document.getElementById("gps-distance");
     const totalScoreEl   = document.getElementById("total-score");
     const totalParEl     = document.getElementById("total-par");
     const scoreVsParEl   = document.getElementById("score-vs-par");
+
+    const zoomBtn      = document.getElementById("zoomBtn");
+    const zoomModal    = document.getElementById("zoomModal");
+    const closeModal   = zoomModal.querySelector(".close");
+    const holeImage    = document.getElementById("holeImage");
+    const playerMarker = document.getElementById("playerMarker");
+
+    /* ---------- FONCTIONS SCORE / AFFICHAGE ---------- */
 
     function initCourseTotals() {
       let totalWhite = 0;
@@ -353,39 +348,13 @@
       gpsDistanceEl.textContent = "";
     }
 
-    scoreInputEl.addEventListener("input", () => {
-      const value = parseInt(scoreInputEl.value, 10);
-      if (!isNaN(value)) {
-        scores[currentHoleIndex] = value;
-      } else {
-        scores[currentHoleIndex] = null;
-      }
-      updateTotals();
-    });
+    function getHoleImageName(courseKey, holeNumber) {
+      // simple : TROU1.jpg, TROU2.jpg, ...
+      // si tu as des noms différents par parcours, adapte ici.
+      return "TROU" + holeNumber + ".jpg";
+    }
 
-    prevBtn.addEventListener("click", () => {
-      if (currentHoleIndex > 0) {
-        currentHoleIndex--;
-        renderHole();
-      }
-    });
-
-    nextBtn.addEventListener("click", () => {
-      if (currentHoleIndex < course.holes.length - 1) {
-        currentHoleIndex++;
-        renderHole();
-      }
-    });
-
-    courseSelectEl.addEventListener("change", () => {
-      currentCourseKey = courseSelectEl.value;
-      course = courses[currentCourseKey];
-      currentHoleIndex = 0;
-      scores.fill(null);
-      initCourseTotals();
-      renderHole();
-      updateTotals();
-    });
+    /* ---------- GPS / DISTANCE AU GREEN ---------- */
 
     function distanceInMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000;
@@ -399,7 +368,7 @@
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
-    }
+    }  // Haversine classique.[web:104][web:106]
 
     function updateGpsAndDistance() {
       const hole = course.holes[currentHoleIndex];
@@ -454,6 +423,124 @@
       );
     }
 
+    /* ---------- PROJECTION SUR L'IMAGE (GÉNÉRIQUE) ---------- */
+
+    function latLonToImagePercentGeneric(courseKey, holeNumber, lat, lon) {
+      const key = courseKey + "-" + holeNumber;
+      const ref = holeImageRefs[key];
+      if (!ref) return null;
+
+      const dMG  = distanceInMeters(ref.mark.lat, ref.mark.lon, ref.green.lat, ref.green.lon);
+      const dMP  = distanceInMeters(ref.mark.lat, ref.mark.lon, lat, lon);
+
+      let t = dMP / dMG;
+      t = Math.max(0, Math.min(1, t));
+
+      return {
+        x: ref.imgMark.x + t * (ref.imgGreen.x - ref.imgMark.x),
+        y: ref.imgMark.y + t * (ref.imgGreen.y - ref.imgMark.y)
+      };
+    }  // interpolation linéaire entre deux repères.[web:32][web:33]
+
+    function updateMarkerPositionFromGps() {
+      const hole = course.holes[currentHoleIndex];
+
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+
+          const perc = latLonToImagePercentGeneric(
+            currentCourseKey,
+            hole.number,
+            latitude,
+            longitude
+          );
+
+          if (!perc) {
+            playerMarker.style.left = "-1000px";
+            playerMarker.style.top  = "-1000px";
+            return;
+          }
+
+          const rect = holeImage.getBoundingClientRect();
+          const xPx  = rect.left + rect.width  * perc.x;
+          const yPx  = rect.top  + rect.height * perc.y;
+
+          playerMarker.style.left = xPx + "px";
+          playerMarker.style.top  = yPx + "px";
+        },
+        () => {
+          playerMarker.style.left = "-1000px";
+          playerMarker.style.top  = "-1000px";
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    /* ---------- ÉVÉNEMENTS ---------- */
+
+    scoreInputEl.addEventListener("input", () => {
+      const value = parseInt(scoreInputEl.value, 10);
+      if (!isNaN(value)) {
+        scores[currentHoleIndex] = value;
+      } else {
+        scores[currentHoleIndex] = null;
+      }
+      updateTotals();
+    });
+
+    prevBtn.addEventListener("click", () => {
+      if (currentHoleIndex > 0) {
+        currentHoleIndex--;
+        renderHole();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentHoleIndex < course.holes.length - 1) {
+        currentHoleIndex++;
+        renderHole();
+      }
+    });
+
+    courseSelectEl.addEventListener("change", () => {
+      currentCourseKey = courseSelectEl.value;
+      course = courses[currentCourseKey];
+      currentHoleIndex = 0;
+      scores.fill(null);
+      initCourseTotals();
+      renderHole();
+      updateTotals();
+    });
+
+    gpsButtonEl.addEventListener("click", updateGpsAndDistance);
+
+    zoomBtn.addEventListener("click", () => {
+      const hole = course.holes[currentHoleIndex];
+      const imgName = getHoleImageName(currentCourseKey, hole.number);
+
+      holeImage.src = imgName;
+      holeImage.alt = "Trou " + hole.number;
+
+      zoomModal.style.display = "block";
+      setTimeout(updateMarkerPositionFromGps, 100);
+    });
+
+    closeModal.addEventListener("click", () => {
+      zoomModal.style.display = "none";
+    });
+
+    zoomModal.addEventListener("click", (e) => {
+      if (e.target === zoomModal) zoomModal.style.display = "none";
+    });
+
+    /* ---------- INIT ---------- */
     initCourseTotals();
     renderHole();
     updateTotals();
