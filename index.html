@@ -112,6 +112,17 @@
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
+    #markerDistance {
+      position: absolute;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 11px;
+      border-radius: 10px;
+      transform: translate(-50%, -150%); /* au-dessus du point rouge */
+      white-space: nowrap;
+      pointer-events: none;
+    }
     .modal .close {
       position: absolute;
       top: 8px;
@@ -175,6 +186,7 @@
     <div class="modal-content">
       <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
       <div id="playerMarker"></div>
+      <div id="markerDistance"></div> <!-- nouveau -->
     </div>
   </div>
 
@@ -236,28 +248,352 @@
     // À compléter pour les autres trous au fur et à mesure.
 
     const holeImageRefs = {
-      "cice-1": {
-        // repère 135 m
-        mark:  { lat: 48.03675, lon: -1.76950 },
-        // green trou 1
-        green: { lat: 48.03784, lon: -1.76911 },
-        // positions visuelles sur TROU1.jpg (0–1)
-        imgMark:  { x: 0.55, y: 0.60 },
-        imgGreen: { x: 0.63, y: 0.23 }
-      },
-      "cice-2": {
-        // point à ~164 m du green
-        mark:  { lat: 48.03816, lon: -1.76862 },
-        // green trou 2 (mêmes coordonnées que dans course.holes[1])
-        green: { lat: 48.03467, lon: -1.76605 },
-        // positions à ajuster sur TROU2.jpg
-        imgMark:  { x: 0.50, y: 0.65 },
-        imgGreen: { x: 0.60, y: 0.20 }
+  "cice-1": {
+    marks: [
+      {
+        // ancien "mark" du trou 1
+        lat: 48.03675,
+        lon: -1.76950,
+        // ancien "imgMark" du trou 1
+        img: { x: 0.629, y: 0.332 }
       }
-      // plus tard :
-      // "cice-3": { mark: {...}, green: {...}, imgMark: {...}, imgGreen: {...} },
-      // etc.
-    };
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 1
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 1
+      img: { x: 0.537, y: 0.233 }
+    }
+  },
+
+  "cice-2": {
+    marks: [
+      {
+        // ancien "mark" du trou 2 (point à 164 m)
+        lat: 48.03816,
+        lon: -1.76862,
+        // ancien "imgMark" du trou 2
+        img: { x: 0.236, y: 0.507 }
+      },
+      {
+        // ancien "mark" du trou 2 (point à 135 m)
+        lat: 48.03585,
+        lon: -1.76655,
+        // ancien "imgMark" du trou 2
+        img: { x: 0.416, y: 0.360 }
+      }
+      // plus tard: autre marque si tu veux
+    ],
+    green: {
+      // ancien "green" du trou 2
+      lat: 48.03467,
+      lon: -1.76605,
+      // ancien "imgGreen" du trou 2
+      img: { x: 0.504, y: 0.250 }
+    }
+  },
+  "cice-3": {
+    green: {
+      // ancien "green" du trou 3
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 3
+      img: { x: 0.553, y: 0.239 }
+    }
+  },
+  "cice-4": {
+    marks: [
+      {
+        // ancien "mark" du trou 4
+        lat: 48.03616,
+        lon: -1.76372,
+        // ancien "imgMark" du trou 4
+        img: { x: 0.496, y: 0.382 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 4
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 4
+      img: { x: 0.507, y: 0.259 }
+    }
+  },
+  "cice-5": {
+    marks: [
+      {
+        // ancien "mark" du trou 5
+        lat: 48.03526,
+        lon: -1.76287,
+        // ancien "imgMark" du trou 5
+        img: { x: 0.587, y: 0.405 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 5
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 5
+      img: { x: 0.513, y: 0.271 }
+    }
+  },
+  "cice-6": {
+    green: {
+      // ancien "green" du trou 6
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 6
+      img: { x: 0.483, y: 0.222 }
+    }
+  },
+  "cice-7": {
+    marks: [
+      {
+        // ancien "mark" du trou 7 (point à 200 m)
+        lat: 48.03010,
+        lon: -1.76268,
+        // ancien "imgMark" du trou 7
+        img: { x: 0.386, y: 0.419 }
+      },
+      {
+        // ancien "mark" du trou 7 (point à 100 m)
+        lat: 48.02932,
+        lon: -1.76358,
+        // ancien "imgMark" du trou 7
+        img: { x: 0.406, y: 0.328 }
+      }
+      // plus tard: autre marque si tu veux
+    ],
+    green: {
+      // ancien "green" du trou 7
+      lat: 48.03467,
+      lon: -1.76605,
+      // ancien "imgGreen" du trou 7
+      img: { x: 0.460, y: 0.264 }
+    }
+  },
+  "cice-8": {
+    marks: [
+      {
+        // ancien "mark" du trou 8
+        lat: 48.03020,
+        lon: -1.76697,
+        // ancien "imgMark" du trou 8
+        img: { x: 0.683, y: 0.427 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 8
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 8
+      img: { x: 0.633, y: 0.252 }
+    }
+  },
+  "cice-9": {
+    marks: [
+      {
+        // ancien "mark" du trou 9
+        lat: 48.03370,
+        lon: -1.76868,
+        // ancien "imgMark" du trou 9
+        img: { x: 0.727, y: 0.379 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 9
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 9
+      img: { x: 0.647, y: 0.238 }
+    }
+  },
+  "cice-10": {
+    marks: [
+      {
+        // ancien "mark" du trou 10
+        lat: 48.03653,
+        lon: -1.77162,
+        // ancien "imgMark" du trou 10
+        img: { x: 0.629, y: 0.473 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 10
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 10
+      img: { x: 0.566, y: 0.314 }
+    }
+  },
+  "cice-11": {
+    green: {
+      // ancien "green" du trou 11
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 11
+      img: { x: 0.549, y: 0.325 }
+    }
+  },
+  "cice-12": {
+    marks: [
+      {
+        // ancien "mark" du trou 12
+        lat: 48.03858,
+        lon: -1.76702,
+        // ancien "imgMark" du trou 12
+        img: { x: 0.500, y: 0.388 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 12
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 12
+      img: { x: 0.456, y: 0.223 }
+    }
+  },
+  "cice-13": {
+    marks: [
+      {
+        // ancien "mark" du trou 13 (point à 188 m)
+        lat: 48.03957,
+        lon: -1.76204,
+        // ancien "imgMark" du trou 13
+        img: { x: 0.580, y: 0.443 }
+      },
+      {
+        // ancien "mark" du trou 13 (point à 100 m)
+        lat: 48.04030,
+        lon: -1.76121,
+        // ancien "imgMark" du trou 137
+        img: { x: 0.500, y: 0.294 }
+      }
+      // plus tard: autre marque si tu veux
+    ],
+    green: {
+      // ancien "green" du trou 13
+      lat: 48.03467,
+      lon: -1.76605,
+      // ancien "imgGreen" du trou 13
+      img: { x: 0.420, y: 0.217 }
+    }
+  },
+  "cice-14": {
+    green: {
+      // ancien "green" du trou 14
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 14
+      img: { x: 0.533, y: 0.327 }
+    }
+  },
+  "cice-15": {
+    marks: [
+      {
+        // ancien "mark" du trou 15
+        lat: 48.03934,
+        lon: -1.75864,
+        // ancien "imgMark" du trou 15
+        img: { x: 0.557, y: 0.355 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 15
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 15
+      img: { x: 0.533, y: 0.244 }
+    }
+  },
+  "cice-16": {
+    marks: [
+      {
+        // ancien "mark" du trou 16 (point à 154 m)
+        lat: 48.03573,
+        lon: -1.75988,
+        // ancien "imgMark" du trou 16
+        img: { x: 0.419, y: 0.391 }
+      },
+      {
+        // ancien "mark" du trou 16 (point à 135 m)
+        lat: 48.03494,
+        lon: -1.76115,
+        // ancien "imgMark" du trou 137
+        img: { x: 0.531, y: 0.316 }
+      }
+      // plus tard: autre marque si tu veux
+    ],
+    green: {
+      // ancien "green" du trou 16
+      lat: 48.03467,
+      lon: -1.76605,
+      // ancien "imgGreen" du trou 16
+      img: { x: 0.564, y: 0.218 }
+    }
+  },
+  "cice-17": {
+    marks: [
+      {
+        // ancien "mark" du trou 17
+        lat: 48.03167,
+        lon: -1.76474,
+        // ancien "imgMark" du trou 17
+        img: { x: 0.434, y: 0.329 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 17
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 17
+      img: { x: 0.579, y: 0.229 }
+    }
+  },
+  "cice-18": {
+    marks: [
+      {
+        // ancien "mark" du trou 18
+        lat: 48.03291,
+        lon: -1.77055,
+        // ancien "imgMark" du trou 18
+        img: { x: 0.397, y: 0.322 }
+      }
+      // plus tard tu pourras rajouter une deuxième marque ici
+      // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+    ],
+    green: {
+      // ancien "green" du trou 18
+      lat: 48.03784,
+      lon: -1.76911,
+      // ancien "imgGreen" du trou 18
+      img: { x: 0.484, y: 0.233 }
+    }
+  }
+
+  // pour les autres trous, tu feras pareil
+};
+
+
 
     /* ---------- VARIABLES GLOBALES ---------- */
 
@@ -288,8 +624,18 @@
     const zoomBtn      = document.getElementById("zoomBtn");
     const zoomModal    = document.getElementById("zoomModal");
     const closeModal   = zoomModal.querySelector(".close");
-    const holeImage    = document.getElementById("holeImage");
+    const holeImage    = document.getElementById("holeImage"); // <--- ajout
     const playerMarker = document.getElementById("playerMarker");
+    const markerDistance = document.getElementById("markerDistance"); // nouveau
+
+    // TEMPORAIRE : pour lire x,y quand tu cliques sur l'image
+holeImage.addEventListener("click", (event) => {
+  const rect = holeImage.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width;
+  const y = (event.clientY - rect.top)  / rect.height;
+
+  alert("x = " + x.toFixed(3) + " | y = " + y.toFixed(3));
+});
 
     /* ---------- FONCTIONS SCORE / AFFICHAGE ---------- */
 
@@ -426,21 +772,53 @@
     /* ---------- PROJECTION SUR L'IMAGE (GÉNÉRIQUE) ---------- */
 
     function latLonToImagePercentGeneric(courseKey, holeNumber, lat, lon) {
-      const key = courseKey + "-" + holeNumber;
-      const ref = holeImageRefs[key];
-      if (!ref) return null;
+  const key = courseKey + "-" + holeNumber;
+  const ref = holeImageRefs[key];
+  if (!ref || !ref.marks || ref.marks.length === 0) return null;
 
-      const dMG  = distanceInMeters(ref.mark.lat, ref.mark.lon, ref.green.lat, ref.green.lon);
-      const dMP  = distanceInMeters(ref.mark.lat, ref.mark.lon, lat, lon);
+  // construit la liste des points dans l'ordre : mark1, mark2, ..., green
+  const pts = ref.marks.map(m => ({
+    lat: m.lat,
+    lon: m.lon,
+    img: m.img
+  }));
+  pts.push({
+    lat: ref.green.lat,
+    lon: ref.green.lon,
+    img: ref.green.img
+  });
 
-      let t = dMP / dMG;
-      t = Math.max(0, Math.min(1, t));
+  // on cherche le segment le plus proche de la position du joueur
+  let best = null;
 
-      return {
-        x: ref.imgMark.x + t * (ref.imgGreen.x - ref.imgMark.x),
-        y: ref.imgMark.y + t * (ref.imgGreen.y - ref.imgMark.y)
-      };
-    }  // interpolation linéaire entre deux repères.[web:32][web:33]
+  for (let i = 0; i < pts.length - 1; i++) {
+    const A = pts[i];
+    const B = pts[i + 1];
+
+    const dAB = distanceInMeters(A.lat, A.lon, B.lat, B.lon);
+    const dAP = distanceInMeters(A.lat, A.lon, lat, lon);
+    const dPB = distanceInMeters(lat, lon, B.lat, B.lon);
+
+    // si le joueur est entre A et B, on aura approximativement dAP + dPB ≈ dAB
+    const diff = Math.abs((dAP + dPB) - dAB);
+
+    if (!best || diff < best.diff) {
+      best = { A, B, dAB, dAP, diff };
+    }
+  }
+
+  const A = best.A;
+  const B = best.B;
+
+  let t = best.dAP / best.dAB;        // ratio de A vers B
+  t = Math.max(0, Math.min(1, t));
+
+  return {
+    x: A.img.x + t * (B.img.x - A.img.x),
+    y: A.img.y + t * (B.img.y - A.img.y)
+  };
+}
+  // interpolation linéaire entre deux repères.[web:32][web:33]
 
     function updateMarkerPositionFromGps() {
       const hole = course.holes[currentHoleIndex];
@@ -452,28 +830,48 @@
           const { latitude, longitude } = position.coords;
 
           const perc = latLonToImagePercentGeneric(
-            currentCourseKey,
-            hole.number,
-            latitude,
-            longitude
-          );
+  currentCourseKey,
+  hole.number,
+  latitude,
+  longitude
+);
 
-          if (!perc) {
-            playerMarker.style.left = "-1000px";
-            playerMarker.style.top  = "-1000px";
-            return;
-          }
+if (!perc) {
+  playerMarker.style.left = "-1000px";
+  playerMarker.style.top  = "-1000px";
+  markerDistance.style.left = "-1000px";
+  markerDistance.style.top  = "-1000px";
+  return;
+}
 
-          const rect = holeImage.getBoundingClientRect();
-          const xPx  = rect.left + rect.width  * perc.x;
-          const yPx  = rect.top  + rect.height * perc.y;
+const rect = holeImage.getBoundingClientRect();
+const xPx  = rect.left + rect.width  * perc.x;
+const yPx  = rect.top  + rect.height * perc.y;
 
-          playerMarker.style.left = xPx + "px";
-          playerMarker.style.top  = yPx + "px";
+// position du point rouge
+playerMarker.style.left = xPx + "px";
+playerMarker.style.top  = yPx + "px";
+
+// --- calcul de la distance au green (GPS) ---
+const dGreen = distanceInMeters(
+  latitude,
+  longitude,
+  hole.greenLat,
+  hole.greenLon
+);
+const dText = Math.round(dGreen) + " m";
+
+// texte et position du badge
+markerDistance.textContent = dText;
+markerDistance.style.left = xPx + "px";
+markerDistance.style.top  = yPx + "px";
+
         },
         () => {
           playerMarker.style.left = "-1000px";
           playerMarker.style.top  = "-1000px";
+          markerDistance.style.left = "-1000px";   // ajout
+          markerDistance.style.top  = "-1000px";   // ajout
         },
         {
           enableHighAccuracy: true,
