@@ -821,65 +821,66 @@ holeImage.addEventListener("click", (event) => {
   // interpolation linéaire entre deux repères.[web:32][web:33]
 
     function updateMarkerPositionFromGps() {
-      const hole = course.holes[currentHoleIndex];
+  const hole = course.holes[currentHoleIndex];
+  if (!navigator.geolocation) return;
 
-      if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
+      // 1) Coordonnées relatives (0–1) dans l'image
+      const perc = latLonToImagePercentGeneric(
+        currentCourseKey,
+        hole.number,
+        latitude,
+        longitude
+      );
+      if (!perc) {
+        playerMarker.style.left = '-1000px';
+        playerMarker.style.top = '-1000px';
+        markerDistance.style.left = '-1000px';
+        markerDistance.style.top = '-1000px';
+        return;
+      }
 
-          const perc = latLonToImagePercentGeneric(
-  currentCourseKey,
-  hole.number,
-  latitude,
-  longitude
-);
+      // 2) Rect réel de l'image dans la page (dépend du device)
+      const rect = holeImage.getBoundingClientRect();
 
-if (!perc) {
-  playerMarker.style.left = "-1000px";
-  playerMarker.style.top  = "-1000px";
-  markerDistance.style.left = "-1000px";
-  markerDistance.style.top  = "-1000px";
-  return;
+      // 3) Conversion pour cent → pixels (dans la page)
+      const xPage = rect.left + window.scrollX + rect.width * perc.x;
+      const yPage = rect.top + window.scrollY + rect.height * perc.y;
+
+      // 4) Positionnement du point rouge
+      playerMarker.style.left = xPage + 'px';
+      playerMarker.style.top  = yPage + 'px';
+
+      // 5) Distance GPS au green
+      const dGreen = distanceInMeters(
+        latitude,
+        longitude,
+        hole.greenLat,
+        hole.greenLon
+      );
+      const dText = Math.round(dGreen) + ' m';
+
+      markerDistance.textContent = dText;
+      markerDistance.style.left = xPage + 'px';
+      markerDistance.style.top  = (yPage - 20) + 'px'; // 20px au-dessus
+    },
+    (error) => {
+      playerMarker.style.left = '-1000px';
+      playerMarker.style.top = '-1000px';
+      markerDistance.style.left = '-1000px';
+      markerDistance.style.top = '-1000px';
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
 }
 
-const rect = holeImage.getBoundingClientRect();
-const xPx  = rect.left + rect.width  * perc.x;
-const yPx  = rect.top  + rect.height * perc.y;
-
-// position du point rouge
-playerMarker.style.left = xPx + "px";
-playerMarker.style.top  = yPx + "px";
-
-// --- calcul de la distance au green (GPS) ---
-const dGreen = distanceInMeters(
-  latitude,
-  longitude,
-  hole.greenLat,
-  hole.greenLon
-);
-const dText = Math.round(dGreen) + " m";
-
-// texte et position du badge
-markerDistance.textContent = dText;
-markerDistance.style.left = xPx + "px";
-markerDistance.style.top  = yPx + "px";
-
-        },
-        () => {
-          playerMarker.style.left = "-1000px";
-          playerMarker.style.top  = "-1000px";
-          markerDistance.style.left = "-1000px";   // ajout
-          markerDistance.style.top  = "-1000px";   // ajout
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    }
 
     /* ---------- ÉVÉNEMENTS ---------- */
 
