@@ -165,6 +165,9 @@
       <div id="gps-distance"></div>
     </div>
 
+    <div id="distance-green"></div>
+    <div id="distance-marks"></div>
+
     <div class="score-section">
       <label for="score-input">Score du trou</label>
       <input id="score-input" type="number" min="1" />
@@ -246,6 +249,7 @@
     marks: [
       {
         // ancien "mark" du trou 1
+        label: "Repère 135 m",
         lat: 48.03675,
         lon: -1.76950,
         // ancien "imgMark" du trou 1
@@ -267,6 +271,7 @@
     marks: [
       {
         // ancien "mark" du trou 2 (point à 164 m)
+        label: "Repère 164 m",
         lat: 48.03816,
         lon: -1.76862,
         // ancien "imgMark" du trou 2
@@ -274,6 +279,7 @@
       },
       {
         // ancien "mark" du trou 2 (point à 135 m)
+        label: "Repère 135 m",
         lat: 48.03585,
         lon: -1.76655,
         // ancien "imgMark" du trou 2
@@ -302,6 +308,7 @@
     marks: [
       {
         // ancien "mark" du trou 4
+        label: "Repère 135 m",
         lat: 48.03616,
         lon: -1.76372,
         // ancien "imgMark" du trou 4
@@ -322,6 +329,7 @@
     marks: [
       {
         // ancien "mark" du trou 5
+        label: "Repère 135 m",
         lat: 48.03526,
         lon: -1.76287,
         // ancien "imgMark" du trou 5
@@ -351,6 +359,7 @@
     marks: [
       {
         // ancien "mark" du trou 7 (point à 200 m)
+        label: "Repère 200 m",
         lat: 48.03010,
         lon: -1.76268,
         // ancien "imgMark" du trou 7
@@ -358,6 +367,7 @@
       },
       {
         // ancien "mark" du trou 7 (point à 100 m)
+        label: "Repère 135 m",
         lat: 48.02932,
         lon: -1.76358,
         // ancien "imgMark" du trou 7
@@ -377,6 +387,7 @@
     marks: [
       {
         // ancien "mark" du trou 8
+        label: "Repère 135 m",
         lat: 48.03020,
         lon: -1.76697,
         // ancien "imgMark" du trou 8
@@ -397,6 +408,7 @@
     marks: [
       {
         // ancien "mark" du trou 9
+        label: "Repère 135 m",
         lat: 48.03370,
         lon: -1.76868,
         // ancien "imgMark" du trou 9
@@ -417,6 +429,7 @@
     marks: [
       {
         // ancien "mark" du trou 10
+        label: "Repère 135 m",
         lat: 48.03653,
         lon: -1.77162,
         // ancien "imgMark" du trou 10
@@ -446,6 +459,7 @@
     marks: [
       {
         // ancien "mark" du trou 12
+        label: "Repère 135 m",
         lat: 48.03858,
         lon: -1.76702,
         // ancien "imgMark" du trou 12
@@ -466,6 +480,7 @@
     marks: [
       {
         // ancien "mark" du trou 13 (point à 188 m)
+        label: "Repère 188 m",
         lat: 48.03957,
         lon: -1.76204,
         // ancien "imgMark" du trou 13
@@ -473,6 +488,7 @@
       },
       {
         // ancien "mark" du trou 13 (point à 100 m)
+        label: "Repère 100 m",
         lat: 48.04030,
         lon: -1.76121,
         // ancien "imgMark" du trou 137
@@ -501,6 +517,7 @@
     marks: [
       {
         // ancien "mark" du trou 15
+        label: "Repère 135 m",
         lat: 48.03934,
         lon: -1.75864,
         // ancien "imgMark" du trou 15
@@ -521,6 +538,7 @@
     marks: [
       {
         // ancien "mark" du trou 16 (point à 154 m)
+        label: "Repère 154 m",
         lat: 48.03573,
         lon: -1.75988,
         // ancien "imgMark" du trou 16
@@ -528,6 +546,7 @@
       },
       {
         // ancien "mark" du trou 16 (point à 135 m)
+        label: "Repère 135 m",
         lat: 48.03494,
         lon: -1.76115,
         // ancien "imgMark" du trou 137
@@ -547,6 +566,7 @@
     marks: [
       {
         // ancien "mark" du trou 17
+        label: "Repère 135 m",
         lat: 48.03167,
         lon: -1.76474,
         // ancien "imgMark" du trou 17
@@ -567,6 +587,7 @@
     marks: [
       {
         // ancien "mark" du trou 18
+        label: "Repère 135 m",
         lat: 48.03291,
         lon: -1.77055,
         // ancien "imgMark" du trou 18
@@ -671,6 +692,75 @@
       };
     }
 
+        function computeDistancesGreenAndMarks(courseKey, holeNumber, userLat, userLon) {
+      const key = courseKey + "-" + holeNumber;
+      const ref = holeImageRefs[key];
+      if (!ref) return null;
+
+      // Distance au green
+      let distanceGreen = null;
+      if (ref.green && typeof ref.green.lat === "number" && typeof ref.green.lon === "number") {
+        distanceGreen = distanceInMeters(
+          userLat,
+          userLon,
+          ref.green.lat,
+          ref.green.lon
+        );
+      }
+
+      // Distances vers chaque mark
+      const marksDistances = [];
+      if (Array.isArray(ref.marks)) {
+        ref.marks.forEach((m, idx) => {
+          if (typeof m.lat === "number" && typeof m.lon === "number") {
+            const d = distanceInMeters(userLat, userLon, m.lat, m.lon);
+            marksDistances.push({
+              index: idx,      // 0, 1, 2...
+              lat: m.lat,
+              lon: m.lon,
+              distance: d
+            });
+          }
+        });
+      }
+
+      return {
+        distanceGreen,
+        marksDistances
+      };
+    }
+
+      function updateDistancesUI(courseKey, holeNumber, userLat, userLon) {
+        const res = computeDistancesGreenAndMarks(courseKey, holeNumber, userLat, userLon);
+        if (!res) return;
+
+        const greenEl = document.getElementById("distance-green");
+        if (greenEl) {
+          if (res.distanceGreen != null) {
+            greenEl.textContent = "Green : " + res.distanceGreen.toFixed(0) + " m";
+          } else {
+            greenEl.textContent = "Green : N/A";
+          }
+        }
+
+        const marksEl = document.getElementById("distance-marks");
+        if (marksEl) {
+          marksEl.innerHTML = "";
+          if (res.marksDistances.length === 0) {
+            marksEl.textContent = "Pas de mark pour ce trou";
+          } else {
+            res.marksDistances.forEach(md => {
+              const div = document.createElement("div");
+              // Ici tu peux renommer "Mark 1" → "Repère 200m", etc. si tu ajoutes un label dans holeImageRefs
+              div.textContent =
+                "Mark " + (md.index + 1) + " : " + md.distance.toFixed(0) + " m";
+              marksEl.appendChild(div);
+            });
+          }
+        }
+      }
+
+
     function initCourseTotals() {
       let totalWhite = 0;
       let totalYellow = 0;
@@ -733,7 +823,7 @@
     }
 
     /* ---------- GPS + MARQUEUR ---------- */
-    function handleGpsSuccess(position) {
+          function handleGpsSuccess(position) {
       const hole = course.holes[currentHoleIndex];
       const { latitude, longitude, accuracy } = position.coords;
 
@@ -743,6 +833,9 @@
       const dGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
       const dText = Math.round(dGreen) + " m";
       gpsDistanceEl.textContent = "Distance au green approx. " + dText;
+
+      // Mise à jour des distances green + marks
+      updateDistanceUIFromUser(currentCourseKey, hole.number, latitude, longitude);
 
       const perc = latLonToImagePercentGeneric(
         currentCourseKey,
@@ -769,6 +862,8 @@
       markerDistance.style.left = xPx + "px";
       markerDistance.style.top = yPx + "px";
     }
+
+
 
     function handleGpsError(error) {
       let msg = "Erreur de géolocalisation.";
@@ -803,6 +898,72 @@
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
+
+      function computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon) {
+        const key = courseKey + "-" + holeNumber;
+        const holeCfg = holeImageRefs[key];
+        if (!holeCfg) return null;
+
+        let distanceGreen = null;
+        if (holeCfg.green && typeof holeCfg.green.lat === "number" && typeof holeCfg.green.lon === "number") {
+          distanceGreen = distanceInMeters(
+            userLat,
+            userLon,
+            holeCfg.green.lat,
+            holeCfg.green.lon
+          );
+        }
+
+        const marksDistances = [];
+        if (Array.isArray(holeCfg.marks)) {
+          holeCfg.marks.forEach((m, idx) => {
+            if (typeof m.lat === "number" && typeof m.lon === "number") {
+              const d = distanceInMeters(userLat, userLon, m.lat, m.lon);
+              marksDistances.push({
+                index: idx,      // 0, 1, 2...
+                label: m.label || ("Mark " + (idx + 1)),
+                lat: m.lat,
+                lon: m.lon,
+                distance: d
+              });
+            }
+          });
+        }
+
+        return {
+          distanceGreen,
+          marksDistances
+        };
+      }
+
+      function updateDistanceUIFromUser(courseKey, holeNumber, userLat, userLon) {
+        const res = computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon);
+        if (!res) return;
+
+        const greenEl = document.getElementById("distance-green");
+        if (greenEl) {
+          if (res.distanceGreen != null) {
+            greenEl.textContent = "Green : " + res.distanceGreen.toFixed(0) + " m";
+          } else {
+            greenEl.textContent = "Green : N/A";
+          }
+        }
+
+        const marksEl = document.getElementById("distance-marks");
+        if (marksEl) {
+          marksEl.innerHTML = "";
+          if (res.marksDistances.length === 0) {
+            marksEl.textContent = "Pas de mark pour ce trou";
+          } else {
+            res.marksDistances.forEach(md => {
+              const div = document.createElement("div");
+              div.textContent = md.label + " : " + md.distance.toFixed(0) + " m";
+              marksEl.appendChild(div);
+            });
+          }
+        }
+      }
+
 
     /* ---------- ÉVÉNEMENTS ---------- */
     scoreInputEl.addEventListener("input", () => {
