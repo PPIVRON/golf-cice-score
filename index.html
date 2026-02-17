@@ -165,7 +165,7 @@
       <div id="gps-distance"></div>
     </div>
 
-    <div id="distance-green"></div>
+    <!-- <div id="distance-green"></div> -->
     <div id="distance-marks"></div>
 
     <div class="score-section">
@@ -638,6 +638,15 @@
     const playerMarker = document.getElementById("playerMarker");
     const markerDistance = document.getElementById("markerDistance");
 
+      // TEMPORAIRE : pour lire x,y quand tu cliques sur l'image
+    // holeImage.addEventListener("click", (event) => {
+    // const rect = holeImage.getBoundingClientRect();
+    // const x = (event.clientX - rect.left) / rect.width;
+    // const y = (event.clientY - rect.top)  / rect.height;
+
+    // alert("x = " + x.toFixed(3) + " | y = " + y.toFixed(3));
+    // });
+
     /* ---------- OUTILS ---------- */
     function distanceInMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000;
@@ -940,20 +949,17 @@
         const res = computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon);
         if (!res) return;
 
+        // On ne met PLUS rien dans distance-green, ou alors un texte fixe si tu veux.
         const greenEl = document.getElementById("distance-green");
         if (greenEl) {
-          if (res.distanceGreen != null) {
-            greenEl.textContent = "Green : " + res.distanceGreen.toFixed(0) + " m";
-          } else {
-            greenEl.textContent = "Green : N/A";
-          }
+          greenEl.textContent = ""; // ou par ex. "Distance affichée ci‑dessus."
         }
 
         const marksEl = document.getElementById("distance-marks");
         if (marksEl) {
           marksEl.innerHTML = "";
           if (res.marksDistances.length === 0) {
-            marksEl.textContent = "Pas de mark pour ce trou";
+            marksEl.textContent = "Pas de repère pour ce trou";
           } else {
             res.marksDistances.forEach(md => {
               const div = document.createElement("div");
@@ -963,6 +969,7 @@
           }
         }
       }
+
 
 
     /* ---------- ÉVÉNEMENTS ---------- */
