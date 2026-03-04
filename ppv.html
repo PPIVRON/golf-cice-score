@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Vérification numéro</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input[type="text"] { padding: 6px; width: 200px; }
+    button { padding: 6px 12px; margin-left: 8px; }
+    #result { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Vérification du numéro</h1>
+
+  <p>Veuillez saisir votre numéro (10 chiffres) :</p>
+
+  <input id="num2" type="text" placeholder="0612345678" maxlength="10">
+  <button id="btnCheck">Vérifier</button>
+  <div id="result"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script>
+  const SALT = "MonGolfCicéBlossac18Trous"; // exactement la même valeur
+
+  function hashNumber(num10) {
+    return CryptoJS.SHA256(num10 + SALT).toString();
+  }
+
+  function getParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+  }
+
+  const tokenOrig = getParam("token");
+
+  document.getElementById('btnCheck').addEventListener('click', function () {
+    const input = document.getElementById('num2');
+    const resultDiv = document.getElementById('result');
+    const num2 = input.value.trim();
+
+    if (!/^\d{10}$/.test(num2)) {
+      resultDiv.textContent = "Le numéro doit contenir exactement 10 chiffres.";
+      resultDiv.style.color = "red";
+      return;
+    }
+
+    if (!tokenOrig) {
+      resultDiv.textContent = "Token non reçu (?token= manquant dans l’URL).";
+      resultDiv.style.color = "red";
+      return;
+    }
+
+    const token2 = hashNumber(num2);
+
+    if (token2 === tokenOrig) {
+      resultDiv.textContent = "Numéro correct, redirection...";
+      resultDiv.style.color = "green";
+      window.location.href = "index_v10.html";
+    } else {
+      resultDiv.textContent = "Numéro incorrect.";
+      resultDiv.style.color = "red";
+    }
+  });
+</script>
+
+</body>
+</html>
