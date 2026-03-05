@@ -75,6 +75,10 @@
     if (token2 === tokenOrig) {
       resultDiv.textContent = "Numéro correct, redirection...";
       resultDiv.style.color = "green";
+
+    // Pose un jeton de session
+    sessionStorage.setItem("golfAccessOK", "1");
+
       window.location.href = "index.html";
     } else {
       resultDiv.textContent = "Numéro incorrect.";
