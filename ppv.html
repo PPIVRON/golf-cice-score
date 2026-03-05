@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Vérification numéro</title>
+  <title>VÉRIFICATION DU NUMÉRO</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     input[type="text"] {
@@ -17,14 +17,22 @@
       margin-top: 10px;
       width: 50%;
     }
+    .taille_text {
+      padding: 10px 16px;
+      font-size: 3.0rem;
+      margin-top: 10px;
+      width: 50%;
+    }
     #result { margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <h1>Vérification du numéro</h1>
+  <h1><center>VÉRIFICATION DU NUMÉRO</center></h1>
 
-  <p>Veuillez saisir votre numéro (10 chiffres) :</p>
+  <div class="taille_text">
+    <label>Veuillez saisir votre numéro (10 chiffres)</label>
+  </div>
 
   <input id="num2" type="text" placeholder="0612345678" maxlength="10">
   <button id="btnCheck">Vérifier</button>
