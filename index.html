@@ -193,6 +193,18 @@
   </div>
 
   <script>
+
+    (function () {
+    const ok = sessionStorage.getItem("golfAccessOK");
+    if (ok !== "1") {
+      // Pas passé par ppv.html -> on renvoie vers ppv.html
+      window.location.href = "ppv.html";
+    } else {
+      // Optionnel : on peut enlever le jeton pour une seule session d'ouverture
+      // sessionStorage.removeItem("golfAccessOK");
+    }
+    })();
+
     /* ---------- DONNÉES PARCOURS (extraites de ta v7) ---------- */
     const courses = {
       cice: {
