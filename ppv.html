@@ -5,8 +5,18 @@
   <title>Vérification numéro</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    input[type="text"] { padding: 6px; width: 200px; }
-    button { padding: 6px 12px; margin-left: 8px; }
+    input[type="text"] {
+      padding: 10px;
+      width: 50%;
+      font-size: 1.2rem;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 1.1rem;
+      margin-top: 10px;
+      width: 50%;
+    }
     #result { margin-top: 10px; }
   </style>
 </head>
@@ -57,7 +67,7 @@
     if (token2 === tokenOrig) {
       resultDiv.textContent = "Numéro correct, redirection...";
       resultDiv.style.color = "green";
-      window.location.href = "index.html";
+      window.location.href = "index_v10.html";
     } else {
       resultDiv.textContent = "Numéro incorrect.";
       resultDiv.style.color = "red";
