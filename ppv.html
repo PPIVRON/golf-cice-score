@@ -34,7 +34,7 @@
   <h1><center>VÉRIFICATION DU NUMÉRO</center></h1>
 
   <div class="taille_text">
-    <label>Veuillez saisir votre numéro (10 chiffres)</label>
+    <label>Veuillez saisir votre numéro (16 chiffres)</label>
   </div>
 
   <input id="num2" type="text" placeholder="0612345678" maxlength="10">
@@ -61,8 +61,8 @@
     const resultDiv = document.getElementById('result');
     const num2 = input.value.trim();
 
-    if (!/^\d{10}$/.test(num2)) {
-      resultDiv.textContent = "Le numéro doit contenir exactement 10 chiffres.";
+    if (!/^\d{16}$/.test(num2)) {
+      resultDiv.textContent = "Le numéro doit contenir exactement 16 chiffres.";
       resultDiv.style.color = "red";
       return;
     }
