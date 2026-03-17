@@ -624,6 +624,10 @@
     let currentCourseKey = "cice";
     let course = courses[currentCourseKey];
     let currentHoleIndex = 0;
+
+    let gpsWatchId = null;
+    let lastPosition = null;
+
     const scores = new Array(18).fill(null);
 
     const courseNameEl = document.getElementById("course-name");
@@ -837,16 +841,78 @@
       playerMarker.style.top = "-1000px";
       markerDistance.style.left = "-1000px";
       markerDistance.style.top = "-1000px";
+
+      // démarrer le suivi GPS pour ce trou
+     startHoleTracking();
+
     }
 
     function getHoleImageName(courseKey, holeNumber) {
       return "TROU" + holeNumber + ".jpg";
     }
 
-    /* ---------- GPS + MARQUEUR ---------- */
-          function handleGpsSuccess(position) {
+
+    function handleGpsError(error) {
+      let msg = "Erreur de géolocalisation.";
+      if (error.code === error.PERMISSION_DENIED) msg = "Permission de localisation refusée.";
+      else if (error.code === error.POSITION_UNAVAILABLE) msg = "Position non disponible.";
+      else if (error.code === error.TIMEOUT) msg = "Délai dépassé pour la localisation.";
+      gpsStatusEl.textContent = msg;
+      gpsCoordsEl.textContent = "";
+      gpsDistanceEl.textContent = "";
+
+      playerMarker.style.left = "-1000px";
+      playerMarker.style.top = "-1000px";
+      markerDistance.style.left = "-1000px";
+      markerDistance.style.top = "-1000px";
+    }
+
+    function stopHoleTracking() {
+      if (gpsWatchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+      }
+      lastPosition = null;
+    }
+
+    function startHoleTracking() {
+      stopHoleTracking(); // sécurité
+
+      if (!navigator.geolocation) {
+        gpsStatusEl.textContent = "La géolocalisation n'est pas supportée sur cet appareil.";
+        gpsCoordsEl.textContent = "";
+        gpsDistanceEl.textContent = "";
+        return;
+      }
+
       const hole = course.holes[currentHoleIndex];
+
+      gpsStatusEl.textContent = "Recherche de ta position...";
+      gpsCoordsEl.textContent = "";
+      gpsDistanceEl.textContent = "";
+
+      gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => onHolePositionUpdate(hole, pos),
+        handleGpsError,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+      );
+    }
+
+    function onHolePositionUpdate(hole, position) {
       const { latitude, longitude, accuracy } = position.coords;
+
+      // Filtrage précision
+      if (accuracy && accuracy > 50) {
+        gpsStatusEl.textContent = `Signal faible (±${Math.round(accuracy)} m)...`;
+        return;
+      }
+
+      // Filtrage micro‑mouvements
+      if (lastPosition) {
+        const d = distanceInMeters(lastPosition.lat, lastPosition.lon, latitude, longitude);
+        if (d < 2) return;
+      }
+      lastPosition = { lat: latitude, lon: longitude };
 
       gpsStatusEl.textContent = `Position trouvée (précision ±${Math.round(accuracy)} m).`;
       gpsCoordsEl.textContent = `Ta position : Lat ${latitude.toFixed(6)} / Lon ${longitude.toFixed(6)}`;
@@ -855,16 +921,17 @@
       const dText = Math.round(dGreen) + " m";
       gpsDistanceEl.textContent = "Distance au green approx. " + dText;
 
-      // Mise à jour des distances green + marks
+      // Distances green + repères
       updateDistanceUIFromUser(currentCourseKey, hole.number, latitude, longitude);
 
+      // Placement du marker si la modale est ouverte
       const perc = latLonToImagePercentGeneric(
         currentCourseKey,
         hole.number,
         latitude,
         longitude
       );
-      if (!perc) {
+      if (!perc || zoomModal.style.display !== "block") {
         playerMarker.style.left = "-1000px";
         playerMarker.style.top = "-1000px";
         markerDistance.style.left = "-1000px";
@@ -884,41 +951,6 @@
       markerDistance.style.top = yPx + "px";
     }
 
-
-
-    function handleGpsError(error) {
-      let msg = "Erreur de géolocalisation.";
-      if (error.code === error.PERMISSION_DENIED) msg = "Permission de localisation refusée.";
-      else if (error.code === error.POSITION_UNAVAILABLE) msg = "Position non disponible.";
-      else if (error.code === error.TIMEOUT) msg = "Délai dépassé pour la localisation.";
-      gpsStatusEl.textContent = msg;
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-
-      playerMarker.style.left = "-1000px";
-      playerMarker.style.top = "-1000px";
-      markerDistance.style.left = "-1000px";
-      markerDistance.style.top = "-1000px";
-    }
-
-    function updateGpsAndDistance() {
-      if (!navigator.geolocation) {
-        gpsStatusEl.textContent = "La géolocalisation n'est pas supportée sur cet appareil.";
-        gpsCoordsEl.textContent = "";
-        gpsDistanceEl.textContent = "";
-        return;
-      }
-
-      gpsStatusEl.textContent = "Recherche de ta position...";
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-
-      navigator.geolocation.getCurrentPosition(
-        handleGpsSuccess,
-        handleGpsError,
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
 
       function computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon) {
         const key = courseKey + "-" + holeNumber;
@@ -1020,7 +1052,7 @@
     });
 
     gpsButtonEl.addEventListener("click", () => {
-      updateGpsAndDistance();
+      gpsStatusEl.textContent = "Le suivi GPS est actif (mise à jour automatique).";
     });
 
     zoomBtn.addEventListener("click", () => {
@@ -1029,18 +1061,27 @@
       holeImage.src = imgName;
       holeImage.alt = "Trou " + hole.number;
       zoomModal.style.display = "block";
-      updateGpsAndDistance();
+      // le watch GPS mettra à jour le marker dès la prochaine position
     });
 
     closeModal.addEventListener("click", () => {
       zoomModal.style.display = "none";
+      playerMarker.style.left = "-1000px";
+      playerMarker.style.top = "-1000px";
+      markerDistance.style.left = "-1000px";
+      markerDistance.style.top = "-1000px";
     });
 
     zoomModal.addEventListener("click", (e) => {
       if (e.target === zoomModal) {
         zoomModal.style.display = "none";
+        playerMarker.style.left = "-1000px";
+        playerMarker.style.top = "-1000px";
+        markerDistance.style.left = "-1000px";
+        markerDistance.style.top = "-1000px";
       }
     });
+
 
     /* ---------- INIT ---------- */
     initCourseTotals();
