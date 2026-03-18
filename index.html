@@ -1,200 +1,583 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Golf Scorecard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Golf – Score & GPS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 15px;
-      background-color: #ffffff;
-    }
-    h1, h2 {
-      text-align: center;
-      margin: 10px 0;
-    }
-    .course-select {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
-    .course-select label {
-      margin-right: 5px;
-    }
-    .hole-info {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .hole-info div {
-      margin: 3px 0;
-    }
-    .navigation {
-      display: flex;
-      justify-content: center;
-      margin: 10px 0;
-    }
-    .navigation button {
-      margin: 0 5px;
-      padding: 8px 12px;
-      font-size: 14px;
-    }
-    .gps-section {
-      margin-top: 15px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-      font-size: 14px;
-    }
-    .gps-section button {
-      margin-bottom: 8px;
-    }
-    .score-section {
-      margin-top: 10px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-      text-align: center;
-    }
-    .score-section input {
-      width: 60px;
-      font-size: 16px;
-      text-align: center;
-    }
-    .totals {
-      margin-top: 15px;
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-      font-size: 14px;
-    }
-    .totals div {
-      margin: 3px 0;
     }
 
-    /* ---- MODAL ZOOM ---- */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5f7;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #ffffff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    header {
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    header .course-name {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    header .hole-line {
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    header .hole-line span.small {
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    main {
+      flex: 1;
+      padding: 10px 14px 72px; /* laisser la place à la nav bas */
+      overflow-y: auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* --- Vue SCORE --- */
+
+    .score-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .score-current {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .score-current-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .score-current-top .label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .score-current-top .total {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .score-current-number {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .score-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: none;
+      font-size: 22px;
+      font-weight: 500;
+      color: #111827;
+      background: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .score-btn:active {
+      transform: scale(0.96);
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .score-extra {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .score-extra span {
+      margin-right: 6px;
+    }
+
+    .score-extra button {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+    }
+
+    .score-holes {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .score-holes table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .score-holes th,
+    .score-holes td {
+      padding: 3px 4px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .score-holes th {
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .score-holes tr:last-child td {
+      border-bottom: none;
+    }
+
+    .score-holes input {
+      width: 32px;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 11px;
+      padding: 1px 2px;
+    }
+
+    /* --- Vue GPS / CARTE --- */
+
+    .gps-main {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .gps-distance {
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .gps-distance .label {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .gps-distance .value {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .gps-distance .unit {
+      font-size: 13px;
+      margin-left: 2px;
+      opacity: 0.9;
+    }
+
+    .gps-status {
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 4px;
+    }
+
+    .gps-card {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+    }
+
+    .gps-card img {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .gps-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      flex: 1;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-primary:active,
+    .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .gps-status-line {
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 6px;
+    }
+
+    /* Modal ZOOM (tu réintègres ta logique existante) */
+
     .modal {
       display: none;
       position: fixed;
-      z-index: 9999;
+      z-index: 50;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.6);
+      overflow: hidden;
+      background-color: rgba(0,0,0,0.7);
     }
+
     .modal-content {
-      position: relative;
-      margin: 3% auto;
-      max-width: 700px;
-      width: 90%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 95%;
+      max-height: 85%;
+      background-color: #111827;
+      border-radius: 10px;
+      padding: 8px;
     }
-    #holeImage {
+
+    .modal-content img {
       width: 100%;
-      height: auto;
-      display: block;
-      max-height: 90vh;
+      max-height: 100%;
+      border-radius: 8px;
       object-fit: contain;
     }
-    #playerMarker {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: red;
-      border: 2px solid white;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    #markerDistance {
-      position: absolute;
-      padding: 2px 6px;
-      background: rgba(0, 0, 0, 0.75);
-      color: #fff;
-      font-size: 11px;
-      border-radius: 10px;
-      transform: translate(-50%, -150%);
-      white-space: nowrap;
-      pointer-events: none;
-    }
+
     .modal .close {
       position: absolute;
       top: 8px;
-      right: 18px;
-      color: #fff;
-      font-size: 32px;
+      right: 12px;
+      color: #f9fafb;
+      font-size: 28px;
+      font-weight: bold;
       cursor: pointer;
-      z-index: 10000;
+    }
+
+    #playerMarker,
+    #markerDistance {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+    }
+
+    #playerMarker {
+      width: 12px;
+      height: 12px;
+      background: #ef4444;
+      border-radius: 999px;
+      border: 2px solid #f9fafb;
+    }
+
+    #markerDistance {
+      background: rgba(0,0,0,0.8);
+      color: #f9fafb;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+
+    /* --- Vue STATS --- */
+
+    .stats-main {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stats-summary {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 10px 12px;
+    }
+
+    .stats-summary h2 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .stats-summary .line {
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+
+    .stats-detail {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .stats-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .stats-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    /* --- NAVIGATION BAS --- */
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      padding: 6px 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      z-index: 40;
+    }
+
+    .nav-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 4px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: #6b7280;
+      background: #f9fafb;
+    }
+
+    .nav-btn span {
+      font-size: 11px;
+    }
+
+    .nav-btn.active {
+      background: #111827;
+      color: #f9fafb;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 id="course-name">Garden Golf de Cicé-Blossac</h1>
+<div class="app">
 
-    <div class="course-select">
-      <label for="course-select">Parcours</label>
-      <select id="course-select">
-        <option value="cice">Cicé-Blossac</option>
-        <option value="rennes">Rennes St-Jacques</option>
-      </select>
+  <header>
+    <div class="course-name" id="courseName">Garden Golf de Cicé-Blossac</div>
+    <div class="hole-line">
+      <div>
+        Trou <span id="holeNumber">1</span>
+        <span class="small">• Par <span id="holePar">4</span> • <span id="holeDistance">347 m (Blanc)</span></span>
+      </div>
+      <div class="small">
+        Total <span id="totalScore">0</span>
+        <span id="totalVsPar">(E)</span>
+      </div>
     </div>
+  </header>
 
-    <div class="hole-info">
-      <h2 id="hole-title">Trou 1</h2>
-      <div id="hole-par"></div>
-      <div id="hole-white"></div>
-      <div id="hole-yellow"></div>
-    </div>
+  <main>
+    <!-- Vue SCORE -->
+    <section id="view-score" class="view active">
+      <div class="score-main">
+        <div class="score-current">
+          <div class="score-current-top">
+            <div class="label">Score du trou</div>
+            <div class="total">
+              Cumul: <span id="totalScore2">0</span> <span id="totalVsPar2">(E)</span>
+            </div>
+          </div>
+          <div class="score-current-number">
+            <button class="score-btn" id="decreaseScore">−</button>
+            <div class="score-value" id="currentHoleScore">4</div>
+            <button class="score-btn" id="increaseScore">+</button>
+          </div>
+          <div class="score-extra">
+            <div>
+              <span>Putts:</span>
+              <span id="currentHolePutts">2</span>
+            </div>
+            <div>
+              <button id="editExtrasBtn">Détails trou</button>
+            </div>
+          </div>
+        </div>
 
-    <div class="navigation">
-      <button id="prev-hole">Trou précédent</button>
-      <button id="next-hole">Trou suivant</button>
-    </div>
+        <div class="score-holes">
+          <table>
+            <thead>
+            <tr>
+              <th>Trou</th>
+              <th>Par</th>
+              <th>Score</th>
+              <th>±</th>
+            </tr>
+            </thead>
+            <tbody id="holesTableBody">
+            <!-- rempli par JS à partir de tes données courses -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    <div class="gps-section">
-      <button id="gps-button">Ma position / distance au green</button>
-      <button id="zoomBtn">ZOOM</button>
-      <div id="gps-status"></div>
-      <div id="gps-coords"></div>
-      <div id="gps-distance"></div>
-    </div>
+    <!-- Vue GPS / CARTE -->
+    <section id="view-gps" class="view">
+      <div class="gps-main">
+        <div class="gps-distance">
+          <div class="label">Distance au centre du green</div>
+          <div>
+            <span class="value" id="gpsDistanceValue">‑‑‑</span><span class="unit">m</span>
+          </div>
+        </div>
+        <div class="gps-status">
+          <span id="gpsStatus">GPS inactif</span>
+        </div>
 
-    <!-- <div id="distance-green"></div> -->
-    <div id="distance-marks"></div>
+        <div class="gps-card">
+          <img id="holeImagePreview" src="TROU1.jpg" alt="Trou 1">
+          <div class="gps-actions">
+            <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
+            <button class="btn-secondary" id="zoomBtn">ZOOM plein écran</button>
+          </div>
+          <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
+        </div>
+      </div>
+    </section>
 
-    <div class="score-section">
-      <label for="score-input">Score du trou</label>
-      <input id="score-input" type="number" min="1" />
-    </div>
+    <!-- Vue STATS -->
+    <section id="view-stats" class="view">
+      <div class="stats-main">
+        <div class="stats-summary">
+          <h2>Résumé de la partie</h2>
+          <div class="line">
+            Score total : <span id="statsTotalScore">0</span>
+            (<span id="statsTotalVsPar">E</span>)
+          </div>
+          <div class="line">
+            Putts : <span id="statsTotalPutts">0</span>
+          </div>
+        </div>
+        <div class="stats-detail" id="statsDetail">
+          <!-- lignes trou par trou générées par JS -->
+        </div>
+      </div>
+    </section>
+  </main>
 
-    <div class="totals">
-      <div>Longueur totale Blanc : <span id="total-white"></span> m</div>
-      <div>Longueur totale Jaune : <span id="total-yellow"></span> m</div>
-      <div>Score total : <span id="total-score">0</span></div>
-      <div>Par total : <span id="total-par">0</span></div>
-      <div>Score vs Par : <span id="score-vs-par">E</span></div>
-    </div>
+</div>
+
+<!-- Modal ZOOM (réutilisation de ta logique existante) -->
+<div id="zoomModal" class="modal">
+  <span class="close">&times;</span>
+  <div class="modal-content">
+    <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
+    <div id="playerMarker"></div>
+    <div id="markerDistance"></div>
   </div>
+</div>
 
-  <!-- MODAL ZOOM -->
-  <div id="zoomModal" class="modal">
-    <span class="close">&times;</span>
-    <div class="modal-content">
-      <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
-      <div id="playerMarker"></div>
-      <div id="markerDistance"></div>
-    </div>
-  </div>
+<!-- Navigation bas -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-view="score" id="btnNavScore">
+    <span>Score</span>
+  </button>
+  <button class="nav-btn" data-view="gps" id="btnNavGps">
+    <span>GPS / Carte</span>
+  </button>
+  <button class="nav-btn" data-view="stats" id="btnNavStats">
+    <span>Stats</span>
+  </button>
+</div>
 
-  <script>
+<script>
 
-    (function () {
+   (function () {
     const ok = sessionStorage.getItem("golfAccessOK");
     if (ok !== "1") {
       // Pas passé par ppv.html -> on renvoie vers ppv.html
@@ -204,9 +587,12 @@
       // sessionStorage.removeItem("golfAccessOK");
     }
     })();
+  
+  /* ------------- DONNÉES PARCOURS -------------
+     Ici tu copies/colles ton objet courses de index_v12
+     (Cicé, Rennes, greenLat/greenLon, etc.) */
 
-    /* ---------- DONNÉES PARCOURS (extraites de ta v7) ---------- */
-    const courses = {
+   const courses = {
       cice: {
         name: "Garden Golf de Cicé-Blossac",
         holes: [
@@ -255,7 +641,7 @@
       }
     };
 
-    /* ---------- CONFIG IMAGES TROUS (extrait de ta v7) ---------- */
+   /* ---------- CONFIG IMAGES TROUS (extrait de ta v7) ---------- */
         const holeImageRefs = {
   "cice-1": {
     marks: [
@@ -620,473 +1006,417 @@
   // pour les autres trous, tu feras pareil
 };
 
-    /* ---------- VARIABLES GLOBALES ---------- */
-    let currentCourseKey = "cice";
-    let course = courses[currentCourseKey];
-    let currentHoleIndex = 0;
+  // Variables d’état global (course sélectionnée, index du trou, etc.)
+  let currentCourseKey = "cice"; // par ex.
+  let currentHoleIndex = 0;
+  let watchId = null;
+  let gpsActive = false;
 
-    let gpsWatchId = null;
-    let lastPosition = null;
+  const courseNameEl = document.getElementById("courseName");
+  const holeNumberEl = document.getElementById("holeNumber");
+  const holeParEl = document.getElementById("holePar");
+  const holeDistanceEl = document.getElementById("holeDistance");
+  const totalScoreEls = [document.getElementById("totalScore"), document.getElementById("totalScore2")];
+  const totalVsParEls = [document.getElementById("totalVsPar"), document.getElementById("totalVsPar2")];
 
-    const scores = new Array(18).fill(null);
+  const viewScore = document.getElementById("view-score");
+  const viewGps = document.getElementById("view-gps");
+  const viewStats = document.getElementById("view-stats");
 
-    const courseNameEl = document.getElementById("course-name");
-    const courseSelectEl = document.getElementById("course-select");
-    const holeTitleEl = document.getElementById("hole-title");
-    const holeParEl = document.getElementById("hole-par");
-    const holeWhiteEl = document.getElementById("hole-white");
-    const holeYellowEl = document.getElementById("hole-yellow");
-    const totalWhiteEl = document.getElementById("total-white");
-    const totalYellowEl = document.getElementById("total-yellow");
-    const scoreInputEl = document.getElementById("score-input");
-    const prevBtn = document.getElementById("prev-hole");
-    const nextBtn = document.getElementById("next-hole");
+  const navBtns = document.querySelectorAll(".nav-btn");
 
-    const gpsButtonEl = document.getElementById("gps-button");
-    const gpsStatusEl = document.getElementById("gps-status");
-    const gpsCoordsEl = document.getElementById("gps-coords");
-    const gpsDistanceEl = document.getElementById("gps-distance");
+  const currentHoleScoreEl = document.getElementById("currentHoleScore");
+  const currentHolePuttsEl = document.getElementById("currentHolePutts");
+  const holesTableBody = document.getElementById("holesTableBody");
 
-    const zoomBtn = document.getElementById("zoomBtn");
-    const zoomModal = document.getElementById("zoomModal");
-    const closeModal = zoomModal.querySelector(".close");
-    const holeImage = document.getElementById("holeImage");
-    const playerMarker = document.getElementById("playerMarker");
-    const markerDistance = document.getElementById("markerDistance");
+  const gpsDistanceValueEl = document.getElementById("gpsDistanceValue");
+  const gpsStatusEl = document.getElementById("gpsStatus");
+  const gpsCoordsTextEl = document.getElementById("gpsCoordsText");
+  const toggleGpsBtn = document.getElementById("toggleGpsBtn");
+  const holeImagePreviewEl = document.getElementById("holeImagePreview");
 
-      // TEMPORAIRE : pour lire x,y quand tu cliques sur l'image
-    // holeImage.addEventListener("click", (event) => {
-    // const rect = holeImage.getBoundingClientRect();
-    // const x = (event.clientX - rect.left) / rect.width;
-    // const y = (event.clientY - rect.top)  / rect.height;
+  const zoomModal = document.getElementById("zoomModal");
+  const zoomBtn = document.getElementById("zoomBtn");
+  const closeModalBtn = zoomModal.querySelector(".close");
+  const holeImageEl = document.getElementById("holeImage");
+  const playerMarkerEl = document.getElementById("playerMarker");
+  const markerDistanceEl = document.getElementById("markerDistance");
 
-    // alert("x = " + x.toFixed(3) + " | y = " + y.toFixed(3));
-    // });
+  const statsTotalScoreEl = document.getElementById("statsTotalScore");
+  const statsTotalVsParEl = document.getElementById("statsTotalVsPar");
+  const statsTotalPuttsEl = document.getElementById("statsTotalPutts");
+  const statsDetailEl = document.getElementById("statsDetail");
 
-    /* ---------- OUTILS ---------- */
-    function distanceInMeters(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const toRad = (deg) => deg * Math.PI / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
+  // --- Fonctions utilitaires (à adapter avec ton code existant) ---
 
-    function latLonToImagePercentGeneric(courseKey, holeNumber, lat, lon) {
-      const key = courseKey + "-" + holeNumber;
-      const ref = holeImageRefs[key];
-      if (!ref || !ref.marks || ref.marks.length === 0) return null;
+  function getCurrentCourse() {
+    return courses[currentCourseKey];
+  }
 
-      const pts = ref.marks.map(m => ({
-        lat: m.lat,
-        lon: m.lon,
-        img: m.img
-      }));
-      pts.push({
-        lat: ref.green.lat,
-        lon: ref.green.lon,
-        img: ref.green.img
+  function getCurrentHole() {
+    return getCurrentCourse().holes[currentHoleIndex];
+  }
+
+  function initCourseTotals() {
+  // Pour chaque parcours (cice, rennes, etc.)
+  Object.keys(courses).forEach(courseKey => {
+    const course = courses[courseKey];
+
+    course.holes.forEach(hole => {
+      // Si aucun score enregistré, on initialise au par (comportement V12)
+      if (hole.score === undefined || hole.score === null) {
+        hole.score = hole.par;
+      }
+      // Si aucun putts enregistré, on initialise à 2 (valeur standard)
+      if (hole.putts === undefined || hole.putts === null) {
+        hole.putts = 2;
+      }
+    });
+  });
+
+  // Une fois les trous initialisés, on calcule les totaux
+  updateTotals();
+}
+
+
+  function renderHeader() {
+    const course = getCurrentCourse();
+    const hole = getCurrentHole();
+    courseNameEl.textContent = course.name;
+    holeNumberEl.textContent = hole.number;
+    holeParEl.textContent = hole.par;
+    holeDistanceEl.textContent = `${hole.white} m (Blanc)`; // ou selon couleur choisie
+  }
+
+  function updateTotals() {
+    // recalcul total, vs par, putts, etc. (reprendre ta logique)
+    const course = getCurrentCourse();
+    let total = 0;
+    let parTotal = 0;
+    let totalPutts = 0;
+
+    course.holes.forEach(h => {
+      const s = h.score ?? h.par;
+      total += s;
+      parTotal += h.par;
+      totalPutts += h.putts ?? 0;
+    });
+
+    const diff = total - parTotal;
+    const vsParText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+    totalScoreEls.forEach(el => el.textContent = total);
+    totalVsParEls.forEach(el => el.textContent = `(${vsParText})`);
+
+    statsTotalScoreEl.textContent = total;
+    statsTotalVsParEl.textContent = vsParText;
+    statsTotalPuttsEl.textContent = totalPutts;
+  }
+
+  function renderHoleScore() {
+    const hole = getCurrentHole();
+    currentHoleScoreEl.textContent = hole.score ?? hole.par;
+    currentHolePuttsEl.textContent = hole.putts ?? 2;
+  }
+
+  function renderHolesTable() {
+    const course = getCurrentCourse();
+    holesTableBody.innerHTML = "";
+    course.holes.forEach((hole, index) => {
+      const tr = document.createElement("tr");
+      const score = hole.score ?? hole.par;
+      const diff = score - hole.par;
+      const diffText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+
+      tr.innerHTML = `
+        <td>${hole.number}</td>
+        <td>${hole.par}</td>
+        <td><input type="number" min="1" data-index="${index}" value="${score}"></td>
+        <td>${diffText}</td>
+      `;
+      holesTableBody.appendChild(tr);
+    });
+
+    holesTableBody.querySelectorAll("input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const idx = parseInt(e.target.dataset.index, 10);
+        const val = parseInt(e.target.value, 10);
+        const course = getCurrentCourse();
+        if (!isNaN(val) && val > 0) {
+          course.holes[idx].score = val;
+        }
+        updateTotals();
+        if (idx === currentHoleIndex) {
+          renderHoleScore();
+        }
+        renderHolesTable();
+        renderStatsDetail();
       });
-
-      let best = null;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const A = pts[i];
-        const B = pts[i + 1];
-        const dAB = distanceInMeters(A.lat, A.lon, B.lat, B.lon);
-        const dAP = distanceInMeters(A.lat, A.lon, lat, lon);
-        const dPB = distanceInMeters(lat, lon, B.lat, B.lon);
-        const diff = Math.abs(dAP + dPB - dAB);
-        if (!best || diff < best.diff) {
-          best = { A, B, dAB, dAP, diff };
-        }
-      }
-
-      const A = best.A;
-      const B = best.B;
-      let t = best.dAP / best.dAB;
-      t = Math.max(0, Math.min(1, t));
-
-      return {
-        x: A.img.x + t * (B.img.x - A.img.x),
-        y: A.img.y + t * (B.img.y - A.img.y)
-      };
-    }
-
-        function computeDistancesGreenAndMarks(courseKey, holeNumber, userLat, userLon) {
-      const key = courseKey + "-" + holeNumber;
-      const ref = holeImageRefs[key];
-      if (!ref) return null;
-
-      // Distance au green
-      let distanceGreen = null;
-      if (ref.green && typeof ref.green.lat === "number" && typeof ref.green.lon === "number") {
-        distanceGreen = distanceInMeters(
-          userLat,
-          userLon,
-          ref.green.lat,
-          ref.green.lon
-        );
-      }
-
-      // Distances vers chaque mark
-      const marksDistances = [];
-      if (Array.isArray(ref.marks)) {
-        ref.marks.forEach((m, idx) => {
-          if (typeof m.lat === "number" && typeof m.lon === "number") {
-            const d = distanceInMeters(userLat, userLon, m.lat, m.lon);
-            marksDistances.push({
-              index: idx,      // 0, 1, 2...
-              lat: m.lat,
-              lon: m.lon,
-              distance: d
-            });
-          }
-        });
-      }
-
-      return {
-        distanceGreen,
-        marksDistances
-      };
-    }
-
-      function updateDistancesUI(courseKey, holeNumber, userLat, userLon) {
-        const res = computeDistancesGreenAndMarks(courseKey, holeNumber, userLat, userLon);
-        if (!res) return;
-
-        const greenEl = document.getElementById("distance-green");
-        if (greenEl) {
-          if (res.distanceGreen != null) {
-            greenEl.textContent = "Green : " + res.distanceGreen.toFixed(0) + " m";
-          } else {
-            greenEl.textContent = "Green : N/A";
-          }
-        }
-
-        const marksEl = document.getElementById("distance-marks");
-        if (marksEl) {
-          marksEl.innerHTML = "";
-          if (res.marksDistances.length === 0) {
-            marksEl.textContent = "Pas de mark pour ce trou";
-          } else {
-            res.marksDistances.forEach(md => {
-              const div = document.createElement("div");
-              // Ici tu peux renommer "Mark 1" → "Repère 200m", etc. si tu ajoutes un label dans holeImageRefs
-              div.textContent =
-                "Mark " + (md.index + 1) + " : " + md.distance.toFixed(0) + " m";
-              marksEl.appendChild(div);
-            });
-          }
-        }
-      }
-
-
-    function initCourseTotals() {
-      let totalWhite = 0;
-      let totalYellow = 0;
-      let totalPar = 0;
-      course.holes.forEach(hole => {
-        totalWhite += hole.white;
-        totalYellow += hole.yellow;
-        totalPar += hole.par;
-      });
-      courseNameEl.textContent = course.name;
-      totalWhiteEl.textContent = totalWhite;
-      totalYellowEl.textContent = totalYellow;
-      document.getElementById("total-par").textContent = totalPar;
-    }
-
-    function formatScoreVsPar(diff) {
-      if (diff === 0) return "E";
-      return diff > 0 ? "+" + diff : diff.toString();
-    }
-
-    function updateTotals() {
-      let sumScores = 0;
-      let sumPar = 0;
-      course.holes.forEach((hole, idx) => {
-        const s = scores[idx];
-        if (typeof s === "number" && !isNaN(s)) {
-          sumScores += s;
-          sumPar += hole.par;
-        }
-      });
-      document.getElementById("total-score").textContent = sumScores;
-      const diff = sumScores - sumPar;
-      document.getElementById("score-vs-par").textContent = formatScoreVsPar(diff);
-    }
-
-    function renderHole() {
-      const hole = course.holes[currentHoleIndex];
-      holeTitleEl.textContent = "Trou " + hole.number;
-      holeParEl.textContent = "Par " + hole.par;
-      holeWhiteEl.textContent = "Blanc " + hole.white + " m";
-      holeYellowEl.textContent = "Jaune " + hole.yellow + " m";
-
-      const existingScore = scores[currentHoleIndex];
-      scoreInputEl.value = existingScore != null ? existingScore : "";
-
-      prevBtn.disabled = currentHoleIndex === 0;
-      nextBtn.disabled = currentHoleIndex === course.holes.length - 1;
-
-      gpsStatusEl.textContent = "";
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-      playerMarker.style.left = "-1000px";
-      playerMarker.style.top = "-1000px";
-      markerDistance.style.left = "-1000px";
-      markerDistance.style.top = "-1000px";
-
-      // démarrer le suivi GPS pour ce trou
-     startHoleTracking();
-
-    }
-
-    function getHoleImageName(courseKey, holeNumber) {
-      return "TROU" + holeNumber + ".jpg";
-    }
-
-
-    function handleGpsError(error) {
-      let msg = "Erreur de géolocalisation.";
-      if (error.code === error.PERMISSION_DENIED) msg = "Permission de localisation refusée.";
-      else if (error.code === error.POSITION_UNAVAILABLE) msg = "Position non disponible.";
-      else if (error.code === error.TIMEOUT) msg = "Délai dépassé pour la localisation.";
-      gpsStatusEl.textContent = msg;
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-
-      playerMarker.style.left = "-1000px";
-      playerMarker.style.top = "-1000px";
-      markerDistance.style.left = "-1000px";
-      markerDistance.style.top = "-1000px";
-    }
-
-    function stopHoleTracking() {
-      if (gpsWatchId !== null && navigator.geolocation) {
-        navigator.geolocation.clearWatch(gpsWatchId);
-        gpsWatchId = null;
-      }
-      lastPosition = null;
-    }
-
-    function startHoleTracking() {
-      stopHoleTracking(); // sécurité
-
-      if (!navigator.geolocation) {
-        gpsStatusEl.textContent = "La géolocalisation n'est pas supportée sur cet appareil.";
-        gpsCoordsEl.textContent = "";
-        gpsDistanceEl.textContent = "";
-        return;
-      }
-
-      const hole = course.holes[currentHoleIndex];
-
-      gpsStatusEl.textContent = "Recherche de ta position...";
-      gpsCoordsEl.textContent = "";
-      gpsDistanceEl.textContent = "";
-
-      gpsWatchId = navigator.geolocation.watchPosition(
-        (pos) => onHolePositionUpdate(hole, pos),
-        handleGpsError,
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
-      );
-    }
-
-    function onHolePositionUpdate(hole, position) {
-      const { latitude, longitude, accuracy } = position.coords;
-
-      // Filtrage précision
-      if (accuracy && accuracy > 50) {
-        gpsStatusEl.textContent = `Signal faible (±${Math.round(accuracy)} m)...`;
-        return;
-      }
-
-      // Filtrage micro‑mouvements
-      if (lastPosition) {
-        const d = distanceInMeters(lastPosition.lat, lastPosition.lon, latitude, longitude);
-        if (d < 2) return;
-      }
-      lastPosition = { lat: latitude, lon: longitude };
-
-      gpsStatusEl.textContent = `Position trouvée (précision ±${Math.round(accuracy)} m).`;
-      gpsCoordsEl.textContent = `Ta position : Lat ${latitude.toFixed(6)} / Lon ${longitude.toFixed(6)}`;
-
-      const dGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-      const dText = Math.round(dGreen) + " m";
-      gpsDistanceEl.textContent = "Distance au green approx. " + dText;
-
-      // Distances green + repères
-      updateDistanceUIFromUser(currentCourseKey, hole.number, latitude, longitude);
-
-      // Placement du marker si la modale est ouverte
-      const perc = latLonToImagePercentGeneric(
-        currentCourseKey,
-        hole.number,
-        latitude,
-        longitude
-      );
-      if (!perc || zoomModal.style.display !== "block") {
-        playerMarker.style.left = "-1000px";
-        playerMarker.style.top = "-1000px";
-        markerDistance.style.left = "-1000px";
-        markerDistance.style.top = "-1000px";
-        return;
-      }
-
-      const rect = holeImage.getBoundingClientRect();
-      const xPx = rect.left + rect.width * perc.x;
-      const yPx = rect.top + rect.height * perc.y;
-
-      playerMarker.style.left = xPx + "px";
-      playerMarker.style.top = yPx + "px";
-
-      markerDistance.textContent = dText;
-      markerDistance.style.left = xPx + "px";
-      markerDistance.style.top = yPx + "px";
-    }
-
-
-      function computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon) {
-        const key = courseKey + "-" + holeNumber;
-        const holeCfg = holeImageRefs[key];
-        if (!holeCfg) return null;
-
-        let distanceGreen = null;
-        if (holeCfg.green && typeof holeCfg.green.lat === "number" && typeof holeCfg.green.lon === "number") {
-          distanceGreen = distanceInMeters(
-            userLat,
-            userLon,
-            holeCfg.green.lat,
-            holeCfg.green.lon
-          );
-        }
-
-        const marksDistances = [];
-        if (Array.isArray(holeCfg.marks)) {
-          holeCfg.marks.forEach((m, idx) => {
-            if (typeof m.lat === "number" && typeof m.lon === "number") {
-              const d = distanceInMeters(userLat, userLon, m.lat, m.lon);
-              marksDistances.push({
-                index: idx,      // 0, 1, 2...
-                label: m.label || ("Mark " + (idx + 1)),
-                lat: m.lat,
-                lon: m.lon,
-                distance: d
-              });
-            }
-          });
-        }
-
-        return {
-          distanceGreen,
-          marksDistances
-        };
-      }
-
-      function updateDistanceUIFromUser(courseKey, holeNumber, userLat, userLon) {
-        const res = computeHoleDistancesFromUser(courseKey, holeNumber, userLat, userLon);
-        if (!res) return;
-
-        // On ne met PLUS rien dans distance-green, ou alors un texte fixe si tu veux.
-        const greenEl = document.getElementById("distance-green");
-        if (greenEl) {
-          greenEl.textContent = ""; // ou par ex. "Distance affichée ci‑dessus."
-        }
-
-        const marksEl = document.getElementById("distance-marks");
-        if (marksEl) {
-          marksEl.innerHTML = "";
-          if (res.marksDistances.length === 0) {
-            marksEl.textContent = "Pas de repère pour ce trou";
-          } else {
-            res.marksDistances.forEach(md => {
-              const div = document.createElement("div");
-              div.textContent = md.label + " : " + md.distance.toFixed(0) + " m";
-              marksEl.appendChild(div);
-            });
-          }
-        }
-      }
-
-
-
-    /* ---------- ÉVÉNEMENTS ---------- */
-    scoreInputEl.addEventListener("input", () => {
-      const value = parseInt(scoreInputEl.value, 10);
-      if (!isNaN(value)) {
-        scores[currentHoleIndex] = value;
-      } else {
-        scores[currentHoleIndex] = null;
-      }
-      updateTotals();
     });
+  }
 
-    prevBtn.addEventListener("click", () => {
-      if (currentHoleIndex > 0) {
-        currentHoleIndex--;
-        renderHole();
-      }
+  function renderStatsDetail() {
+    const course = getCurrentCourse();
+    statsDetailEl.innerHTML = "";
+    course.holes.forEach(hole => {
+      const score = hole.score ?? hole.par;
+      const diff = score - hole.par;
+      const diffText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+      const row = document.createElement("div");
+      row.className = "stats-detail-row";
+      row.innerHTML = `
+        <div>Trou ${hole.number}</div>
+        <div>${score} (${diffText})</div>
+      `;
+      statsDetailEl.appendChild(row);
     });
+  }
 
-    nextBtn.addEventListener("click", () => {
-      if (currentHoleIndex < course.holes.length - 1) {
-        currentHoleIndex++;
-        renderHole();
-      }
-    });
-
-    courseSelectEl.addEventListener("change", () => {
-      currentCourseKey = courseSelectEl.value;
-      course = courses[currentCourseKey];
-      currentHoleIndex = 0;
-      scores.fill(null);
-      initCourseTotals();
-      renderHole();
-      updateTotals();
-    });
-
-    gpsButtonEl.addEventListener("click", () => {
-      gpsStatusEl.textContent = "Le suivi GPS est actif (mise à jour automatique).";
-    });
-
-    zoomBtn.addEventListener("click", () => {
-      const hole = course.holes[currentHoleIndex];
-      const imgName = getHoleImageName(currentCourseKey, hole.number);
-      holeImage.src = imgName;
-      holeImage.alt = "Trou " + hole.number;
-      zoomModal.style.display = "block";
-      // le watch GPS mettra à jour le marker dès la prochaine position
-    });
-
-    closeModal.addEventListener("click", () => {
-      zoomModal.style.display = "none";
-      playerMarker.style.left = "-1000px";
-      playerMarker.style.top = "-1000px";
-      markerDistance.style.left = "-1000px";
-      markerDistance.style.top = "-1000px";
-    });
-
-    zoomModal.addEventListener("click", (e) => {
-      if (e.target === zoomModal) {
-        zoomModal.style.display = "none";
-        playerMarker.style.left = "-1000px";
-        playerMarker.style.top = "-1000px";
-        markerDistance.style.left = "-1000px";
-        markerDistance.style.top = "-1000px";
-      }
-    });
-
-
-    /* ---------- INIT ---------- */
-    initCourseTotals();
-    renderHole();
+  function renderHole() {
+    renderHeader();
+    renderHoleScore();
+    renderHolesTable();
+    renderStatsDetail();
     updateTotals();
-  </script>
+    updateGpsHoleImage();
+  }
+
+  function updateGpsHoleImage() {
+    const hole = getCurrentHole();
+    // ici tu gardes ton mapping trou -> image (TROU1.jpg, TROU2.jpg, etc.)
+    const imgName = `TROU${hole.number}.jpg`;
+    holeImagePreviewEl.src = imgName;
+    holeImageEl.src = imgName;
+  }
+
+  // --- Navigation vues ---
+
+  function showView(view) {
+    viewScore.classList.remove("active");
+    viewGps.classList.remove("active");
+    viewStats.classList.remove("active");
+    if (view === "score") viewScore.classList.add("active");
+    if (view === "gps") viewGps.classList.add("active");
+    if (view === "stats") viewStats.classList.add("active");
+
+    navBtns.forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.view === view);
+    });
+  }
+
+  navBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      showView(view);
+    });
+  });
+
+  // Swipe gauche/droite pour changer de trou
+  let touchStartX = 0;
+  let touchEndX = 0;
+  document.addEventListener("touchstart", e => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  document.addEventListener("touchend", e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  });
+
+  function handleSwipe() {
+    const delta = touchEndX - touchStartX;
+    if (Math.abs(delta) < 60) return;
+    const course = getCurrentCourse();
+    if (delta < 0 && currentHoleIndex < course.holes.length - 1) {
+      currentHoleIndex++;
+      renderHole();
+    } else if (delta > 0 && currentHoleIndex > 0) {
+      currentHoleIndex--;
+      renderHole();
+    }
+  }
+
+  // --- GPS / watchPosition (reprendre ta logique v12) ---
+
+  function distanceInMeters(lat1, lon1, lat2, lon2) {
+    // utiliser ta fonction haversine existante
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function handleGpsSuccess(pos) {
+    const { latitude, longitude, accuracy } = pos.coords;
+    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+    gpsStatusEl.textContent = "GPS OK";
+
+    const hole = getCurrentHole();
+    if (hole.greenLat && hole.greenLon) {
+      const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+      gpsDistanceValueEl.textContent = Math.round(d);
+      updateMarkerPositionFromGps(latitude, longitude, d);
+    } else {
+      gpsDistanceValueEl.textContent = "‑‑‑";
+      hideMarker();
+    }
+  }
+
+  function handleGpsError(err) {
+    gpsStatusEl.textContent = "Erreur GPS : " + err.message;
+    gpsDistanceValueEl.textContent = "‑‑‑";
+    hideMarker();
+  }
+
+  function startGps() {
+    if (!navigator.geolocation) {
+      gpsStatusEl.textContent = "GPS non disponible";
+      return;
+    }
+    if (watchId !== null) return;
+
+    gpsStatusEl.textContent = "Recherche du signal…";
+    gpsActive = true;
+    toggleGpsBtn.textContent = "Arrêter GPS live";
+
+    watchId = navigator.geolocation.watchPosition(
+      handleGpsSuccess,
+      handleGpsError,
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  function stopGps() {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    gpsActive = false;
+    toggleGpsBtn.textContent = "Activer GPS live";
+    gpsStatusEl.textContent = "GPS inactif";
+    gpsDistanceValueEl.textContent = "‑‑‑";
+    gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
+    hideMarker();
+  }
+
+  toggleGpsBtn.addEventListener("click", () => {
+    if (gpsActive) stopGps();
+    else startGps();
+  });
+
+  // --- ZOOM modal (réutilise ta fonction de projection lat/lon -> x/y) ---
+
+  function updateMarkerPositionFromGps(lat, lon, distToGreen) {
+    // ici tu réutilises ton latLonToImagePercent(hole, lat, lon)
+    // pour obtenir (xPercent, yPercent)
+    const hole = getCurrentHole();
+    const { xPercent, yPercent } = latLonToImagePercent(hole, lat, lon);
+    const imgRect = holeImageEl.getBoundingClientRect();
+
+    const x = imgRect.left + (imgRect.width * xPercent);
+    const y = imgRect.top + (imgRect.height * yPercent);
+
+    playerMarkerEl.style.left = `${x}px`;
+    playerMarkerEl.style.top = `${y}px`;
+    markerDistanceEl.style.left = `${x}px`;
+    markerDistanceEl.style.top = `${y - 16}px`;
+    markerDistanceEl.textContent = `${Math.round(distToGreen)} m`;
+  }
+
+  function hideMarker() {
+    playerMarkerEl.style.left = "-1000px";
+    playerMarkerEl.style.top = "-1000px";
+    markerDistanceEl.style.left = "-1000px";
+    markerDistanceEl.style.top = "-1000px";
+  }
+
+  function latLonToImagePercent(hole, lat, lon) {
+  const key = `${currentCourseKey}-${hole.number}`;
+  const ref = holeImageRefs[key];
+  if (!ref || !ref.green) {
+    return { xPercent: 0.5, yPercent: 0.5 };
+  }
+
+  // Pour chaque trou, on prend :
+  // - le green comme point 1
+  // - le premier mark (s'il existe) comme point 2
+  const g = ref.green;
+  const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
+
+  // Si pas de mark, on n’a qu’un point → on retourne directement la position du green
+  if (!m) {
+    return {
+      xPercent: g.img.x,
+      yPercent: g.img.y
+    };
+  }
+
+  // Vecteur GPS repère -> green
+  const dxGps = g.lon - m.lon;
+  const dyGps = g.lat - m.lat;
+
+  // Vecteur image repère -> green
+  const dxImg = g.img.x - m.img.x;
+  const dyImg = g.img.y - m.img.y;
+
+  // Si repère et green alignés GPS ou image (sécurité)
+  const denom = (dxGps * dxGps + dyGps * dyGps);
+  if (denom === 0) {
+    return {
+      xPercent: g.img.x,
+      yPercent: g.img.y
+    };
+  }
+
+  // Matrice linéaire 2D (approx isotrope locale),
+  // on suppose que (lat, lon) se projette dans la même direction que (dxGps, dyGps)
+  // On projette la position joueur sur l'axe repère-green.
+  const uxGps = dxGps / Math.sqrt(denom);
+  const uyGps = dyGps / Math.sqrt(denom);
+
+  const vxGps = lon - m.lon;
+  const vyGps = lat - m.lat;
+
+  const proj = vxGps * uxGps + vyGps * uyGps;
+
+  // Proportion le long de l’axe repère -> green
+  const length = Math.sqrt(denom);
+  const t = proj / length;
+
+  const x = m.img.x + dxImg * t;
+  const y = m.img.y + dyImg * t;
+
+  return {
+    xPercent: x,
+    yPercent: y
+  };
+}
+
+
+  zoomBtn.addEventListener("click", () => {
+    zoomModal.style.display = "block";
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    zoomModal.style.display = "none";
+  });
+
+  zoomModal.addEventListener("click", (e) => {
+    if (e.target === zoomModal) {
+      zoomModal.style.display = "none";
+    }
+  });
+
+  // --- Init ---
+
+  initCourseTotals();
+  renderHole();
+  showView("score");
+</script>
+
 </body>
 </html>
