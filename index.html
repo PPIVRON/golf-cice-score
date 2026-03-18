@@ -442,6 +442,28 @@
       color: #f9fafb;
       font-weight: 500;
     }
+
+    #marksContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .mark-badge {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(15,23,42,0.9);
+      color: #f9fafb;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+
   </style>
 </head>
 <body>
@@ -526,9 +548,11 @@
             <button class="btn-secondary" id="zoomBtn">ZOOM plein écran</button>
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
+          <div class="gps-status-line" id="gpsMarksDistances"></div> <!-- NOUVEAU -->
         </div>
       </div>
     </section>
+
 
     <!-- Vue STATS -->
     <section id="view-stats" class="view">
@@ -559,6 +583,7 @@
     <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
     <div id="playerMarker"></div>
     <div id="markerDistance"></div>
+    <div id="marksContainer"></div> <!-- NOUVEAU -->
   </div>
 </div>
 
@@ -587,7 +612,10 @@
       // sessionStorage.removeItem("golfAccessOK");
     }
     })();
-  
+
+    const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
+    const marksContainerEl = document.getElementById("marksContainer");
+
   /* ------------- DONNÉES PARCOURS -------------
      Ici tu copies/colles ton objet courses de index_v12
      (Cicé, Rennes, greenLat/greenLon, etc.) */
@@ -1047,6 +1075,9 @@
   const statsTotalPuttsEl = document.getElementById("statsTotalPutts");
   const statsDetailEl = document.getElementById("statsDetail");
 
+  const decreaseScoreBtn = document.getElementById("decreaseScore");
+  const increaseScoreBtn = document.getElementById("increaseScore");
+
   // --- Fonctions utilitaires (à adapter avec ton code existant) ---
 
   function getCurrentCourse() {
@@ -1188,6 +1219,33 @@
     holeImageEl.src = imgName;
   }
 
+  // --- Listeners score +/- ---
+
+    increaseScoreBtn.addEventListener("click", () => {
+      const hole = getCurrentHole();
+      let score = hole.score ?? hole.par;
+      score++;
+      hole.score = score;
+      currentHoleScoreEl.textContent = score;
+      updateTotals();
+      renderHolesTable();
+      renderStatsDetail();
+    });
+
+    decreaseScoreBtn.addEventListener("click", () => {
+      const hole = getCurrentHole();
+      let score = hole.score ?? hole.par;
+      if (score > 1) {
+        score--;
+        hole.score = score;
+        currentHoleScoreEl.textContent = score;
+        updateTotals();
+        renderHolesTable();
+        renderStatsDetail();
+      }
+    });
+
+
   // --- Navigation vues ---
 
   function showView(view) {
@@ -1250,6 +1308,38 @@
     return R * c;
   }
 
+  function computeDistancesToMarks(lat, lon) {
+    const hole = getCurrentHole();
+    const key = `${currentCourseKey}-${hole.number}`;
+    const ref = holeImageRefs[key];
+    if (!ref || !ref.marks || ref.marks.length === 0) {
+      return [];
+    }
+
+    return ref.marks.map(mark => {
+      const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
+      return {
+        label: mark.label,
+        distance: Math.round(d)
+      };
+    });
+  }
+
+  function renderMarksDistances(lat, lon) {
+    const marksDistances = computeDistancesToMarks(lat, lon);
+    if (marksDistances.length === 0) {
+      gpsMarksDistancesEl.textContent = "";
+      return;
+    }
+
+    // Une ligne par repère
+    gpsMarksDistancesEl.innerHTML = marksDistances
+      .map(m => `${m.label} : ${m.distance} m`)
+      .join("<br>");
+  }
+
+
+
   function handleGpsSuccess(pos) {
     const { latitude, longitude, accuracy } = pos.coords;
     gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
@@ -1264,7 +1354,11 @@
       gpsDistanceValueEl.textContent = "‑‑‑";
       hideMarker();
     }
+
+    renderMarksDistances(latitude, longitude);
+    renderMarksBadges(latitude, longitude);    // badges sur la carte zoom
   }
+
 
   function handleGpsError(err) {
     gpsStatusEl.textContent = "Erreur GPS : " + err.message;
@@ -1300,8 +1394,11 @@
     gpsStatusEl.textContent = "GPS inactif";
     gpsDistanceValueEl.textContent = "‑‑‑";
     gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
+    gpsMarksDistancesEl.textContent = ""; // <-- ICI, juste avant hideMarker
+    marksContainerEl.innerHTML = "";
     hideMarker();
   }
+
 
   toggleGpsBtn.addEventListener("click", () => {
     if (gpsActive) stopGps();
@@ -1326,6 +1423,34 @@
     markerDistanceEl.style.top = `${y - 16}px`;
     markerDistanceEl.textContent = `${Math.round(distToGreen)} m`;
   }
+
+  function renderMarksBadges(lat, lon) {
+    const hole = getCurrentHole();
+    const key = `${currentCourseKey}-${hole.number}`;
+    const ref = holeImageRefs[key];
+    if (!ref || !ref.marks || ref.marks.length === 0) {
+      marksContainerEl.innerHTML = "";
+      return;
+    }
+
+    marksContainerEl.innerHTML = "";
+
+    const imgRect = holeImageEl.getBoundingClientRect();
+
+    ref.marks.forEach(mark => {
+      const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
+      const x = imgRect.left + imgRect.width * mark.img.x;
+      const y = imgRect.top + imgRect.height * mark.img.y;
+
+      const badge = document.createElement("div");
+      badge.className = "mark-badge";
+      badge.style.left = `${x}px`;
+      badge.style.top = `${y}px`;
+      badge.textContent = `${mark.label} : ${Math.round(d)} m`;
+      marksContainerEl.appendChild(badge);
+    });
+  }
+
 
   function hideMarker() {
     playerMarkerEl.style.left = "-1000px";
