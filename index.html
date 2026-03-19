@@ -616,6 +616,15 @@
   </div>
 </div>
 
+<div id="tipsModal" class="modal">
+  <div class="modal-content" style="max-width: 90%; max-height: 70%; background:#ffffff; color:#111827;">
+    <span class="close" id="closeTips">&times;</span>
+    <h2 style="font-size:16px; margin-bottom:8px;">Conseils pour le trou</h2>
+    <div id="tipsText" style="font-size:14px; line-height:1.4;"></div>
+  </div>
+</div>
+
+
 <!-- Navigation bas -->
 <div class="bottom-nav">
   <button class="nav-btn active" data-view="score" id="btnNavScore">
@@ -647,6 +656,12 @@
     const decreasePuttsBtn = document.getElementById("decreasePutts");
     const increasePuttsBtn = document.getElementById("increasePutts");
     let currentTeeColor = "white"; // "white" ou "yellow"
+
+    const editExtrasBtn = document.getElementById("editExtrasBtn");
+    const tipsModal = document.getElementById("tipsModal");
+    const closeTipsBtn = document.getElementById("closeTips");
+    const tipsTextEl = document.getElementById("tipsText");
+
 
 
   /* ------------- DONNÉES PARCOURS -------------
@@ -1066,6 +1081,38 @@
 
   // pour les autres trous, tu feras pareil
 };
+
+  const holeTips = {
+    "cice-1": "Drive côté gauche pour ouvrir le green, éviter l'eau à droite.",
+    "cice-2": "Par 5 en dogleg, privilégier un lay‑up avant le ruisseau.",
+    // ...
+    "rennes-1": "…"
+    // etc.
+  };
+
+  function getCurrentHoleKey() {
+    const hole = getCurrentHole();
+    return `${currentCourseKey}-${hole.number}`;
+  }
+
+  function openTipsModal() {
+    const key = getCurrentHoleKey();
+    const tip = holeTips[key] || "Aucun conseil spécifique pour ce trou pour l’instant.";
+    tipsTextEl.textContent = tip;
+    tipsModal.style.display = "block";
+  }
+
+  function closeTipsModal() {
+    tipsModal.style.display = "none";
+  }
+
+  editExtrasBtn.addEventListener("click", openTipsModal);
+  closeTipsBtn.addEventListener("click", closeTipsModal);
+  tipsModal.addEventListener("click", (e) => {
+    if (e.target === tipsModal) closeTipsModal();
+  });
+
+
 
   // Variables d’état global (course sélectionnée, index du trou, etc.)
   let currentCourseKey = "cice"; // par ex.
