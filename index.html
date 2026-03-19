@@ -494,6 +494,19 @@
         <span id="totalVsPar">(E)</span>
       </div>
     </div>
+
+    <!-- AJOUTER ICI le sélecteur de repère -->
+    <div style="margin-top:4px; font-size:12px;">
+      <label>
+        <input type="radio" name="teeColor" value="white" checked>
+        Blanc
+      </label>
+      <label style="margin-left:8px;">
+        <input type="radio" name="teeColor" value="yellow">
+        Jaune
+      </label>
+    </div>
+
   </header>
 
   <main>
@@ -520,7 +533,7 @@
             <button class="score-btn" id="increasePutts">+</button>
           </div>
           <div>
-            <button id="editExtrasBtn">Détails trou</button>
+            <button id="editExtrasBtn">Conseils</button>
           </div>
         </div>
 
@@ -633,6 +646,7 @@
     const marksContainerEl = document.getElementById("marksContainer");
     const decreasePuttsBtn = document.getElementById("decreasePutts");
     const increasePuttsBtn = document.getElementById("increasePutts");
+    let currentTeeColor = "white"; // "white" ou "yellow"
 
 
   /* ------------- DONNÉES PARCOURS -------------
@@ -1097,6 +1111,15 @@
   const decreaseScoreBtn = document.getElementById("decreaseScore");
   const increaseScoreBtn = document.getElementById("increaseScore");
 
+  // Sélecteur de repère (tee blanc/jaune)  <-- BLOc ICI
+  const teeRadios = document.querySelectorAll('input[name="teeColor"]');
+  teeRadios.forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      currentTeeColor = e.target.value; // "white" ou "yellow"
+      renderHeader();
+    });
+  });
+
   // --- Fonctions utilitaires (à adapter avec ton code existant) ---
 
   function getCurrentCourse() {
@@ -1132,7 +1155,10 @@
     courseNameEl.textContent = course.name;
     holeNumberEl.textContent = hole.number;
     holeParEl.textContent = hole.par;
-    holeDistanceEl.textContent = `${hole.white} m (Blanc)`; // ou selon couleur choisie
+
+    const distance = currentTeeColor === "yellow" ? hole.yellow : hole.white;
+    const label = currentTeeColor === "yellow" ? "Jaune" : "Blanc";
+    holeDistanceEl.textContent = `${distance} m (${label})`;
   }
 
   function updateTotals() {
