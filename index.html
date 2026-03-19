@@ -664,6 +664,7 @@
     const tipsModal = document.getElementById("tipsModal");
     const closeTipsBtn = document.getElementById("closeTips");
     const tipsTextEl = document.getElementById("tipsText");
+    let lateralFactorCice1 = 1.0; // 1.0 = valeur de base, <1 = moins de décalage, >1 = plus
 
 
 
@@ -748,7 +749,7 @@
     marks: [
       {
         // ancien "mark" du trou 2 (point à 164 m)
-        label: "Repère 140 m du départ",
+        label: "Repère 196 m du départ",
         lat: 48.03706,
         lon: -1.76662,
         // ancien "imgMark" du trou 2
@@ -1640,13 +1641,15 @@
     return { xPercent: 0.5, yPercent: 0.5 };
   }
 
-  // Pour chaque trou, on prend :
-  // - le green comme point 1
-  // - le premier mark (s'il existe) comme point 2
+  // Cas spécial : Cicé trou 1, projection 2D un peu plus riche
+  if (key === "cice-1") {
+    return latLonToImagePercentCice1(lat, lon, ref);
+  }
+
+  // Cas général (autres trous) : projection simple le long de la ligne repère -> green
   const g = ref.green;
   const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
 
-  // Si pas de mark, on n’a qu’un point → on retourne directement la position du green
   if (!m) {
     return {
       xPercent: g.img.x,
@@ -1654,15 +1657,11 @@
     };
   }
 
-  // Vecteur GPS repère -> green
   const dxGps = g.lon - m.lon;
   const dyGps = g.lat - m.lat;
-
-  // Vecteur image repère -> green
   const dxImg = g.img.x - m.img.x;
   const dyImg = g.img.y - m.img.y;
 
-  // Si repère et green alignés GPS ou image (sécurité)
   const denom = (dxGps * dxGps + dyGps * dyGps);
   if (denom === 0) {
     return {
@@ -1671,9 +1670,6 @@
     };
   }
 
-  // Matrice linéaire 2D (approx isotrope locale),
-  // on suppose que (lat, lon) se projette dans la même direction que (dxGps, dyGps)
-  // On projette la position joueur sur l'axe repère-green.
   const uxGps = dxGps / Math.sqrt(denom);
   const uyGps = dyGps / Math.sqrt(denom);
 
@@ -1681,8 +1677,6 @@
   const vyGps = lat - m.lat;
 
   const proj = vxGps * uxGps + vyGps * uyGps;
-
-  // Proportion le long de l’axe repère -> green
   const length = Math.sqrt(denom);
   const t = proj / length;
 
@@ -1694,6 +1688,60 @@
     yPercent: y
   };
 }
+
+  function latLonToImagePercentCice1(lat, lon, ref) {
+  const g = ref.green;
+  const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
+
+  if (!m) {
+    return { xPercent: g.img.x, yPercent: g.img.y };
+  }
+
+  // 1) Repère -> green en coordonnées GPS
+  const dxGps = g.lon - m.lon;
+  const dyGps = g.lat - m.lat;
+  const distGps = Math.sqrt(dxGps * dxGps + dyGps * dyGps) || 1;
+
+  const uxGps = dxGps / distGps;
+  const uyGps = dyGps / distGps;
+
+  // 2) Position joueur par rapport au repère
+  const vxGps = lon - m.lon;
+  const vyGps = lat - m.lat;
+
+  // Composante le long de l'axe repère->green
+  const proj = vxGps * uxGps + vyGps * uyGps;
+  const t = proj / distGps; // 0 = repère, 1 = green (approx)
+
+  // Composante latérale (perpendiculaire à l'axe)
+  const perpX = -uyGps;
+  const perpY = uxGps;
+  const lateral = vxGps * perpX + vyGps * perpY;
+
+  // 3) Axe image repère->green
+  const dxImg = g.img.x - m.img.x;
+  const dyImg = g.img.y - m.img.y;
+
+  const distImg = Math.sqrt(dxImg * dxImg + dyImg * dyImg) || 1;
+  const uxImg = dxImg / distImg;
+  const uyImg = dyImg / distImg;
+
+  // Échelles
+  const scaleLongitudinal = distImg / distGps;
+  const scaleLateral = scaleLongitudinal * lateralFactorCice1;
+
+  // Position sur l’image :
+  // - m.img + t * axe repère->green (longitudinal)
+  // - + (lateral * scaleLateral) * direction perpendiculaire image
+  const x = m.img.x + dxImg * t + (lateral * scaleLateral) * (-uyImg);
+  const y = m.img.y + dyImg * t + (lateral * scaleLateral) * (uxImg);
+
+  return {
+    xPercent: x,
+    yPercent: y
+  };
+}
+
 
 
   zoomBtn.addEventListener("click", () => {
