@@ -500,14 +500,17 @@
             <button class="score-btn" id="increaseScore">+</button>
           </div>
           <div class="score-extra">
-            <div>
-              <span>Putts:</span>
-              <span id="currentHolePutts">2</span>
-            </div>
-            <div>
-              <button id="editExtrasBtn">Détails trou</button>
-            </div>
+          <div>
+            <span>Putts :</span>
+            <button class="score-btn" id="decreasePutts">−</button>
+            <span id="currentHolePutts">2</span>
+            <button class="score-btn" id="increasePutts">+</button>
           </div>
+          <div>
+            <button id="editExtrasBtn">Détails trou</button>
+          </div>
+        </div>
+
         </div>
 
         <div class="score-holes">
@@ -615,6 +618,9 @@
 
     const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
     const marksContainerEl = document.getElementById("marksContainer");
+    const decreasePuttsBtn = document.getElementById("decreasePutts");
+    const increasePuttsBtn = document.getElementById("increasePutts");
+
 
   /* ------------- DONNÉES PARCOURS -------------
      Ici tu copies/colles ton objet courses de index_v12
@@ -1244,6 +1250,31 @@
         renderStatsDetail();
       }
     });
+
+    // --- Listeners putts +/- ---
+
+    increasePuttsBtn.addEventListener("click", () => {
+      const hole = getCurrentHole();
+      let putts = hole.putts ?? 0;
+      putts++;
+      hole.putts = putts;
+      currentHolePuttsEl.textContent = putts;
+      updateTotals();      // pour les stats globales
+      renderStatsDetail(); // si tu veux voir les putts dans le récap plus tard
+    });
+
+    decreasePuttsBtn.addEventListener("click", () => {
+      const hole = getCurrentHole();
+      let putts = hole.putts ?? 0;
+      if (putts > 0) {
+        putts--;
+        hole.putts = putts;
+        currentHolePuttsEl.textContent = putts;
+        updateTotals();
+        renderStatsDetail();
+      }
+    });
+
 
 
   // --- Navigation vues ---
