@@ -1227,19 +1227,37 @@
   function renderStatsDetail() {
     const course = getCurrentCourse();
     statsDetailEl.innerHTML = "";
+
     course.holes.forEach(hole => {
-      const score = hole.score ?? hole.par;
-      const diff = score - hole.par;
-      const diffText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+      const score = (hole.score === null || hole.score === undefined)
+        ? ""
+        : hole.score;
+
+      const diff =
+        (hole.score === null || hole.score === undefined)
+          ? ""
+          : hole.score - hole.par;
+
+      const diffText =
+        diff === ""
+          ? ""
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+
+      const displayText =
+        score === ""
+          ? "—"                            // trou non joué
+          : `${score} (${diffText || "E"})`; // trou joué
+
       const row = document.createElement("div");
       row.className = "stats-detail-row";
       row.innerHTML = `
         <div>Trou ${hole.number}</div>
-        <div>${score} (${diffText})</div>
+        <div>${displayText}</div>
       `;
       statsDetailEl.appendChild(row);
     });
   }
+
 
   function renderHole() {
     renderHeader();
