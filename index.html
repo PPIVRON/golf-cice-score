@@ -1107,27 +1107,24 @@
     return getCurrentCourse().holes[currentHoleIndex];
   }
 
-  function initCourseTotals() {
+ function initCourseTotals() {
   // Pour chaque parcours (cice, rennes, etc.)
   Object.keys(courses).forEach(courseKey => {
     const course = courses[courseKey];
 
     course.holes.forEach(hole => {
-      // Si aucun score enregistré, on initialise au par (comportement V12)
-      if (hole.score === undefined || hole.score === null) {
-        hole.score = hole.par;
+      // Au départ, aucun score/putts joués
+      if (hole.score === undefined) {
+        hole.score = null;   // non joué
       }
-      // Si aucun putts enregistré, on initialise à 2 (valeur standard)
-      if (hole.putts === undefined || hole.putts === null) {
-        hole.putts = 2;
+      if (hole.putts === undefined) {
+        hole.putts = null;   // non joué
       }
     });
   });
 
-  // Une fois les trous initialisés, on calcule les totaux
   updateTotals();
 }
-
 
   function renderHeader() {
     const course = getCurrentCourse();
@@ -1139,21 +1136,27 @@
   }
 
   function updateTotals() {
-    // recalcul total, vs par, putts, etc. (reprendre ta logique)
     const course = getCurrentCourse();
     let total = 0;
     let parTotal = 0;
     let totalPutts = 0;
 
     course.holes.forEach(h => {
-      const s = h.score ?? h.par;
-      total += s;
-      parTotal += h.par;
-      totalPutts += h.putts ?? 0;
+      if (h.score !== null && h.score !== undefined) {
+        total += h.score;
+        parTotal += h.par;
+      }
+      if (h.putts !== null && h.putts !== undefined) {
+        totalPutts += h.putts;
+      }
     });
 
     const diff = total - parTotal;
-    const vsParText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+    const vsParText =
+      parTotal === 0
+        ? "E"
+        : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+
     totalScoreEls.forEach(el => el.textContent = total);
     totalVsParEls.forEach(el => el.textContent = `(${vsParText})`);
 
@@ -1164,19 +1167,34 @@
 
   function renderHoleScore() {
     const hole = getCurrentHole();
-    currentHoleScoreEl.textContent = hole.score ?? hole.par;
-    currentHolePuttsEl.textContent = hole.putts ?? 2;
+
+    // Affichage : si pas encore joué, on montre le par comme repère
+    const displayedScore =
+      (hole.score === null || hole.score === undefined) ? hole.par : hole.score;
+    currentHoleScoreEl.textContent = displayedScore;
+
+    const displayedPutts =
+      (hole.putts === null || hole.putts === undefined) ? "-" : hole.putts;
+    currentHolePuttsEl.textContent = displayedPutts;
   }
 
   function renderHolesTable() {
     const course = getCurrentCourse();
     holesTableBody.innerHTML = "";
     course.holes.forEach((hole, index) => {
-      const tr = document.createElement("tr");
-      const score = hole.score ?? hole.par;
-      const diff = score - hole.par;
-      const diffText = diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString());
+      const score = (hole.score === null || hole.score === undefined)
+        ? ""
+        : hole.score;
+      const diff =
+        (hole.score === null || hole.score === undefined)
+          ? ""
+          : hole.score - hole.par;
+      const diffText =
+        diff === ""
+          ? ""
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
 
+      const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${hole.number}</td>
         <td>${hole.par}</td>
@@ -1193,6 +1211,8 @@
         const course = getCurrentCourse();
         if (!isNaN(val) && val > 0) {
           course.holes[idx].score = val;
+        } else {
+          course.holes[idx].score = null;
         }
         updateTotals();
         if (idx === currentHoleIndex) {
