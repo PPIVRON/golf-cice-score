@@ -43,6 +43,10 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <script>
+
+  // Sauvegarde de l'URL complète de ppv.html pour pouvoir y revenir
+  sessionStorage.setItem("ppvUrl", window.location.href);
+  
   const SALT = "MonGolfCicéBlossac18Trous"; // exactement la même valeur
 
   function hashNumber(num10) {
