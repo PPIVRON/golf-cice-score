@@ -479,6 +479,32 @@
       white-space: nowrap;
     }
 
+    .players-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .player-tab {
+      flex: 1;
+      padding: 7px 4px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .player-tab.active {
+      border-color: #111827;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+
 
   </style>
 </head>
@@ -516,6 +542,8 @@
     <!-- Vue SCORE -->
     <section id="view-score" class="view active">
       <div class="score-main">
+        <!-- Onglets joueurs -->
+      <div class="players-tabs" id="playersTabs"></div>
         <div class="score-current">
           <div class="score-current-top">
             <div class="label">Score du trou</div>
@@ -644,15 +672,28 @@
 <script>
 
    (function () {
-    const ok = sessionStorage.getItem("golfAccessOK");
-    if (ok !== "1") {
-      // Pas passé par ppv.html -> on renvoie vers ppv.html
-      window.location.href = "ppv.html";
-    } else {
-      // Optionnel : on peut enlever le jeton pour une seule session d'ouverture
-      // sessionStorage.removeItem("golfAccessOK");
-    }
+      const ok = sessionStorage.getItem("golfAccessOK");
+      if (ok !== "1") {
+        window.location.href = "ppv.html";
+      }
     })();
+
+    // Lecture config partie depuis setup.html
+    const golfSetup = JSON.parse(sessionStorage.getItem("golfSetup"));
+    if (!golfSetup) {
+      window.location.href = "setup.html";
+    }
+
+    // Initialisation des joueurs
+    const players = golfSetup.players.map(p => ({
+      trigram: p.trigram,
+      teeColor: p.teeColor,
+      holes: []
+    }));
+
+    let currentCourseKey   = golfSetup.courseKey;
+    let currentPlayerIndex = 0;
+
 
     const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
     const marksContainerEl = document.getElementById("marksContainer");
@@ -1115,6 +1156,38 @@
     return `${currentCourseKey}-${hole.number}`;
   }
 
+  function getCurrentPlayer() {
+  return players[currentPlayerIndex];
+  }
+
+  function getCurrentPlayerHole() {
+    return getCurrentPlayer().holes[currentHoleIndex];
+  }
+
+  function renderPlayersTabs() {
+    const tabsEl = document.getElementById("playersTabs");
+    if (!tabsEl) return;
+    tabsEl.innerHTML = "";
+
+    players.forEach((player, index) => {
+      const tab = document.createElement("button");
+      tab.className = "player-tab" + (index === currentPlayerIndex ? " active" : "");
+      tab.textContent = player.trigram;
+      tab.addEventListener("click", () => {
+        currentPlayerIndex = index;
+        currentTeeColor = players[index].teeColor;
+        renderPlayersTabs();
+        renderHoleScore();
+        renderHolesTable();
+        renderStatsDetail();
+        updateTotals();
+        renderHeader();
+      });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+
   function openTipsModal() {
     const key = getCurrentHoleKey();
     const tip = holeTips[key] || "Aucun conseil spécifique pour ce trou pour l’instant.";
@@ -1197,24 +1270,22 @@
     return getCurrentCourse().holes[currentHoleIndex];
   }
 
- function initCourseTotals() {
-  // Pour chaque parcours (cice, rennes, etc.)
-  Object.keys(courses).forEach(courseKey => {
-    const course = courses[courseKey];
+   function initCourseTotals() {
+    const course = courses[currentCourseKey];
 
-    course.holes.forEach(hole => {
-      // Au départ, aucun score/putts joués
-      if (hole.score === undefined) {
-        hole.score = null;   // non joué
-      }
-      if (hole.putts === undefined) {
-        hole.putts = null;   // non joué
-      }
+    // Pour chaque joueur, on crée son propre tableau de trous
+    players.forEach(player => {
+      player.holes = course.holes.map(hole => ({
+        number: hole.number,
+        par:    hole.par,
+        score:  null,
+        putts:  null
+      }));
     });
-  });
 
-  updateTotals();
-}
+    updateTotals();
+  }
+
 
   function renderHeader() {
     const course = getCurrentCourse();
@@ -1229,12 +1300,12 @@
   }
 
   function updateTotals() {
-    const course = getCurrentCourse();
+    const player = getCurrentPlayer();
     let total = 0;
     let parTotal = 0;
     let totalPutts = 0;
 
-    course.holes.forEach(h => {
+    player.holes.forEach(h => {
       if (h.score !== null && h.score !== undefined) {
         total += h.score;
         parTotal += h.par;
@@ -1258,12 +1329,12 @@
     statsTotalPuttsEl.textContent = totalPutts;
   }
 
-  function renderHoleScore() {
-    const hole = getCurrentHole();
 
-    // Affichage : si pas encore joué, on montre le par comme repère
+  function renderHoleScore() {
+    const hole = getCurrentPlayerHole(); // scores/putts du joueur actif
+
     const displayedScore =
-      (hole.score === null || hole.score === undefined) ? hole.par : hole.score;
+      (hole.score === null || hole.score === undefined) ? getCurrentHole().par : hole.score;
     currentHoleScoreEl.textContent = displayedScore;
 
     const displayedPutts =
@@ -1271,10 +1342,12 @@
     currentHolePuttsEl.textContent = displayedPutts;
   }
 
+
   function renderHolesTable() {
-    const course = getCurrentCourse();
+    const player = getCurrentPlayer();
     holesTableBody.innerHTML = "";
-    course.holes.forEach((hole, index) => {
+
+    player.holes.forEach((hole, index) => {
       const score = (hole.score === null || hole.score === undefined)
         ? ""
         : hole.score;
@@ -1301,11 +1374,11 @@
       input.addEventListener("change", (e) => {
         const idx = parseInt(e.target.dataset.index, 10);
         const val = parseInt(e.target.value, 10);
-        const course = getCurrentCourse();
+        const player = getCurrentPlayer();
         if (!isNaN(val) && val > 0) {
-          course.holes[idx].score = val;
+          player.holes[idx].score = val;
         } else {
-          course.holes[idx].score = null;
+          player.holes[idx].score = null;
         }
         updateTotals();
         if (idx === currentHoleIndex) {
@@ -1317,11 +1390,12 @@
     });
   }
 
+
   function renderStatsDetail() {
-    const course = getCurrentCourse();
+    const player = getCurrentPlayer();
     statsDetailEl.innerHTML = "";
 
-    course.holes.forEach(hole => {
+    player.holes.forEach(hole => {
       const score = (hole.score === null || hole.score === undefined)
         ? ""
         : hole.score;
@@ -1338,8 +1412,8 @@
 
       const displayText =
         score === ""
-          ? "—"                            // trou non joué
-          : `${score} (${diffText || "E"})`; // trou joué
+          ? "—"
+          : `${score} (${diffText || "E"})`;
 
       const row = document.createElement("div");
       row.className = "stats-detail-row";
@@ -1352,14 +1426,16 @@
   }
 
 
-  function renderHole() {
-    renderHeader();
-    renderHoleScore();
-    renderHolesTable();
-    renderStatsDetail();
-    updateTotals();
-    updateGpsHoleImage();
-  }
+ function renderHole() {
+  renderHeader();
+  renderPlayersTabs();  // onglets joueurs
+  renderHoleScore();
+  renderHolesTable();
+  renderStatsDetail();
+  updateTotals();
+  updateGpsHoleImage();
+}
+
 
   function updateGpsHoleImage() {
     const hole = getCurrentHole();
@@ -1371,9 +1447,9 @@
 
   // --- Listeners score +/- ---
 
-    increaseScoreBtn.addEventListener("click", () => {
-      const hole = getCurrentHole();
-      let score = hole.score ?? hole.par;
+   increaseScoreBtn.addEventListener("click", () => {
+      const hole = getCurrentPlayerHole();
+      let score = hole.score ?? getCurrentHole().par;
       score++;
       hole.score = score;
       currentHoleScoreEl.textContent = score;
@@ -1383,8 +1459,8 @@
     });
 
     decreaseScoreBtn.addEventListener("click", () => {
-      const hole = getCurrentHole();
-      let score = hole.score ?? hole.par;
+      const hole = getCurrentPlayerHole();
+      let score = hole.score ?? getCurrentHole().par;
       if (score > 1) {
         score--;
         hole.score = score;
@@ -1395,20 +1471,18 @@
       }
     });
 
-    // --- Listeners putts +/- ---
-
     increasePuttsBtn.addEventListener("click", () => {
-      const hole = getCurrentHole();
+      const hole = getCurrentPlayerHole();
       let putts = hole.putts ?? 0;
       putts++;
       hole.putts = putts;
       currentHolePuttsEl.textContent = putts;
-      updateTotals();      // pour les stats globales
-      renderStatsDetail(); // si tu veux voir les putts dans le récap plus tard
+      updateTotals();
+      renderStatsDetail();
     });
 
     decreasePuttsBtn.addEventListener("click", () => {
-      const hole = getCurrentHole();
+      const hole = getCurrentPlayerHole();
       let putts = hole.putts ?? 0;
       if (putts > 0) {
         putts--;
@@ -1418,6 +1492,7 @@
         renderStatsDetail();
       }
     });
+
 
 
 
