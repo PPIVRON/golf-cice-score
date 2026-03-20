@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Golf – Configuration partie</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <style>
     * {
       box-sizing: border-box;
@@ -117,6 +117,26 @@
       align-items: center;
       gap: 10px;
     }
+
+    .player-trigram {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .player-trigram::placeholder {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
 
     .tee-toggle {
       display: flex;
