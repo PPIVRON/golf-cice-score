@@ -1649,7 +1649,7 @@
     return R * c;
   }
 
-  function computeDistancesToMarks(lat, lon) {
+   function computeDistancesToMarks(lat, lon) {
     const hole = getCurrentHole();
     const key = `${currentCourseKey}-${hole.number}`;
     const ref = holeImageRefs[key];
@@ -1657,14 +1657,25 @@
       return [];
     }
 
-    return ref.marks.map(mark => {
-      const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
-      return {
-        label: mark.label,
-        distance: Math.round(d)
-      };
-    });
+    // Distance joueur → green
+    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+
+    return ref.marks
+      .filter(mark => {
+        // Distance joueur → repère
+        const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+        // On affiche le repère seulement si on est encore avant lui
+        return distToMark < distToGreen;
+      })
+      .map(mark => {
+        const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
+        return {
+          label: mark.label,
+          distance: Math.round(d)
+        };
+      });
   }
+
 
   function renderMarksDistances(lat, lon) {
     const marksDistances = computeDistancesToMarks(lat, lon);
@@ -1776,10 +1787,18 @@
 
     marksContainerEl.innerHTML = "";
 
+    // Distance joueur → green
+    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+
     const imgRect = holeImageEl.getBoundingClientRect();
 
     ref.marks.forEach(mark => {
-      const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
+      const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+
+      // On affiche le badge seulement si on est encore avant le repère
+      if (distToMark >= distToGreen) return;
+
+      const d = distToMark;
       const x = imgRect.left + imgRect.width * mark.img.x;
       const y = imgRect.top + imgRect.height * mark.img.y;
 
@@ -1791,6 +1810,7 @@
       marksContainerEl.appendChild(badge);
     });
   }
+
 
 
   function hideMarker() {
