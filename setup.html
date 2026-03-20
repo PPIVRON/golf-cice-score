@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Golf – Configuration partie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5f7;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+
+    /* Nombre de joueurs */
+    .nb-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nb-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      cursor: pointer;
+    }
+
+    .nb-btn.active {
+      border-color: #111827;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    /* Parcours */
+    .course-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .course-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .course-btn.active {
+      border-color: #111827;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    /* Joueurs */
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .player-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .player-num {
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .player-trigram {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .player-trigram::placeholder {
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      color: #9ca3af;
+    }
+
+    .tee-toggle {
+      display: flex;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #d1d5db;
+      flex-shrink: 0;
+    }
+
+    .tee-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+      border: none;
+      background: #f9fafb;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .tee-btn.active-white {
+      background: #f1f5f9;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .tee-btn.active-yellow {
+      background: #fef08a;
+      color: #78350f;
+      font-weight: 600;
+    }
+
+    /* Bouton démarrer */
+    .btn-start {
+      width: 100%;
+      max-width: 420px;
+      padding: 14px;
+      border-radius: 999px;
+      border: none;
+      background: #16a34a;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .btn-start:active {
+      transform: scale(0.97);
+    }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Configuration de la partie</h1>
+
+  <!-- Parcours -->
+  <div class="card">
+    <h2>Parcours</h2>
+    <div class="course-btns">
+      <button class="course-btn active" data-course="cice">Cicé-Blossac</button>
+      <button class="course-btn" data-course="rennes">Rennes St-Jacques</button>
+    </div>
+  </div>
+
+  <!-- Nombre de joueurs -->
+  <div class="card">
+    <h2>Nombre de joueurs</h2>
+    <div class="nb-btns">
+      <button class="nb-btn active" data-nb="1">1</button>
+      <button class="nb-btn" data-nb="2">2</button>
+      <button class="nb-btn" data-nb="3">3</button>
+      <button class="nb-btn" data-nb="4">4</button>
+    </div>
+  </div>
+
+  <!-- Joueurs -->
+  <div class="card">
+    <h2>Joueurs</h2>
+    <div id="playersForm">
+      <!-- généré dynamiquement -->
+    </div>
+    <div class="error-msg" id="errorMsg">Merci de renseigner le trigramme de chaque joueur.</div>
+  </div>
+
+  <!-- Bouton démarrer -->
+  <button class="btn-start" id="btnStart">Démarrer la partie →</button>
+
+<script>
+
+  // Vérification accès
+  (function () {
+    const ok = sessionStorage.getItem("golfAccessOK");
+    if (ok !== "1") {
+      window.location.href = "ppv.html";
+    }
+  })();
+
+  let selectedCourse = "cice";
+  let nbPlayers = 1;
+
+  const playersFormEl = document.getElementById("playersForm");
+  const errorMsgEl = document.getElementById("errorMsg");
+
+  // --- Sélection parcours ---
+  document.querySelectorAll(".course-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".course-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedCourse = btn.dataset.course;
+    });
+  });
+
+  // --- Sélection nb joueurs ---
+  document.querySelectorAll(".nb-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nb-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      nbPlayers = parseInt(btn.dataset.nb, 10);
+      renderPlayersForm();
+    });
+  });
+
+  // --- Générer le formulaire joueurs ---
+  function renderPlayersForm() {
+    playersFormEl.innerHTML = "";
+    for (let i = 0; i < nbPlayers; i++) {
+      const row = document.createElement("div");
+      row.className = "player-row";
+      row.innerHTML = `
+        <div class="player-num">${i + 1}</div>
+        <input
+          class="player-trigram"
+          type="text"
+          maxlength="3"
+          placeholder="Trigramme (ex: JDU)"
+          data-player="${i}"
+          id="trigram-${i}"
+        >
+        <div class="tee-toggle">
+          <button
+            class="tee-btn active-white"
+            data-player="${i}"
+            data-tee="white"
+            id="tee-white-${i}"
+          >Blanc</button>
+          <button
+            class="tee-btn"
+            data-player="${i}"
+            data-tee="yellow"
+            id="tee-yellow-${i}"
+          >Jaune</button>
+        </div>
+      `;
+      playersFormEl.appendChild(row);
+    }
+
+    // Listeners tee blanc/jaune
+    document.querySelectorAll(".tee-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const playerIdx = btn.dataset.player;
+        const tee = btn.dataset.tee;
+        const whiteBtn = document.getElementById(`tee-white-${playerIdx}`);
+        const yellowBtn = document.getElementById(`tee-yellow-${playerIdx}`);
+        whiteBtn.classList.remove("active-white");
+        yellowBtn.classList.remove("active-yellow");
+        if (tee === "white") {
+          whiteBtn.classList.add("active-white");
+        } else {
+          yellowBtn.classList.add("active-yellow");
+        }
+      });
+    });
+  }
+
+  // --- Démarrer la partie ---
+  document.getElementById("btnStart").addEventListener("click", () => {
+    const players = [];
+    let valid = true;
+
+    for (let i = 0; i < nbPlayers; i++) {
+      const trigram = document.getElementById(`trigram-${i}`).value.trim().toUpperCase();
+      if (!trigram) {
+        valid = false;
+        break;
+      }
+
+      const whiteBtn = document.getElementById(`tee-white-${i}`);
+      const teeColor = whiteBtn.classList.contains("active-white") ? "white" : "yellow";
+
+      players.push({ trigram, teeColor });
+    }
+
+    if (!valid) {
+      errorMsgEl.style.display = "block";
+      return;
+    }
+
+    errorMsgEl.style.display = "none";
+
+    // Sauvegarde dans sessionStorage
+    const setupData = {
+      courseKey: selectedCourse,
+      players: players
+    };
+    sessionStorage.setItem("golfSetup", JSON.stringify(setupData));
+
+    // Redirect vers l'appli
+    window.location.href = "index.html";
+  });
+
+  // Init formulaire avec 1 joueur
+  renderPlayersForm();
+
+</script>
+</body>
+</html>
