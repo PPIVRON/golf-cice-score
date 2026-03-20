@@ -1899,21 +1899,29 @@
     return players
       .map(player => {
         let total = 0;
+        let parTotal = 0;
         let holesPlayed = 0;
         player.holes.forEach(h => {
           if (h.score !== null) {
             total += h.score;
+            parTotal += h.par;
             holesPlayed++;
           }
         });
+        const diff = total - parTotal;
+        const diffText = holesPlayed === 0
+          ? "—"
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
         return {
           trigram: player.trigram,
           score: total,
+          diffText: diffText,
           holesPlayed: holesPlayed
         };
       })
       .sort((a, b) => a.score - b.score);
   }
+
 
   function renderRankingBand() {
     if (players.length <= 1) {
@@ -1928,10 +1936,11 @@
     ranking.forEach((p, index) => {
       const item = document.createElement("div");
       item.className = "ranking-item" + (index === 0 ? " leader" : "");
-      item.innerHTML = `${p.trigram} <strong>${p.score}</strong>`;
+      item.innerHTML = `${p.trigram} <strong>${p.score > 0 ? p.score : "—"}</strong> (${p.diffText})`;
       rankingBandEl.appendChild(item);
     });
   }
+
 
   function renderRankingDetail() {
     const ranking = computeRanking();
@@ -1943,11 +1952,12 @@
       row.innerHTML = `
         <div class="ranking-pos">${index + 1}</div>
         <div class="ranking-trigram">${p.trigram}</div>
-        <div class="ranking-score">${p.score > 0 ? p.score + " coups" : "—"}</div>
+        <div class="ranking-score">${p.score > 0 ? p.score + " (" + p.diffText + ")" : "—"}</div>
       `;
       rankingDetailEl.appendChild(row);
     });
   }
+
 
 
 
