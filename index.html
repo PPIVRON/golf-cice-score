@@ -617,6 +617,8 @@
     <!-- Vue STATS -->
     <section id="view-stats" class="view">
       <div class="stats-main">
+        <!-- Onglets joueurs stats -->
+      <div class="players-tabs" id="statsTabs"></div>
         <div class="stats-summary">
           <h2>Résumé de la partie</h2>
           <div class="line">
@@ -1176,12 +1178,37 @@
       tab.addEventListener("click", () => {
         currentPlayerIndex = index;
         currentTeeColor = players[index].teeColor;
+        // Mettre à jour le radio button visuellement
+      const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
+      if (teeRadio) teeRadio.checked = true;
+
         renderPlayersTabs();
+        renderStatsTabs();   // AJOUT
         renderHoleScore();
         renderHolesTable();
         renderStatsDetail();
         updateTotals();
         renderHeader();
+      });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+  function renderStatsTabs() {
+    const tabsEl = document.getElementById("statsTabs");
+    if (!tabsEl) return;
+    tabsEl.innerHTML = "";
+
+    players.forEach((player, index) => {
+      const tab = document.createElement("button");
+      tab.className = "player-tab" + (index === currentPlayerIndex ? " active" : "");
+      tab.textContent = player.trigram;
+      tab.addEventListener("click", () => {
+        currentPlayerIndex = index;
+        renderStatsTabs();
+        renderPlayersTabs();  // AJOUT
+        renderStatsDetail();
+        updateTotals();
       });
       tabsEl.appendChild(tab);
     });
@@ -1429,6 +1456,7 @@
  function renderHole() {
   renderHeader();
   renderPlayersTabs();  // onglets joueurs
+  renderStatsTabs();   // AJOUT
   renderHoleScore();
   renderHolesTable();
   renderStatsDetail();
