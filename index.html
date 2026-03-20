@@ -528,34 +528,7 @@
       font-weight: 700;
     }
 
-    .new-game-bar {
-      position: fixed;
-      bottom: 60px; /* juste au-dessus de la barre de nav */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      justify-content: center;
-      padding: 4px 16px;
-      background: #f4f5f7;
-      border-top: 1px solid #e5e7eb;
-      z-index: 39;
-    }
-
-    #btnNewGame {
-      width: 100%;
-      padding: 8px;
-      border-radius: 999px;
-      border: 2px solid #dc2626;
-      background: #ffffff;
-      color: #dc2626;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-
+    
 
   </style>
 </head>
@@ -689,6 +662,17 @@
         <div class="stats-detail" id="statsDetail">
           <!-- lignes trou par trou générées par JS -->
         </div>
+        <!-- Bouton Nouvelle partie -->
+        <div style="margin-top: 16px; text-align: center;">
+          <button id="btnNewGame" style="
+            background: none;
+            border: none;
+            color: #dc2626;
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+          ">↩ Nouvelle partie</button>
+        </div>
       </div>
     </section>
   </main>
@@ -735,11 +719,6 @@
   <button class="nav-btn" data-view="stats" id="btnNavStats">
     <span>Stats</span>
   </button>
-</div>
-
-<!-- Bouton Nouvelle partie -->
-<div class="new-game-bar">
-  <button id="btnNewGame">Nouvelle partie</button>
 </div>
 
 
