@@ -504,6 +504,29 @@
       color: #f9fafb;
     }
 
+    #rankingBand {
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 12px;
+      padding: 5px 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      cursor: pointer;
+    }
+
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ranking-item.leader {
+      color: #fbbf24; /* or pour le leader */
+      font-weight: 700;
+    }
 
 
   </style>
@@ -537,6 +560,12 @@
     </div>
 
   </header>
+
+  <!-- Bandeau classement multi-joueurs -->
+  <div id="rankingBand" style="display:none;">
+    <!-- généré dynamiquement -->
+  </div>
+
 
   <main>
     <!-- Vue SCORE -->
@@ -638,6 +667,15 @@
 
 </div>
 
+<!-- Modal CLASSEMENT -->
+<div id="rankingModal" class="modal">
+  <div class="modal-content" style="background:#ffffff; color:#111827; max-width:90%; max-height:60%;">
+    <span class="close" id="closeRanking">&times;</span>
+    <h2 style="font-size:15px; margin-bottom:12px;">Classement</h2>
+    <div id="rankingDetail"></div>
+  </div>
+</div>
+
 <!-- Modal ZOOM (réutilisation de ta logique existante) -->
 <div id="zoomModal" class="modal">
   <span class="close">&times;</span>
@@ -708,6 +746,12 @@
     const closeTipsBtn = document.getElementById("closeTips");
     const tipsTextEl = document.getElementById("tipsText");
     let lateralFactorCice1 = 1.0; // 1.0 = valeur de base, <1 = moins de décalage, >1 = plus
+
+    const rankingBandEl   = document.getElementById("rankingBand");
+    const rankingModal    = document.getElementById("rankingModal");
+    const closeRankingBtn = document.getElementById("closeRanking");
+    const rankingDetailEl = document.getElementById("rankingDetail");
+
 
 
 
@@ -1130,7 +1174,7 @@
 };
 
   const holeTips = {
-    "cice-1": "Du départ attention au hors limite à droite le long du practice ..., s'aligner sur les arbres du départ du trou 2 ... attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ... Green pentu dans le sens descendant haut vers le bas ... attention à droite du green l'eau arrive vite et impossible d'arrêter la balle",
+    "cice-1": "Du départ attention au hors limite à droite le long du practice ..., s'aligner sur les arbres du départ du trou 2 ... attention à droite du poteau des 135m de ne pas se retrouver sous les arbres ... attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ... Green pentu dans le sens descendant haut vers le bas ... attention à droite du green l'eau arrive vite et impossible d'arrêter la balle",
     "cice-2": "Par 5 en dogleg droit accentué, privilégié une mise en jeu dans le virage (attention le fairway est peu large) donc une visée 10 m environ du bunker de gauche ... pour le deuxième coup, soit passer au dessus des arbres, soit un coup à droite (entre la droite du premier arbre et le poteau des 135 m ... attaque du green, protégé par 3 bunker (2 à gauche le long du green, 1 à droite bas) , une pente accentuée en haut du green, mais pour une grande partie assez plat ...  privilégier une attaque longue ...",
     "cice-3": "Par 5 en dogleg, privilégier un lay‑up avant le ruisseau.",
     "cice-4": "Par 5 en dogleg, privilégier un lay‑up avant le ruisseau.",
@@ -1462,6 +1506,7 @@
   renderStatsDetail();
   updateTotals();
   updateGpsHoleImage();
+  renderRankingBand(); // MANQUANT
 }
 
 
@@ -1475,51 +1520,56 @@
 
   // --- Listeners score +/- ---
 
-   increaseScoreBtn.addEventListener("click", () => {
-      const hole = getCurrentPlayerHole();
-      let score = hole.score ?? getCurrentHole().par;
-      score++;
+  increaseScoreBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let score = hole.score ?? getCurrentHole().par;
+    score++;
+    hole.score = score;
+    currentHoleScoreEl.textContent = score;
+    updateTotals();
+    renderHolesTable();
+    renderStatsDetail();
+    renderRankingBand(); // AJOUT
+  });
+
+  decreaseScoreBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let score = hole.score ?? getCurrentHole().par;
+    if (score > 1) {
+      score--;
       hole.score = score;
       currentHoleScoreEl.textContent = score;
       updateTotals();
       renderHolesTable();
       renderStatsDetail();
-    });
+      renderRankingBand(); // AJOUT
+    }
+  });
 
-    decreaseScoreBtn.addEventListener("click", () => {
-      const hole = getCurrentPlayerHole();
-      let score = hole.score ?? getCurrentHole().par;
-      if (score > 1) {
-        score--;
-        hole.score = score;
-        currentHoleScoreEl.textContent = score;
-        updateTotals();
-        renderHolesTable();
-        renderStatsDetail();
-      }
-    });
+  increasePuttsBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let putts = hole.putts ?? 0;
+    putts++;
+    hole.putts = putts;
+    currentHolePuttsEl.textContent = putts;
+    updateTotals();
+    renderStatsDetail();
+    renderRankingBand(); // AJOUT
+  });
 
-    increasePuttsBtn.addEventListener("click", () => {
-      const hole = getCurrentPlayerHole();
-      let putts = hole.putts ?? 0;
-      putts++;
+  decreasePuttsBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let putts = hole.putts ?? 0;
+    if (putts > 0) {
+      putts--;
       hole.putts = putts;
       currentHolePuttsEl.textContent = putts;
       updateTotals();
       renderStatsDetail();
-    });
+      renderRankingBand(); // AJOUT
+    }
+  });
 
-    decreasePuttsBtn.addEventListener("click", () => {
-      const hole = getCurrentPlayerHole();
-      let putts = hole.putts ?? 0;
-      if (putts > 0) {
-        putts--;
-        hole.putts = putts;
-        currentHolePuttsEl.textContent = putts;
-        updateTotals();
-        renderStatsDetail();
-      }
-    });
 
 
 
@@ -1845,6 +1895,60 @@
   };
 }
 
+  function computeRanking() {
+    return players
+      .map(player => {
+        let total = 0;
+        let holesPlayed = 0;
+        player.holes.forEach(h => {
+          if (h.score !== null) {
+            total += h.score;
+            holesPlayed++;
+          }
+        });
+        return {
+          trigram: player.trigram,
+          score: total,
+          holesPlayed: holesPlayed
+        };
+      })
+      .sort((a, b) => a.score - b.score);
+  }
+
+  function renderRankingBand() {
+    if (players.length <= 1) {
+      rankingBandEl.style.display = "none";
+      return;
+    }
+
+    const ranking = computeRanking();
+    rankingBandEl.style.display = "flex";
+    rankingBandEl.innerHTML = "";
+
+    ranking.forEach((p, index) => {
+      const item = document.createElement("div");
+      item.className = "ranking-item" + (index === 0 ? " leader" : "");
+      item.innerHTML = `${p.trigram} <strong>${p.score}</strong>`;
+      rankingBandEl.appendChild(item);
+    });
+  }
+
+  function renderRankingDetail() {
+    const ranking = computeRanking();
+    rankingDetailEl.innerHTML = "";
+
+    ranking.forEach((p, index) => {
+      const row = document.createElement("div");
+      row.className = "ranking-row" + (index === 0 ? " leader" : "");
+      row.innerHTML = `
+        <div class="ranking-pos">${index + 1}</div>
+        <div class="ranking-trigram">${p.trigram}</div>
+        <div class="ranking-score">${p.score > 0 ? p.score + " coups" : "—"}</div>
+      `;
+      rankingDetailEl.appendChild(row);
+    });
+  }
+
 
 
   zoomBtn.addEventListener("click", () => {
@@ -1860,6 +1964,22 @@
       zoomModal.style.display = "none";
     }
   });
+
+  rankingBandEl.addEventListener("click", () => {
+    renderRankingDetail();
+    rankingModal.style.display = "block";
+  });
+
+  closeRankingBtn.addEventListener("click", () => {
+    rankingModal.style.display = "none";
+  });
+
+  rankingModal.addEventListener("click", (e) => {
+    if (e.target === rankingModal) {
+      rankingModal.style.display = "none";
+    }
+  });
+
 
   // --- Init ---
 
