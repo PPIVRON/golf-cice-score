@@ -752,7 +752,8 @@
     const marksContainerEl = document.getElementById("marksContainer");
     const decreasePuttsBtn = document.getElementById("decreasePutts");
     const increasePuttsBtn = document.getElementById("increasePutts");
-    let currentTeeColor = "white"; // "white" ou "yellow"
+    let currentTeeColor = players[0].teeColor; // couleur du premier joueur
+
 
     const editExtrasBtn = document.getElementById("editExtrasBtn");
     const tipsModal = document.getElementById("tipsModal");
@@ -2036,6 +2037,9 @@
 
 
   // --- Init ---
+
+  const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
+  if (teeRadioInit) teeRadioInit.checked = true;
 
   initCourseTotals();
   renderHole();
