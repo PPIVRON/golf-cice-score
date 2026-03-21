@@ -833,9 +833,16 @@
         lon: -1.76948,
         // ancien "imgMark" du trou 1
         img: { x: 0.629, y: 0.332 }
-      }
+      },
       // plus tard tu pourras rajouter une deuxième marque ici
       // { lat: ..., lon: ..., img: { x: ..., y: ... } }
+      {
+        label: "Repère poteau droite 135 m",
+        lat: 48.03667,
+        lon: -1.76930,
+        // ancien "imgMark" du trou 1
+        img: { x: 0.699, y: 0.319 }
+      }
     ],
     green: {
       // ancien "green" du trou 1
@@ -850,11 +857,18 @@
     marks: [
       {
         // ancien "mark" du trou 2 (point à 164 m)
-        label: "Repère 196 m du départ",
+        label: "Repère centre virage à droite du bunker",
         lat: 48.03706,
         lon: -1.76662,
         // ancien "imgMark" du trou 2
         img: { x: 0.236, y: 0.507 }
+      },
+      {
+        label: "à la corde du virage",
+        lat: 48.03703,
+        lon: -1.76690,
+        // ancien "imgMark" du trou 2
+        img: { x: 0.258, y: 0.522 }
       },
       {
         // ancien "mark" du trou 2 (point à 135 m)
@@ -863,6 +877,20 @@
         lon: -1.76644,
         // ancien "imgMark" du trou 2
         img: { x: 0.416, y: 0.360 }
+      },
+      {
+        label: "Repère poteau droite 135 m",
+        lat: 48.03589,
+        lon: -1.76661,
+        // ancien "imgMark" du trou 2
+        img: { x: 0.455, y: 0.368 }
+      },
+      {
+        label: "Repère bunker green droite",
+        lat: 48.03479,
+        lon: -1.76623,
+        // ancien "imgMark" du trou 2
+        img: { x: 0.532, y: 0.262 }
       }
       // plus tard: autre marque si tu veux
     ],
@@ -1822,112 +1850,157 @@
   }
 
   function latLonToImagePercent(hole, lat, lon) {
-  const key = `${currentCourseKey}-${hole.number}`;
-  const ref = holeImageRefs[key];
-  if (!ref || !ref.green) {
-    return { xPercent: 0.5, yPercent: 0.5 };
-  }
+    const key = `${currentCourseKey}-${hole.number}`;
+    const ref = holeImageRefs[key];
+    if (!ref || !ref.green) {
+      return { xPercent: 0.5, yPercent: 0.5 };
+    }
 
-  // Cas spécial : Cicé trou 1, projection 2D un peu plus riche
-  if (key === "cice-1") {
-    return latLonToImagePercentCice1(lat, lon, ref);
-  }
+    // Cas spécial : Cicé trou 1, projection 2D un peu plus riche
+    if (key === "cice-1") {
+      return latLonToImagePercentCice1(lat, lon, ref);
+    }
+    // Cas spécial : Cicé trou 2
+    if (key === "cice-2") {
+      return latLonToImagePercentCice2(lat, lon, ref);
+    }
 
-  // Cas général (autres trous) : projection simple le long de la ligne repère -> green
-  const g = ref.green;
-  const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
+    // Cas général (autres trous) : projection simple le long de la ligne repère -> green
+    const g = ref.green;
+    const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
 
-  if (!m) {
+    if (!m) {
+      return {
+        xPercent: g.img.x,
+        yPercent: g.img.y
+      };
+    }
+
+    const dxGps = g.lon - m.lon;
+    const dyGps = g.lat - m.lat;
+    const dxImg = g.img.x - m.img.x;
+    const dyImg = g.img.y - m.img.y;
+
+    const denom = (dxGps * dxGps + dyGps * dyGps);
+    if (denom === 0) {
+      return {
+        xPercent: g.img.x,
+        yPercent: g.img.y
+      };
+    }
+
+    const uxGps = dxGps / Math.sqrt(denom);
+    const uyGps = dyGps / Math.sqrt(denom);
+
+    const vxGps = lon - m.lon;
+    const vyGps = lat - m.lat;
+
+    const proj = vxGps * uxGps + vyGps * uyGps;
+    const length = Math.sqrt(denom);
+    const t = proj / length;
+
+    const x = m.img.x + dxImg * t;
+    const y = m.img.y + dyImg * t;
+
     return {
-      xPercent: g.img.x,
-      yPercent: g.img.y
+      xPercent: x,
+      yPercent: y
     };
   }
-
-  const dxGps = g.lon - m.lon;
-  const dyGps = g.lat - m.lat;
-  const dxImg = g.img.x - m.img.x;
-  const dyImg = g.img.y - m.img.y;
-
-  const denom = (dxGps * dxGps + dyGps * dyGps);
-  if (denom === 0) {
-    return {
-      xPercent: g.img.x,
-      yPercent: g.img.y
-    };
-  }
-
-  const uxGps = dxGps / Math.sqrt(denom);
-  const uyGps = dyGps / Math.sqrt(denom);
-
-  const vxGps = lon - m.lon;
-  const vyGps = lat - m.lat;
-
-  const proj = vxGps * uxGps + vyGps * uyGps;
-  const length = Math.sqrt(denom);
-  const t = proj / length;
-
-  const x = m.img.x + dxImg * t;
-  const y = m.img.y + dyImg * t;
-
-  return {
-    xPercent: x,
-    yPercent: y
-  };
-}
 
   function latLonToImagePercentCice1(lat, lon, ref) {
-  const g = ref.green;
-  const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
+    // 3 points de référence
+    const p1 = { // Repère 135 m centre
+      lat: 48.03660, lon: -1.76948,
+      ix: 0.629, iy: 0.332
+    };
+    const p2 = { // Poteau droit 135 m
+      lat: 48.03667, lon: -1.76930,
+      ix: 0.699, iy: 0.319
+    };
+    const p3 = { // Green
+      lat: 48.03783, lon: -1.76912,
+      ix: 0.537, iy: 0.233
+    };
 
-  if (!m) {
-    return { xPercent: g.img.x, yPercent: g.img.y };
+    // Vecteurs GPS depuis p1
+    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat; // p1 -> p2
+    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat; // p1 -> p3
+
+    // Vecteurs image depuis p1
+    const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
+    const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
+
+    // Position joueur par rapport à p1
+    const px = lon - p1.lon;
+    const py = lat - p1.lat;
+
+    // Résolution du système : px = s*ax + t*bx
+    //                         py = s*ay + t*by
+    const denom = ax * by - ay * bx;
+    if (Math.abs(denom) < 1e-12) {
+      // Points colinéaires, fallback projection 1D
+      return { xPercent: p1.ix, yPercent: p1.iy };
+    }
+
+    const s = (px * by - py * bx) / denom;
+    const t = (ax * py - ay * px) / denom;
+
+    // Projection sur l'image
+    const x = p1.ix + s * aix + t * bix;
+    const y = p1.iy + s * aiy + t * biy;
+
+    return {
+      xPercent: x,
+      yPercent: y
+    };
   }
 
-  // 1) Repère -> green en coordonnées GPS
-  const dxGps = g.lon - m.lon;
-  const dyGps = g.lat - m.lat;
-  const distGps = Math.sqrt(dxGps * dxGps + dyGps * dyGps) || 1;
+  function latLonToImagePercentCice2(lat, lon, ref) {
+    // 3 points de référence trou 2
+    const p1 = { // Repère 135 m centre
+      lat: 48.03583, lon: -1.76644,
+      ix: 0.416, iy: 0.360
+    };
+    const p2 = { // Poteau droit 135 m
+      lat: 48.03589, lon: -1.76661,
+      ix: 0.455, iy: 0.368
+    };
+    const p3 = { // Green
+      lat: 48.03465, lon: -1.76596,
+      ix: 0.504, iy: 0.250
+    };
 
-  const uxGps = dxGps / distGps;
-  const uyGps = dyGps / distGps;
+    // Vecteurs GPS depuis p1
+    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
+    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
 
-  // 2) Position joueur par rapport au repère
-  const vxGps = lon - m.lon;
-  const vyGps = lat - m.lat;
+    // Vecteurs image depuis p1
+    const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
+    const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
 
-  // Composante le long de l'axe repère->green
-  const proj = vxGps * uxGps + vyGps * uyGps;
-  const t = proj / distGps; // 0 = repère, 1 = green (approx)
+    // Position joueur par rapport à p1
+    const px = lon - p1.lon;
+    const py = lat - p1.lat;
 
-  // Composante latérale (perpendiculaire à l'axe)
-  const perpX = -uyGps;
-  const perpY = uxGps;
-  const lateral = vxGps * perpX + vyGps * perpY;
+    // Résolution système affine
+    const denom = ax * by - ay * bx;
+    if (Math.abs(denom) < 1e-12) {
+      return { xPercent: p1.ix, yPercent: p1.iy };
+    }
 
-  // 3) Axe image repère->green
-  const dxImg = g.img.x - m.img.x;
-  const dyImg = g.img.y - m.img.y;
+    const s = (px * by - py * bx) / denom;
+    const t = (ax * py - ay * px) / denom;
 
-  const distImg = Math.sqrt(dxImg * dxImg + dyImg * dyImg) || 1;
-  const uxImg = dxImg / distImg;
-  const uyImg = dyImg / distImg;
+    const x = p1.ix + s * aix + t * bix;
+    const y = p1.iy + s * aiy + t * biy;
 
-  // Échelles
-  const scaleLongitudinal = distImg / distGps;
-  const scaleLateral = scaleLongitudinal * lateralFactorCice1;
+    return {
+      xPercent: x,
+      yPercent: y
+    };
+  }
 
-  // Position sur l’image :
-  // - m.img + t * axe repère->green (longitudinal)
-  // - + (lateral * scaleLateral) * direction perpendiculaire image
-  const x = m.img.x + dxImg * t + (lateral * scaleLateral) * (-uyImg);
-  const y = m.img.y + dyImg * t + (lateral * scaleLateral) * (uxImg);
-
-  return {
-    xPercent: x,
-    yPercent: y
-  };
-}
 
   function computeRanking() {
     return players
