@@ -2056,11 +2056,22 @@
 
     ranking.forEach((p, index) => {
       const item = document.createElement("div");
-      item.className = "ranking-item" + (index === 0 ? " leader" : "");
+      item.className = "ranking-item";
+
+      // Couleur selon départ du joueur
+      const player = players.find(pl => pl.trigram === p.trigram);
+      const isYellow = player && player.teeColor === "yellow";
+
+      item.style.color = isYellow ? "#fcd34d" : "#f9fafb";
+      if (index === 0) {
+        item.style.fontWeight = "700"; // leader en gras
+      }
+
       item.innerHTML = `${p.trigram} <strong>${p.score > 0 ? p.score : "—"}</strong> (${p.diffText})`;
       rankingBandEl.appendChild(item);
     });
   }
+
 
 
   function renderRankingDetail() {
