@@ -359,6 +359,7 @@
       background: #ef4444;
       border-radius: 999px;
       border: 2px solid #f9fafb;
+      z-index: 10; /* AJOUT */
     }
 
     #markerDistance {
@@ -369,6 +370,7 @@
       font-size: 11px;
       white-space: nowrap;
       margin-bottom: 4px;
+      z-index: 10; /* AJOUT */
     }
 
     /* --- Vue STATS --- */
@@ -477,6 +479,7 @@
       border-radius: 999px;
       font-size: 11px;
       white-space: nowrap;
+      z-index: 5; /* AJOUT */
     }
 
     .players-tabs {
@@ -1259,17 +1262,26 @@
 
     players.forEach((player, index) => {
       const tab = document.createElement("button");
-      tab.className = "player-tab" + (index === currentPlayerIndex ? " active" : "");
+      const isActive = index === currentPlayerIndex;
+      const isYellow = player.teeColor === "yellow";
+
+      tab.className = "player-tab" + (isActive ? " active" : "");
+
+      // Couleur de fond selon la couleur de départ
+      if (!isActive) {
+        tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+        tab.style.color = isYellow ? "#78350f" : "#6b7280";
+        tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+      }
+
       tab.textContent = player.trigram;
       tab.addEventListener("click", () => {
         currentPlayerIndex = index;
         currentTeeColor = players[index].teeColor;
-        // Mettre à jour le radio button visuellement
-      const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
-      if (teeRadio) teeRadio.checked = true;
-
+        const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
+        if (teeRadio) teeRadio.checked = true;
         renderPlayersTabs();
-        renderStatsTabs();   // AJOUT
+        renderStatsTabs();
         renderHoleScore();
         renderHolesTable();
         renderStatsDetail();
@@ -1280,25 +1292,38 @@
     });
   }
 
-  function renderStatsTabs() {
+
+   function renderStatsTabs() {
     const tabsEl = document.getElementById("statsTabs");
     if (!tabsEl) return;
     tabsEl.innerHTML = "";
 
     players.forEach((player, index) => {
       const tab = document.createElement("button");
-      tab.className = "player-tab" + (index === currentPlayerIndex ? " active" : "");
+      const isActive = index === currentPlayerIndex;
+      const isYellow = player.teeColor === "yellow";
+
+      tab.className = "player-tab" + (isActive ? " active" : "");
+
+      // Couleur de fond selon la couleur de départ
+      if (!isActive) {
+        tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+        tab.style.color = isYellow ? "#78350f" : "#6b7280";
+        tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+      }
+
       tab.textContent = player.trigram;
       tab.addEventListener("click", () => {
         currentPlayerIndex = index;
         renderStatsTabs();
-        renderPlayersTabs();  // AJOUT
+        renderPlayersTabs();
         renderStatsDetail();
         updateTotals();
       });
       tabsEl.appendChild(tab);
     });
   }
+
 
 
   function openTipsModal() {
@@ -1694,7 +1719,7 @@
         // Distance joueur → repère
         const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
         // On affiche le repère seulement si on est encore avant lui
-        return distToMark < distToGreen;
+        return distToMark < distToGreen && distToMark > 10;
       })
       .map(mark => {
         const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
@@ -1825,7 +1850,7 @@
       const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
 
       // On affiche le badge seulement si on est encore avant le repère
-      if (distToMark >= distToGreen) return;
+      if (distToMark >= distToGreen || distToMark <= 10) return;
 
       const d = distToMark;
       const x = imgRect.left + imgRect.width * mark.img.x;
@@ -1909,12 +1934,12 @@
   }
 
   function latLonToImagePercentCice1(lat, lon, ref) {
-    // 3 points de référence
-    const p1 = { // Repère 135 m centre
-      lat: 48.03660, lon: -1.76948,
-      ix: 0.629, iy: 0.332
+    // 3 points couvrant tout le trou 1 : départ + poteau droit 135m + green
+    const p1 = { // Départ
+      lat: 48.03535, lon: -1.77103,
+      ix: 0.416, iy: 0.808
     };
-    const p2 = { // Poteau droit 135 m
+    const p2 = { // Poteau droit 135m
       lat: 48.03667, lon: -1.76930,
       ix: 0.699, iy: 0.319
     };
@@ -1923,30 +1948,22 @@
       ix: 0.537, iy: 0.233
     };
 
-    // Vecteurs GPS depuis p1
-    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat; // p1 -> p2
-    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat; // p1 -> p3
-
-    // Vecteurs image depuis p1
+    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
+    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
     const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
     const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
 
-    // Position joueur par rapport à p1
     const px = lon - p1.lon;
     const py = lat - p1.lat;
 
-    // Résolution du système : px = s*ax + t*bx
-    //                         py = s*ay + t*by
     const denom = ax * by - ay * bx;
     if (Math.abs(denom) < 1e-12) {
-      // Points colinéaires, fallback projection 1D
       return { xPercent: p1.ix, yPercent: p1.iy };
     }
 
     const s = (px * by - py * bx) / denom;
     const t = (ax * py - ay * px) / denom;
 
-    // Projection sur l'image
     const x = p1.ix + s * aix + t * bix;
     const y = p1.iy + s * aiy + t * biy;
 
@@ -1956,13 +1973,14 @@
     };
   }
 
+
   function latLonToImagePercentCice2(lat, lon, ref) {
-    // 3 points de référence trou 2
-    const p1 = { // Repère 135 m centre
-      lat: 48.03583, lon: -1.76644,
-      ix: 0.416, iy: 0.360
+    // 3 points couvrant tout le trou 2 : départ + poteau droit 135m + green
+    const p1 = { // Départ
+      lat: 48.03816, lon: -1.76862,
+      ix: 0.472, iy: 0.888
     };
-    const p2 = { // Poteau droit 135 m
+    const p2 = { // Poteau droit 135m
       lat: 48.03589, lon: -1.76661,
       ix: 0.455, iy: 0.368
     };
@@ -1971,19 +1989,14 @@
       ix: 0.504, iy: 0.250
     };
 
-    // Vecteurs GPS depuis p1
     const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
     const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
-
-    // Vecteurs image depuis p1
     const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
     const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
 
-    // Position joueur par rapport à p1
     const px = lon - p1.lon;
     const py = lat - p1.lat;
 
-    // Résolution système affine
     const denom = ax * by - ay * bx;
     if (Math.abs(denom) < 1e-12) {
       return { xPercent: p1.ix, yPercent: p1.iy };
@@ -2000,6 +2013,7 @@
       yPercent: y
     };
   }
+
 
 
   function computeRanking() {
