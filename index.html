@@ -1314,12 +1314,16 @@
 
       tab.textContent = player.trigram;
       tab.addEventListener("click", () => {
-        currentPlayerIndex = index;
-        renderStatsTabs();
-        renderPlayersTabs();
-        renderStatsDetail();
-        updateTotals();
-      });
+      currentPlayerIndex = index;
+      currentTeeColor = players[index].teeColor; // AJOUT
+      // Mettre à jour le radio button visuellement
+      const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
+      if (teeRadio) teeRadio.checked = true; // AJOUT
+      renderStatsTabs();
+      renderPlayersTabs();
+      renderStatsDetail();
+      updateTotals();
+    });
       tabsEl.appendChild(tab);
     });
   }
