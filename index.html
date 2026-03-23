@@ -1715,24 +1715,27 @@
       return [];
     }
 
-    // Distance joueur → green
     const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
 
     return ref.marks
       .filter(mark => {
-        // Distance joueur → repère
         const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-        // On affiche le repère seulement si on est encore avant lui
-        return distToMark < distToGreen && distToMark > 10;
+        // Distance restante au repère = distToMark - distToGreen
+        // Si positif = repère encore devant nous
+        // Si négatif = repère dépassé → on n'affiche plus
+        return distToMark > distToGreen;
       })
       .map(mark => {
-        const d = distanceInMeters(lat, lon, mark.lat, mark.lon);
+        const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+        const distRestante = Math.round(distToMark - distToGreen);
         return {
           label: mark.label,
-          distance: Math.round(d)
+          distance: Math.round(distToMark),
+          distRestante: distRestante
         };
       });
   }
+
 
 
   function renderMarksDistances(lat, lon) {
@@ -1742,7 +1745,6 @@
       return;
     }
 
-    // Une ligne par repère
     gpsMarksDistancesEl.innerHTML = marksDistances
       .map(m => `${m.label} : ${m.distance} m`)
       .join("<br>");
@@ -1835,40 +1837,9 @@
   }
 
   function renderMarksBadges(lat, lon) {
-    const hole = getCurrentHole();
-    const key = `${currentCourseKey}-${hole.number}`;
-    const ref = holeImageRefs[key];
-    if (!ref || !ref.marks || ref.marks.length === 0) {
-      marksContainerEl.innerHTML = "";
-      return;
-    }
-
-    marksContainerEl.innerHTML = "";
-
-    // Distance joueur → green
-    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
-
-    const imgRect = holeImageEl.getBoundingClientRect();
-
-    ref.marks.forEach(mark => {
-      const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-
-      // On affiche le badge seulement si on est encore avant le repère
-      if (distToMark >= distToGreen || distToMark <= 10) return;
-
-      const d = distToMark;
-      const x = imgRect.left + imgRect.width * mark.img.x;
-      const y = imgRect.top + imgRect.height * mark.img.y;
-
-      const badge = document.createElement("div");
-      badge.className = "mark-badge";
-      badge.style.left = `${x}px`;
-      badge.style.top = `${y}px`;
-      badge.textContent = `${mark.label} : ${Math.round(d)} m`;
-      marksContainerEl.appendChild(badge);
-    });
-  }
-
+  // Badges repères désactivés sur le ZOOM pour ne pas polluer la visibilité
+  marksContainerEl.innerHTML = "";
+}
 
 
   function hideMarker() {
@@ -1938,25 +1909,14 @@
   }
 
   function latLonToImagePercentCice1(lat, lon, ref) {
-    // 3 points couvrant tout le trou 1 : départ + poteau droit 135m + green
-    const p1 = { // Départ
-      lat: 48.03535, lon: -1.77103,
-      ix: 0.416, iy: 0.808
-    };
-    const p2 = { // Poteau droit 135m
-      lat: 48.03667, lon: -1.76930,
-      ix: 0.699, iy: 0.319
-    };
-    const p3 = { // Green
-      lat: 48.03783, lon: -1.76912,
-      ix: 0.537, iy: 0.233
-    };
+    const p1 = { lat: 48.03535, lon: -1.77103, ix: 0.416, iy: 0.808 };
+    const p2 = { lat: 48.03667, lon: -1.76930, ix: 0.699, iy: 0.319 };
+    const p3 = { lat: 48.03783, lon: -1.76912, ix: 0.537, iy: 0.233 };
 
     const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
     const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
     const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
     const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
-
     const px = lon - p1.lon;
     const py = lat - p1.lat;
 
@@ -1968,36 +1928,23 @@
     const s = (px * by - py * bx) / denom;
     const t = (ax * py - ay * px) / denom;
 
-    const x = p1.ix + s * aix + t * bix;
-    const y = p1.iy + s * aiy + t * biy;
-
     return {
-      xPercent: x,
-      yPercent: y
+      xPercent: p1.ix + s * aix + t * bix,
+      yPercent: p1.iy + s * aiy + t * biy
     };
   }
+
 
 
   function latLonToImagePercentCice2(lat, lon, ref) {
-    // 3 points couvrant tout le trou 2 : départ + poteau droit 135m + green
-    const p1 = { // Départ
-      lat: 48.03816, lon: -1.76862,
-      ix: 0.472, iy: 0.888
-    };
-    const p2 = { // Poteau droit 135m
-      lat: 48.03589, lon: -1.76661,
-      ix: 0.455, iy: 0.368
-    };
-    const p3 = { // Green
-      lat: 48.03465, lon: -1.76596,
-      ix: 0.504, iy: 0.250
-    };
+    const p1 = { lat: 48.03816, lon: -1.76862, ix: 0.472, iy: 0.888 };
+    const p2 = { lat: 48.03589, lon: -1.76661, ix: 0.455, iy: 0.368 };
+    const p3 = { lat: 48.03465, lon: -1.76596, ix: 0.504, iy: 0.250 };
 
     const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
     const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
     const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
     const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
-
     const px = lon - p1.lon;
     const py = lat - p1.lat;
 
@@ -2009,14 +1956,12 @@
     const s = (px * by - py * bx) / denom;
     const t = (ax * py - ay * px) / denom;
 
-    const x = p1.ix + s * aix + t * bix;
-    const y = p1.iy + s * aiy + t * biy;
-
     return {
-      xPercent: x,
-      yPercent: y
+      xPercent: p1.ix + s * aix + t * bix,
+      yPercent: p1.iy + s * aiy + t * biy
     };
   }
+
 
 
 
