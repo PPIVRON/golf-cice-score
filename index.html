@@ -484,6 +484,15 @@
       font-weight: 700;
     }
 
+    .mark-tooltip {
+    background: rgba(245,158,11,0.9);
+    border: none;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+  }
     
 
   </style>
@@ -614,6 +623,7 @@
           <div class="gps-actions">
             <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
             <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
+            <button class="btn-secondary" id="centerMapBtn">📍</button>
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
           <div class="gps-status-line" id="gpsMarksDistances"></div>
@@ -1632,13 +1642,17 @@
   // Swipe gauche/droite pour changer de trou
   let touchStartX = 0;
   let touchEndX = 0;
-  document.addEventListener("touchstart", e => {
+    document.addEventListener("touchstart", e => {
+    if (e.target.closest('#mapContainer')) return;
     touchStartX = e.changedTouches[0].screenX;
   });
+
   document.addEventListener("touchend", e => {
+    if (e.target.closest('#mapContainer')) return;
     touchEndX = e.changedTouches[0].screenX;
     handleSwipe();
   });
+
 
   function handleSwipe() {
     const delta = touchEndX - touchStartX;
@@ -1719,9 +1733,11 @@
 
   const hole = getCurrentHole();
 
-  map = L.map('mapContainer', { zoomControl: true }).setView(
-    [hole.greenLat, hole.greenLon], 17
-  );
+  map = L.map('mapContainer', { 
+  zoomControl: false,  // supprime +/-
+  tap: false           // évite les conflits tactiles
+  }).setView([hole.greenLat, hole.greenLon], 17);
+
 
   // AJOUT : force le recalcul de la taille du conteneur
   setTimeout(() => { map.invalidateSize(); }, 100);
@@ -1746,15 +1762,22 @@
   const ref = holeImageRefs[key];
   if (ref && ref.marks) {
     ref.marks.forEach(mark => {
-      const m = L.circleMarker([mark.lat, mark.lon], {
-        radius: 6,
-        fillColor: '#f59e0b',
-        color: '#ffffff',
-        weight: 2,
-        fillOpacity: 1
-      }).addTo(map).bindPopup(mark.label);
-      marksMarkersLeaflet.push(m);
-    });
+    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
+    const m = L.circleMarker([mark.lat, mark.lon], {
+      radius: 6,
+      fillColor: '#f59e0b',
+      color: '#ffffff',
+      weight: 2,
+      fillOpacity: 1
+    }).addTo(map)
+      .bindTooltip(`${Math.round(markToGreen)} m`, {
+        permanent: true,
+        direction: 'right',
+        className: 'mark-tooltip'
+      });
+    marksMarkersLeaflet.push(m);
+  });
+
   }
 }
 
@@ -1984,7 +2007,10 @@ function updateMapPosition(lat, lon) {
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
   });
 
-
+  document.getElementById("centerMapBtn").addEventListener("click", () => {
+    if (!map || !playerMarkerLeaflet) return;
+    map.setView(playerMarkerLeaflet.getLatLng(), 17);
+  });
 
   // --- Init ---
 
