@@ -346,34 +346,7 @@
       cursor: pointer;
     }
 
-    #playerMarker,
-    #markerDistance {
-      position: absolute;
-      transform: translate(-50%, -100%);
-      pointer-events: none;
-    }
-
-    #playerMarker {
-      width: 12px;
-      height: 12px;
-      background: #ef4444;
-      border-radius: 999px;
-      border: 2px solid #f9fafb;
-      z-index: 10; /* AJOUT */
-    }
-
-    #markerDistance {
-      background: rgba(0,0,0,0.8);
-      color: #f9fafb;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 11px;
-      white-space: nowrap;
-      margin-bottom: 4px;
-      z-index: 10; /* AJOUT */
-    }
-
-    /* --- Vue STATS --- */
+   /* --- Vue STATS --- */
 
     .stats-main {
       display: flex;
@@ -461,27 +434,7 @@
       font-weight: 500;
     }
 
-    #marksContainer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .mark-badge {
-      position: absolute;
-      transform: translate(-50%, -100%);
-      background: rgba(15,23,42,0.9);
-      color: #f9fafb;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 11px;
-      white-space: nowrap;
-      z-index: 5; /* AJOUT */
-    }
-
+    
     .players-tabs {
       display: flex;
       gap: 6px;
@@ -534,6 +487,11 @@
     
 
   </style>
+
+  <!-- Leaflet - à ajouter juste avant </head> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 </head>
 <body>
 <div class="app">
@@ -635,13 +593,12 @@
         </div>
 
         <div class="gps-card">
-          <img id="holeImagePreview" src="TROU1.jpg" alt="Trou 1">
+          <div id="mapContainer" style="width:100%; height:300px; border-radius:8px; z-index:1;"></div>
           <div class="gps-actions">
             <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
-            <button class="btn-secondary" id="zoomBtn">ZOOM plein écran</button>
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
-          <div class="gps-status-line" id="gpsMarksDistances"></div> <!-- NOUVEAU -->
+          <div class="gps-status-line" id="gpsMarksDistances"></div>
         </div>
       </div>
     </section>
@@ -688,17 +645,6 @@
     <span class="close" id="closeRanking">&times;</span>
     <h2 style="font-size:15px; margin-bottom:12px;">Classement</h2>
     <div id="rankingDetail"></div>
-  </div>
-</div>
-
-<!-- Modal ZOOM (réutilisation de ta logique existante) -->
-<div id="zoomModal" class="modal">
-  <span class="close">&times;</span>
-  <div class="modal-content">
-    <img id="holeImage" src="TROU1.jpg" alt="Trou 1">
-    <div id="playerMarker"></div>
-    <div id="markerDistance"></div>
-    <div id="marksContainer"></div> <!-- NOUVEAU -->
   </div>
 </div>
 
@@ -752,7 +698,6 @@
 
 
     const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
-    const marksContainerEl = document.getElementById("marksContainer");
     const decreasePuttsBtn = document.getElementById("decreasePutts");
     const increasePuttsBtn = document.getElementById("increasePutts");
     let currentTeeColor = players[0].teeColor; // couleur du premier joueur
@@ -762,7 +707,6 @@
     const tipsModal = document.getElementById("tipsModal");
     const closeTipsBtn = document.getElementById("closeTips");
     const tipsTextEl = document.getElementById("tipsText");
-    let lateralFactorCice1 = 1.0; // 1.0 = valeur de base, <1 = moins de décalage, >1 = plus
 
     const rankingBandEl   = document.getElementById("rankingBand");
     const rankingModal    = document.getElementById("rankingModal");
@@ -1376,14 +1320,12 @@
   const gpsStatusEl = document.getElementById("gpsStatus");
   const gpsCoordsTextEl = document.getElementById("gpsCoordsText");
   const toggleGpsBtn = document.getElementById("toggleGpsBtn");
-  const holeImagePreviewEl = document.getElementById("holeImagePreview");
 
-  const zoomModal = document.getElementById("zoomModal");
-  const zoomBtn = document.getElementById("zoomBtn");
-  const closeModalBtn = zoomModal.querySelector(".close");
-  const holeImageEl = document.getElementById("holeImage");
-  const playerMarkerEl = document.getElementById("playerMarker");
-  const markerDistanceEl = document.getElementById("markerDistance");
+  let map = null;
+  let playerMarkerLeaflet = null;
+  let greenMarkerLeaflet = null;
+  let marksMarkersLeaflet = [];
+
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
   const statsTotalVsParEl = document.getElementById("statsTotalVsPar");
@@ -1581,13 +1523,11 @@
 }
 
 
-  function updateGpsHoleImage() {
-    const hole = getCurrentHole();
-    // ici tu gardes ton mapping trou -> image (TROU1.jpg, TROU2.jpg, etc.)
-    const imgName = `TROU${hole.number}.jpg`;
-    holeImagePreviewEl.src = imgName;
-    holeImageEl.src = imgName;
-  }
+ function updateGpsHoleImage() {
+  // Réinitialise la carte au nouveau trou
+  initMap();
+}
+
 
   // --- Listeners score +/- ---
 
@@ -1746,32 +1686,97 @@
   }
 
 
+  function initMap() {
+  if (map) {
+    map.remove();
+    map = null;
+    playerMarkerLeaflet = null;
+    greenMarkerLeaflet = null;
+    marksMarkersLeaflet = [];
+  }
+
+  const hole = getCurrentHole();
+
+  map = L.map('mapContainer', { zoomControl: true }).setView(
+    [hole.greenLat, hole.greenLon], 17
+  );
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Marqueur green
+  greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="font-size:20px;">⛳</div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 20]
+    })
+  }).addTo(map).bindPopup('Green');
+
+  // Marqueurs repères
+  const key = `${currentCourseKey}-${hole.number}`;
+  const ref = holeImageRefs[key];
+  if (ref && ref.marks) {
+    ref.marks.forEach(mark => {
+      const m = L.circleMarker([mark.lat, mark.lon], {
+        radius: 6,
+        fillColor: '#f59e0b',
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(map).bindPopup(mark.label);
+      marksMarkersLeaflet.push(m);
+    });
+  }
+}
+
+function updateMapPosition(lat, lon) {
+  if (!map) initMap();
+
+  if (playerMarkerLeaflet) {
+    playerMarkerLeaflet.setLatLng([lat, lon]);
+  } else {
+    playerMarkerLeaflet = L.circleMarker([lat, lon], {
+      radius: 8,
+      fillColor: '#ef4444',
+      color: '#ffffff',
+      weight: 2,
+      fillOpacity: 1
+    }).addTo(map).bindPopup('Vous êtes ici');
+  }
+
+  map.setView([lat, lon], 17);
+}
+
+
 
   function handleGpsSuccess(pos) {
-    const { latitude, longitude, accuracy } = pos.coords;
-    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-    gpsStatusEl.textContent = "GPS OK";
+  const { latitude, longitude, accuracy } = pos.coords;
+  gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+  gpsStatusEl.textContent = "GPS OK";
 
-    const hole = getCurrentHole();
-    if (hole.greenLat && hole.greenLon) {
-      const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-      gpsDistanceValueEl.textContent = Math.round(d);
-      updateMarkerPositionFromGps(latitude, longitude, d);
-    } else {
-      gpsDistanceValueEl.textContent = "‑‑‑";
-      hideMarker();
-    }
-
-    renderMarksDistances(latitude, longitude);
-    renderMarksBadges(latitude, longitude);    // badges sur la carte zoom
+  const hole = getCurrentHole();
+  if (hole.greenLat && hole.greenLon) {
+    const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+    gpsDistanceValueEl.textContent = Math.round(d);
+  } else {
+    gpsDistanceValueEl.textContent = "‑‑‑";
   }
+
+  renderMarksDistances(latitude, longitude);
+  updateMapPosition(latitude, longitude);
+}
+
 
 
   function handleGpsError(err) {
     gpsStatusEl.textContent = "Erreur GPS : " + err.message;
     gpsDistanceValueEl.textContent = "‑‑‑";
-    hideMarker();
   }
+
 
   function startGps() {
     if (!navigator.geolocation) {
@@ -1792,19 +1797,18 @@
   }
 
   function stopGps() {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
-    gpsActive = false;
-    toggleGpsBtn.textContent = "Activer GPS live";
-    gpsStatusEl.textContent = "GPS inactif";
-    gpsDistanceValueEl.textContent = "‑‑‑";
-    gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
-    gpsMarksDistancesEl.textContent = ""; // <-- ICI, juste avant hideMarker
-    marksContainerEl.innerHTML = "";
-    hideMarker();
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
   }
+  gpsActive = false;
+  toggleGpsBtn.textContent = "Activer GPS live";
+  gpsStatusEl.textContent = "GPS inactif";
+  gpsDistanceValueEl.textContent = "‑‑‑";
+  gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
+  gpsMarksDistancesEl.textContent = "";
+}
+
 
 
   toggleGpsBtn.addEventListener("click", () => {
@@ -1812,154 +1816,7 @@
     else startGps();
   });
 
-  // --- ZOOM modal (réutilise ta fonction de projection lat/lon -> x/y) ---
-
-  function updateMarkerPositionFromGps(lat, lon, distToGreen) {
-    // ici tu réutilises ton latLonToImagePercent(hole, lat, lon)
-    // pour obtenir (xPercent, yPercent)
-    const hole = getCurrentHole();
-    const { xPercent, yPercent } = latLonToImagePercent(hole, lat, lon);
-    const imgRect = holeImageEl.getBoundingClientRect();
-
-    const x = imgRect.left + (imgRect.width * xPercent);
-    const y = imgRect.top + (imgRect.height * yPercent);
-
-    playerMarkerEl.style.left = `${x}px`;
-    playerMarkerEl.style.top = `${y}px`;
-    markerDistanceEl.style.left = `${x}px`;
-    markerDistanceEl.style.top = `${y - 16}px`;
-    markerDistanceEl.textContent = `${Math.round(distToGreen)} m`;
-  }
-
-  function renderMarksBadges(lat, lon) {
-  // Badges repères désactivés sur le ZOOM pour ne pas polluer la visibilité
-  marksContainerEl.innerHTML = "";
-}
-
-
-  function hideMarker() {
-    playerMarkerEl.style.left = "-1000px";
-    playerMarkerEl.style.top = "-1000px";
-    markerDistanceEl.style.left = "-1000px";
-    markerDistanceEl.style.top = "-1000px";
-  }
-
-  function latLonToImagePercent(hole, lat, lon) {
-    const key = `${currentCourseKey}-${hole.number}`;
-    const ref = holeImageRefs[key];
-    if (!ref || !ref.green) {
-      return { xPercent: 0.5, yPercent: 0.5 };
-    }
-
-    // Cas spécial : Cicé trou 1, projection 2D un peu plus riche
-    if (key === "cice-1") {
-      return latLonToImagePercentCice1(lat, lon, ref);
-    }
-    // Cas spécial : Cicé trou 2
-    if (key === "cice-2") {
-      return latLonToImagePercentCice2(lat, lon, ref);
-    }
-
-    // Cas général (autres trous) : projection simple le long de la ligne repère -> green
-    const g = ref.green;
-    const m = (ref.marks && ref.marks.length > 0) ? ref.marks[0] : null;
-
-    if (!m) {
-      return {
-        xPercent: g.img.x,
-        yPercent: g.img.y
-      };
-    }
-
-    const dxGps = g.lon - m.lon;
-    const dyGps = g.lat - m.lat;
-    const dxImg = g.img.x - m.img.x;
-    const dyImg = g.img.y - m.img.y;
-
-    const denom = (dxGps * dxGps + dyGps * dyGps);
-    if (denom === 0) {
-      return {
-        xPercent: g.img.x,
-        yPercent: g.img.y
-      };
-    }
-
-    const uxGps = dxGps / Math.sqrt(denom);
-    const uyGps = dyGps / Math.sqrt(denom);
-
-    const vxGps = lon - m.lon;
-    const vyGps = lat - m.lat;
-
-    const proj = vxGps * uxGps + vyGps * uyGps;
-    const length = Math.sqrt(denom);
-    const t = proj / length;
-
-    const x = m.img.x + dxImg * t;
-    const y = m.img.y + dyImg * t;
-
-    return {
-      xPercent: x,
-      yPercent: y
-    };
-  }
-
-  function latLonToImagePercentCice1(lat, lon, ref) {
-    const p1 = { lat: 48.03535, lon: -1.77103, ix: 0.164, iy: 0.918 };
-    const p2 = { lat: 48.03667, lon: -1.76930, ix: 0.747, iy: 0.497 };
-    const p3 = { lat: 48.03783, lon: -1.76912, ix: 0.776, iy: 0.100 };
-
-    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
-    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
-    const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
-    const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
-    const px = lon - p1.lon;
-    const py = lat - p1.lat;
-
-    const denom = ax * by - ay * bx;
-    if (Math.abs(denom) < 1e-12) {
-      return { xPercent: p1.ix, yPercent: p1.iy };
-    }
-
-    const s = (px * by - py * bx) / denom;
-    const t = (ax * py - ay * px) / denom;
-
-    return {
-      xPercent: p1.ix + s * aix + t * bix,
-      yPercent: p1.iy + s * aiy + t * biy
-    };
-  }
-
-
-
-  function latLonToImagePercentCice2(lat, lon, ref) {
-    const p1 = { lat: 48.03816, lon: -1.76862, ix: 0.893, iy: 0.939 };
-    const p2 = { lat: 48.03589, lon: -1.76661, ix: 0.423, iy: 0.404 };
-    const p3 = { lat: 48.03465, lon: -1.76596, ix: 0.289, iy: 0.131 };
-
-    const ax = p2.lon - p1.lon, ay = p2.lat - p1.lat;
-    const bx = p3.lon - p1.lon, by = p3.lat - p1.lat;
-    const aix = p2.ix - p1.ix, aiy = p2.iy - p1.iy;
-    const bix = p3.ix - p1.ix, biy = p3.iy - p1.iy;
-    const px = lon - p1.lon;
-    const py = lat - p1.lat;
-
-    const denom = ax * by - ay * bx;
-    if (Math.abs(denom) < 1e-12) {
-      return { xPercent: p1.ix, yPercent: p1.iy };
-    }
-
-    const s = (px * by - py * bx) / denom;
-    const t = (ax * py - ay * px) / denom;
-
-    return {
-      xPercent: p1.ix + s * aix + t * bix,
-      yPercent: p1.iy + s * aiy + t * biy
-    };
-  }
-
-
-
-
+ 
   function computeRanking() {
     return players
       .map(player => {
@@ -2034,22 +1891,6 @@
     });
   }
 
-
-
-
-  zoomBtn.addEventListener("click", () => {
-    zoomModal.style.display = "block";
-  });
-
-  closeModalBtn.addEventListener("click", () => {
-    zoomModal.style.display = "none";
-  });
-
-  zoomModal.addEventListener("click", (e) => {
-    if (e.target === zoomModal) {
-      zoomModal.style.display = "none";
-    }
-  });
 
   rankingBandEl.addEventListener("click", () => {
     renderRankingDetail();
