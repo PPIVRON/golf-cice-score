@@ -594,6 +594,23 @@
 
         <div class="gps-card">
           <div id="mapContainer" style="width:100%; height:300px; border-radius:8px; z-index:1;"></div>
+
+          <!-- Bouton fermeture plein écran -->
+          <button id="closeFullscreenBtn" style="
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+          ">✕ Réduire</button>
+
           <div class="gps-actions">
             <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
             <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
@@ -1946,6 +1963,20 @@ function updateMapPosition(lat, lon) {
       container.style.width = "100%";
       document.getElementById("fullscreenMapBtn").textContent = "Réduire";
     }
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+  });
+
+  // Bouton fermeture plein écran
+  document.getElementById("closeFullscreenBtn").addEventListener("click", () => {
+    const container = document.getElementById("mapContainer");
+    container.style.height = "300px";
+    container.style.position = "relative";
+    container.style.top = "";
+    container.style.left = "";
+    container.style.zIndex = "1";
+    container.style.width = "100%";
+    document.getElementById("closeFullscreenBtn").style.display = "none";
+    document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
   });
 
