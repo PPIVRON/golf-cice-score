@@ -1946,6 +1946,8 @@ function updateMapPosition(lat, lon) {
   // --- Bouton plein écran carte ---
   document.getElementById("fullscreenMapBtn").addEventListener("click", () => {
     const container = document.getElementById("mapContainer");
+    const closeBtn = document.getElementById("closeFullscreenBtn");
+
     if (container.style.height === "100vh") {
       container.style.height = "300px";
       container.style.position = "relative";
@@ -1953,6 +1955,7 @@ function updateMapPosition(lat, lon) {
       container.style.left = "";
       container.style.zIndex = "1";
       container.style.width = "100%";
+      closeBtn.style.display = "none";
       document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
     } else {
       container.style.height = "100vh";
@@ -1961,12 +1964,13 @@ function updateMapPosition(lat, lon) {
       container.style.left = "0";
       container.style.zIndex = "9999";
       container.style.width = "100%";
-      document.getElementById("fullscreenMapBtn").textContent = "Réduire";
+      closeBtn.style.display = "block";
+      document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
     }
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
   });
 
-  // Bouton fermeture plein écran
+  // --- Bouton fermeture plein écran ---
   document.getElementById("closeFullscreenBtn").addEventListener("click", () => {
     const container = document.getElementById("mapContainer");
     container.style.height = "300px";
@@ -1979,6 +1983,7 @@ function updateMapPosition(lat, lon) {
     document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
   });
+
 
 
   // --- Init ---
