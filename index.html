@@ -1592,13 +1592,17 @@
     viewGps.classList.remove("active");
     viewStats.classList.remove("active");
     if (view === "score") viewScore.classList.add("active");
-    if (view === "gps") viewGps.classList.add("active");
+    if (view === "gps") {
+      viewGps.classList.add("active");
+      setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+    }
     if (view === "stats") viewStats.classList.add("active");
 
     navBtns.forEach(btn => {
       btn.classList.toggle("active", btn.dataset.view === view);
     });
   }
+
 
   navBtns.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -1700,6 +1704,9 @@
   map = L.map('mapContainer', { zoomControl: true }).setView(
     [hole.greenLat, hole.greenLon], 17
   );
+
+  // AJOUT : force le recalcul de la taille du conteneur
+  setTimeout(() => { map.invalidateSize(); }, 100);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
