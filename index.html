@@ -1353,6 +1353,7 @@
   let playerMarkerLeaflet = null;
   let greenMarkerLeaflet = null;
   let marksMarkersLeaflet = [];
+  let userInteracting = false;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
@@ -1742,6 +1743,11 @@
   // AJOUT : force le recalcul de la taille du conteneur
   setTimeout(() => { map.invalidateSize(); }, 100);
 
+  // AJOUT : détection interaction utilisateur
+  map.on('dragstart zoomstart', () => {
+    userInteracting = true;
+  });
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
     maxZoom: 19
@@ -1796,8 +1802,12 @@ function updateMapPosition(lat, lon) {
     }).addTo(map).bindPopup('Vous êtes ici');
   }
 
-  map.setView([lat, lon], 17);
+  // Recentrer seulement si l'utilisateur n'interagit pas
+  if (!userInteracting) {
+    map.setView([lat, lon], 17);
+  }
 }
+
 
 
 
@@ -2009,8 +2019,10 @@ function updateMapPosition(lat, lon) {
 
   document.getElementById("centerMapBtn").addEventListener("click", () => {
     if (!map || !playerMarkerLeaflet) return;
+    userInteracting = false; // reprend le suivi auto
     map.setView(playerMarkerLeaflet.getLatLng(), 17);
   });
+
 
   // --- Init ---
 
