@@ -488,10 +488,11 @@
     background: rgba(245,158,11,0.9);
     border: none;
     color: white;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    padding: 2px 6px;
+    padding: 1px 5px;
     border-radius: 999px;
+    box-shadow: none;
   }
     
 
@@ -500,6 +501,8 @@
   <!-- Leaflet - à ajouter juste avant </head> -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+
 
 </head>
 <body>
@@ -723,6 +726,9 @@
 
     let currentCourseKey   = golfSetup.courseKey;
     let currentPlayerIndex = 0;
+
+    let lastLat = null;
+    let lastLon = null;
 
 
     const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
@@ -1735,9 +1741,11 @@
   const hole = getCurrentHole();
 
   map = L.map('mapContainer', { 
-  zoomControl: false,  // supprime +/-
-  tap: false           // évite les conflits tactiles
-  }).setView([hole.greenLat, hole.greenLon], 17);
+  zoomControl: false,
+  tap: false,
+  rotate: true,
+  touchRotate: false
+}).setView([hole.greenLat, hole.greenLon], 17);
 
 
   // AJOUT : force le recalcul de la taille du conteneur
@@ -1764,51 +1772,81 @@
   }).addTo(map).bindPopup('Green');
 
   // Marqueurs repères
-  const key = `${currentCourseKey}-${hole.number}`;
-  const ref = holeImageRefs[key];
-  if (ref && ref.marks) {
-    ref.marks.forEach(mark => {
-    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
-    const m = L.circleMarker([mark.lat, mark.lon], {
-      radius: 6,
-      fillColor: '#f59e0b',
-      color: '#ffffff',
-      weight: 2,
-      fillOpacity: 1
-    }).addTo(map)
-      .bindTooltip(`${Math.round(markToGreen)} m`, {
-        permanent: true,
-        direction: 'right',
-        className: 'mark-tooltip'
+    const key = `${currentCourseKey}-${hole.number}`;
+    const ref = holeImageRefs[key];
+    if (ref && ref.marks) {
+      ref.marks.forEach(mark => {
+        const m = L.circleMarker([mark.lat, mark.lon], {
+          radius: 6,
+          fillColor: '#f59e0b',
+          color: '#ffffff',
+          weight: 2,
+          fillOpacity: 1
+        }).addTo(map)
+          .bindTooltip('...', {
+            permanent: true,
+            direction: 'right',
+            className: 'mark-tooltip'
+          });
+        marksMarkersLeaflet.push(m);
       });
-    marksMarkersLeaflet.push(m);
-  });
-
-  }
+    }
 }
 
-function updateMapPosition(lat, lon) {
-  if (!map) initMap();
+    function updateMapPosition(lat, lon) {
+      if (!map) initMap();
 
-  if (playerMarkerLeaflet) {
-    playerMarkerLeaflet.setLatLng([lat, lon]);
-  } else {
-    playerMarkerLeaflet = L.circleMarker([lat, lon], {
-      radius: 8,
-      fillColor: '#ef4444',
-      color: '#ffffff',
-      weight: 2,
-      fillOpacity: 1
-    }).addTo(map).bindPopup('Vous êtes ici');
-  }
+      if (playerMarkerLeaflet) {
+        playerMarkerLeaflet.setLatLng([lat, lon]);
+      } else {
+        playerMarkerLeaflet = L.circleMarker([lat, lon], {
+          radius: 8,
+          fillColor: '#ef4444',
+          color: '#ffffff',
+          weight: 2,
+          fillOpacity: 1
+        }).addTo(map).bindPopup('Vous êtes ici');
+      }
 
-  // Recentrer seulement si l'utilisateur n'interagit pas
-  if (!userInteracting) {
-    map.setView([lat, lon], 17);
-  }
-}
+      // Mise à jour des tooltips repères
+      const hole = getCurrentHole();
+      const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+      const key = `${currentCourseKey}-${hole.number}`;
+      const ref = holeImageRefs[key];
 
+      if (ref && ref.marks) {
+        ref.marks.forEach((mark, i) => {
+          const m = marksMarkersLeaflet[i];
+          if (!m) return;
+          const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
+          const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
 
+          if (distToGreen > markToGreen) {
+            m.setStyle({ fillOpacity: 1, opacity: 1 });
+            m.setTooltipContent(`${Math.round(distToMark)} m`);
+          } else {
+            m.setStyle({ fillOpacity: 0, opacity: 0 });
+            m.closeTooltip();
+          }
+        });
+      }
+
+      // Rotation selon direction de marche
+      if (!userInteracting && lastLat && lastLon) {
+        const dLat = lat - lastLat;
+        const dLon = lon - lastLon;
+        if (Math.abs(dLat) > 0.00001 || Math.abs(dLon) > 0.00001) {
+          const bearing = Math.atan2(dLon, dLat) * 180 / Math.PI;
+          map.setBearing(-bearing);
+        }
+      }
+      lastLat = lat;
+      lastLon = lon;
+
+      if (!userInteracting) {
+        map.setView([lat, lon], 17);
+      }
+    }
 
 
   function handleGpsSuccess(pos) {
