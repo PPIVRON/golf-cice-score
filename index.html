@@ -1760,14 +1760,14 @@
     DeviceOrientationEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
-          window.addEventListener('deviceorientationabsolute', (e) => {
+          window.addEventListener('deviceorientation', (e) => {
             if (!map || userInteracting) return;
             if (e.alpha !== null) map.setBearing(-e.alpha);
           });
         }
       });
   } else {
-    window.addEventListener('deviceorientationabsolute', (e) => {
+    window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.alpha !== null) map.setBearing(-e.alpha);
     });
@@ -2073,9 +2073,11 @@
     DeviceOrientationEvent.requestPermission()
       .then(response => {
         if (response === 'granted') {
-          window.addEventListener('deviceorientationabsolute', (e) => {
-            if (!map || userInteracting) return;
-            if (e.alpha !== null) map.setBearing(-e.alpha);
+          window.addEventListener('deviceorientation', (e) => {
+        if (!map || userInteracting) return;
+        if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+          map.setBearing(e.webkitCompassHeading);
+        }
           });
           document.getElementById("compassBtn").textContent = "🧭✅";
         } else {
