@@ -1738,11 +1738,12 @@
 
   const hole = getCurrentHole();
 
-  map = L.map('mapContainer', { 
+  map = L.map('mapContainer', {
   zoomControl: false,
   tap: false,
   rotate: true,
-  touchRotate: false
+  touchRotate: false,
+  rotateControl: false  // AJOUT : supprime l'icône boussole du plugin
 }).setView([hole.greenLat, hole.greenLon], 17);
 
 
