@@ -627,6 +627,7 @@
             <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
             <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
             <button class="btn-secondary" id="centerMapBtn">📍</button>
+            <button class="btn-secondary" id="compassBtn">🧭</button>
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
           <div class="gps-status-line" id="gpsMarksDistances"></div>
@@ -727,10 +728,7 @@
     let currentCourseKey   = golfSetup.courseKey;
     let currentPlayerIndex = 0;
 
-    let lastLat = null;
-    let lastLon = null;
-
-
+    
     const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
     const decreasePuttsBtn = document.getElementById("decreasePutts");
     const increasePuttsBtn = document.getElementById("increasePutts");
@@ -1756,6 +1754,25 @@
     userInteracting = true;
   });
 
+  // Boussole iOS   ← ICI
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(response => {
+        if (response === 'granted') {
+          window.addEventListener('deviceorientationabsolute', (e) => {
+            if (!map || userInteracting) return;
+            if (e.alpha !== null) map.setBearing(-e.alpha);
+          });
+        }
+      });
+  } else {
+    window.addEventListener('deviceorientationabsolute', (e) => {
+      if (!map || userInteracting) return;
+      if (e.alpha !== null) map.setBearing(-e.alpha);
+    });
+  }
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
     maxZoom: 19
@@ -1831,18 +1848,7 @@
         });
       }
 
-      // Rotation selon direction de marche
-      if (!userInteracting && lastLat && lastLon) {
-        const dLat = lat - lastLat;
-        const dLon = lon - lastLon;
-        if (Math.abs(dLat) > 0.00001 || Math.abs(dLon) > 0.00001) {
-          const bearing = Math.atan2(dLon, dLat) * 180 / Math.PI;
-          map.setBearing(-bearing);
-        }
-      }
-      lastLat = lat;
-      lastLon = lon;
-
+      
       if (!userInteracting) {
         map.setView([lat, lon], 17);
       }
@@ -2061,6 +2067,25 @@
     map.setView(playerMarkerLeaflet.getLatLng(), 17);
   });
 
+  document.getElementById("compassBtn").addEventListener("click", () => {
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(response => {
+        if (response === 'granted') {
+          window.addEventListener('deviceorientationabsolute', (e) => {
+            if (!map || userInteracting) return;
+            if (e.alpha !== null) map.setBearing(-e.alpha);
+          });
+          document.getElementById("compassBtn").textContent = "🧭✅";
+        } else {
+          document.getElementById("compassBtn").textContent = "🧭❌";
+        }
+      });
+  } else {
+    document.getElementById("compassBtn").textContent = "🧭✅";
+  }
+});
 
   // --- Init ---
 
