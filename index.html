@@ -2300,8 +2300,18 @@
   fetch('tips.json')
     .then(r => r.json())
     .then(data => {
-      holeTips = data;
-      showHumourToast(); // AJOUT
+      const category = golfSetup.tipsCategory || "decouverte";
+      // Extraire les humours de la catégorie choisie
+      holeTips = {};
+      if (data.humour && data.humour[category]) {
+        Object.keys(data.humour[category]).forEach(key => {
+          holeTips[key] = {
+            humour: data.humour[category][key],
+            conseil: data.conseils ? data.conseils[key] : ""
+          };
+        });
+      }
+      showHumourToast();
     })
     .catch(() => { holeTips = {}; });
 
