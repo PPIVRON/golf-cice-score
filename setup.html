@@ -195,35 +195,27 @@
       margin-top: 8px;
       display: none;
     }
-  </style>
 
-  <script>
-    let tipsCategories = [];
-    fetch('tips.json')
-      .then(r => r.json())
-      .then(data => {
-        tipsCategories = data.categories;
-        renderTipsCategories();
-      })
-      .catch(() => { tipsCategories = []; });
-
-    function renderTipsCategories() {
-      const container = document.getElementById("tipsCategoryBtns");
-      if (!container) return;
-      tipsCategories.forEach((cat, index) => {
-        const btn = document.createElement("button");
-        btn.className = "course-btn" + (index === 0 ? " active" : "");
-        btn.dataset.tips = cat.id;
-        btn.textContent = cat.label;
-        btn.addEventListener("click", () => {
-          document.querySelectorAll("#tipsCategoryBtns .course-btn")
-            .forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        });
-        container.appendChild(btn);
-      });
+    .tips-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      cursor: pointer;
+      text-align: center;
     }
-  </script>
+
+    .tips-btn.active {
+      border-color: #111827;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+  </style>
 
 </head>
 <body>
@@ -272,6 +264,7 @@
 
 <script>
 
+  <script>
   // Vérification accès
   (function () {
     const ok = sessionStorage.getItem("golfAccessOK");
@@ -282,9 +275,12 @@
 
   let selectedCourse = "cice";
   let nbPlayers = 1;
-
   let tipsCategories = [];
 
+  const playersFormEl = document.getElementById("playersForm");
+  const errorMsgEl = document.getElementById("errorMsg");
+
+  // Chargement dynamique des catégories tips
   fetch('tips.json')
     .then(r => r.json())
     .then(data => {
@@ -296,13 +292,14 @@
   function renderTipsCategories() {
     const container = document.getElementById("tipsCategoryBtns");
     if (!container) return;
+    container.innerHTML = "";
     tipsCategories.forEach((cat, index) => {
       const btn = document.createElement("button");
-      btn.className = "course-btn" + (index === 0 ? " active" : "");
+      btn.className = "tips-btn" + (index === 0 ? " active" : "");
       btn.dataset.tips = cat.id;
       btn.textContent = cat.label;
       btn.addEventListener("click", () => {
-        document.querySelectorAll("#tipsCategoryBtns .course-btn")
+        document.querySelectorAll("#tipsCategoryBtns .tips-btn")
           .forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
       });
@@ -310,10 +307,7 @@
     });
   }
 
-  const playersFormEl = document.getElementById("playersForm");
-  const errorMsgEl = document.getElementById("errorMsg");
-
-  // --- Sélection parcours ---
+  // Sélection parcours
   document.querySelectorAll(".course-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".course-btn").forEach(b => b.classList.remove("active"));
@@ -322,7 +316,7 @@
     });
   });
 
-  // --- Sélection nb joueurs ---
+  // Sélection nb joueurs
   document.querySelectorAll(".nb-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".nb-btn").forEach(b => b.classList.remove("active"));
@@ -332,7 +326,6 @@
     });
   });
 
-  // --- Générer le formulaire joueurs ---
   function renderPlayersForm() {
     playersFormEl.innerHTML = "";
     for (let i = 0; i < nbPlayers; i++) {
@@ -341,35 +334,17 @@
       row.innerHTML = `
         <div class="player-row-top">
           <div class="player-num">${i + 1}</div>
-          <input
-            class="player-trigram"
-            type="text"
-            maxlength="3"
-            placeholder="Trigramme (ex: JDU)"
-            data-player="${i}"
-            id="trigram-${i}"
-          >
+          <input class="player-trigram" type="text" maxlength="3"
+            placeholder="Trigramme (ex: JDU)" data-player="${i}" id="trigram-${i}">
         </div>
         <div class="tee-toggle">
-          <button
-            class="tee-btn active-white"
-            data-player="${i}"
-            data-tee="white"
-            id="tee-white-${i}"
-          >Blanc</button>
-          <button
-            class="tee-btn"
-            data-player="${i}"
-            data-tee="yellow"
-            id="tee-yellow-${i}"
-          >Jaune</button>
+          <button class="tee-btn active-white" data-player="${i}" data-tee="white" id="tee-white-${i}">Blanc</button>
+          <button class="tee-btn" data-player="${i}" data-tee="yellow" id="tee-yellow-${i}">Jaune</button>
         </div>
       `;
-
       playersFormEl.appendChild(row);
     }
 
-    // Listeners tee blanc/jaune
     document.querySelectorAll(".tee-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const playerIdx = btn.dataset.player;
@@ -387,21 +362,15 @@
     });
   }
 
-  // --- Démarrer la partie ---
   document.getElementById("btnStart").addEventListener("click", () => {
     const players = [];
     let valid = true;
 
     for (let i = 0; i < nbPlayers; i++) {
       const trigram = document.getElementById(`trigram-${i}`).value.trim().toUpperCase();
-      if (!trigram) {
-        valid = false;
-        break;
-      }
-
+      if (!trigram) { valid = false; break; }
       const whiteBtn = document.getElementById(`tee-white-${i}`);
       const teeColor = whiteBtn.classList.contains("active-white") ? "white" : "yellow";
-
       players.push({ trigram, teeColor });
     }
 
@@ -412,8 +381,7 @@
 
     errorMsgEl.style.display = "none";
 
-    // Sauvegarde dans sessionStorage
-    const activeTipsBtn = document.querySelector("#tipsCategoryBtns .course-btn.active");
+    const activeTipsBtn = document.querySelector("#tipsCategoryBtns .tips-btn.active");
     const tipsCategory = activeTipsBtn ? activeTipsBtn.dataset.tips : "decouverte";
 
     const setupData = {
@@ -421,15 +389,12 @@
       players: players,
       tipsCategory: tipsCategory
     };
-    sessionStorage.setItem("golfSetup", JSON.stringify(setupData));
 
-    // Redirect vers l'appli
+    sessionStorage.setItem("golfSetup", JSON.stringify(setupData));
     window.location.href = "index.html";
   });
 
-  // Init formulaire avec 1 joueur
   renderPlayersForm();
-
 </script>
 </body>
 </html>
