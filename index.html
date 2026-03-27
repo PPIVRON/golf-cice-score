@@ -1932,67 +1932,43 @@
 
 
   function initMap() {
-  if (map) {
-    map.remove();
-    map = null;
-    playerMarkerLeaflet = null;
-    greenMarkerLeaflet = null;
-    marksMarkersLeaflet = [];
-  }
+    if (map) {
+      map.remove();
+      map = null;
+      playerMarkerLeaflet = null;
+      greenMarkerLeaflet = null;
+      marksMarkersLeaflet = [];
+    }
 
-  const hole = getCurrentHole();
+    const hole = getCurrentHole();
 
-  map = L.map('mapContainer', { 
-  zoomControl: false,
-  tap: false,
-  rotate: true,
-  touchRotate: false
-}).setView([hole.greenLat, hole.greenLon], 17);
+    map = L.map('mapContainer', {
+      zoomControl: false,
+      tap: false,
+      rotate: true,
+      touchRotate: false
+    }).setView([hole.greenLat, hole.greenLon], 17);
 
+    setTimeout(() => { map.invalidateSize(); }, 100);
 
-  // AJOUT : force le recalcul de la taille du conteneur
-  setTimeout(() => { map.invalidateSize(); }, 100);
-
-  // AJOUT : détection interaction utilisateur
-  map.on('dragstart zoomstart', () => {
-    userInteracting = true;
-  });
-
-  // Boussole iOS   ← ICI
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission()
-      .then(response => {
-        if (response === 'granted') {
-          window.addEventListener('deviceorientation', (e) => {
-            if (!map || userInteracting) return;
-            if (e.alpha !== null) map.setBearing(-e.alpha);
-          });
-        }
-      });
-  } else {
-    window.addEventListener('deviceorientation', (e) => {
-      if (!map || userInteracting) return;
-      if (e.alpha !== null) map.setBearing(-e.alpha);
+    map.on('dragstart zoomstart', () => {
+      userInteracting = true;
     });
-  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19
-  }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    }).addTo(map);
 
-  // Marqueur green
-  greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
-    icon: L.divIcon({
-      className: '',
-      html: '<div style="font-size:20px;">⛳</div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 20]
-    })
-  }).addTo(map).bindPopup('Green');
+    greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+      icon: L.divIcon({
+        className: '',
+        html: '<div style="font-size:20px;">⛳</div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
+      })
+    }).addTo(map).bindPopup('Green');
 
-  // Marqueurs repères
     const key = `${currentCourseKey}-${hole.number}`;
     const ref = holeImageRefs[key];
     if (ref && ref.marks) {
@@ -2012,7 +1988,7 @@
         marksMarkersLeaflet.push(m);
       });
     }
-}
+  }
 
     function updateMapPosition(lat, lon) {
       if (!map) initMap();
@@ -2271,27 +2247,33 @@
     map.setView(playerMarkerLeaflet.getLatLng(), 17);
   });
 
-  document.getElementById("compassBtn").addEventListener("click", () => {
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission()
-      .then(response => {
-        if (response === 'granted') {
-          window.addEventListener('deviceorientation', (e) => {
-        if (!map || userInteracting) return;
-        if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-          map.setBearing(e.webkitCompassHeading);
-        }
-          });
-          document.getElementById("compassBtn").textContent = "🧭✅";
-        } else {
-          document.getElementById("compassBtn").textContent = "🧭❌";
-        }
-      });
-  } else {
-    document.getElementById("compassBtn").textContent = "🧭✅";
+  // --- Boussole globale ---
+  function activerBoussole() {
+    window.addEventListener('deviceorientation', (e) => {
+      if (!map || userInteracting) return;
+      if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+        map.setBearing(e.webkitCompassHeading);
+      }
+    });
   }
-});
+
+  document.getElementById("compassBtn").addEventListener("click", () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(response => {
+          if (response === 'granted') {
+            activerBoussole();
+            document.getElementById("compassBtn").textContent = "🧭✅";
+          } else {
+            document.getElementById("compassBtn").textContent = "🧭❌";
+          }
+        });
+    } else {
+      activerBoussole();
+      document.getElementById("compassBtn").textContent = "🧭✅";
+    }
+  });
 
   // --- Init ---
 
