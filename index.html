@@ -2252,7 +2252,7 @@
     window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        map.setBearing(e.webkitCompassHeading);
+        map.setBearing(-e.webkitCompassHeading);
       }
     });
   }
