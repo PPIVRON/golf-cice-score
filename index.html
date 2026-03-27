@@ -494,6 +494,24 @@
     border-radius: 999px;
     box-shadow: none;
   }
+
+    #holeToast {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17,24,39,0.92);
+    color: #f9fafb;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-style: italic;
+    z-index: 999;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
     
 
   </style>
@@ -506,6 +524,9 @@
 
 </head>
 <body>
+
+  <div id="holeToast"></div>
+
 <div class="app">
 
   <header>
@@ -730,6 +751,8 @@
 
 
 <script>
+
+    let holeTips = {};
 
    (function () {
       const ok = sessionStorage.getItem("golfAccessOK");
@@ -1539,7 +1562,7 @@
 
   function openTipsModal() {
     const key = getCurrentHoleKey();
-    const tip = holeTips[key] || "Aucun conseil spécifique pour ce trou pour l’instant.";
+    const tip = holeTips[key]?.conseil || "Aucun conseil spécifique pour ce trou pour l'instant.";
     tipsTextEl.textContent = tip;
     tipsModal.style.display = "block";
   }
@@ -1859,6 +1882,12 @@
   updateStatsAnalysis(); // AJOUT
   updateGpsHoleImage();
   renderRankingBand(); // MANQUANT
+
+  // Toast humour sur vue Score uniquement
+  if (viewScore.classList.contains("active")) {
+    showHumourToast();
+  }
+  
 }
 
 
@@ -2290,6 +2319,27 @@
       rankingModal.style.display = "none";
     }
   });
+
+  // Chargement tips.json
+    fetch('tips.json')
+      .then(r => r.json())
+      .then(data => { holeTips = data; })
+      .catch(() => { holeTips = {}; });
+
+    // Toast humour
+    function showHumourToast() {
+      const key = `${currentCourseKey}-${getCurrentHole().number}`;
+      const tip = holeTips[key];
+      if (!tip || !tip.humour) return;
+
+      const toast = document.getElementById("holeToast");
+      toast.textContent = `😄 ${tip.humour}`;
+      toast.style.display = "block";
+
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 4000); // disparaît après 4 secondes
+    }
 
    // --- Bouton Nouvelle partie ---
   document.getElementById("btnNewGame").addEventListener("click", () => {
