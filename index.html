@@ -639,41 +639,44 @@
     <!-- Vue STATS -->
     <section id="view-stats" class="view">
       <div class="stats-main">
+
         <!-- Onglets joueurs stats -->
-      <div class="players-tabs" id="statsTabs"></div>
-        <div class="stats-summary">
-          <h2>Résumé de la partie</h2>
-          <div class="line">
-            Score total : <span id="statsTotalScore">0</span>
-            (<span id="statsTotalVsPar">E</span>)
-          </div>
-          <div class="line">
-            Putts : <span id="statsTotalPutts">0</span>
-          </div>
-          <div class="line">
-            Aller (1-9) : <span id="statsAllerScore">—</span>
-            (<span id="statsAllerVsPar">—</span>)
-          </div>
-          <div class="line">
-            Retour (10-18) : <span id="statsRetourScore">—</span>
-            (<span id="statsRetourVsPar">—</span>)
+        <div class="players-tabs" id="statsTabs"></div>
+
+        <!-- Onglets Résumé / Analyse / Trous -->
+        <div class="players-tabs" id="statsViewTabs">
+          <button class="player-tab active" data-statsview="resume">Résumé</button>
+          <button class="player-tab" data-statsview="analyse">Analyse</button>
+          <button class="player-tab" data-statsview="trous">Trous</button>
+        </div>
+
+        <!-- Bloc Résumé -->
+        <div id="statsViewResume">
+          <div class="stats-summary">
+            <h2>Résumé de la partie</h2>
+            <div class="line">Score total : <span id="statsTotalScore">0</span> (<span id="statsTotalVsPar">E</span>)</div>
+            <div class="line">Putts : <span id="statsTotalPutts">0</span></div>
+            <div class="line">Aller (1-9) : <span id="statsAllerScore">—</span> (<span id="statsAllerVsPar">—</span>)</div>
+            <div class="line">Retour (10-18) : <span id="statsRetourScore">—</span> (<span id="statsRetourVsPar">—</span>)</div>
           </div>
         </div>
 
-        <!-- Bloc analyse (nouveau) -->
-        <div class="stats-summary">
-          <h2>Analyse</h2>
-          <div class="line">🐦 Birdies : <span id="statsBirdies">0</span></div>
-          <div class="line">— Pars : <span id="statsPars">0</span></div>
-          <div class="line">📈 Bogeys : <span id="statsBogeys">0</span></div>
-          <div class="line">📈📈 Double+ : <span id="statsDoubles">0</span></div>
-          <div class="line">✅ Meilleur trou : <span id="statsBestHole">—</span></div>
-          <div class="line">❌ Pire trou : <span id="statsWorstHole">—</span></div>
+        <!-- Bloc Analyse -->
+        <div id="statsViewAnalyse" style="display:none;">
+          <div class="stats-summary">
+            <h2>Analyse</h2>
+            <div class="line">🐦 Birdies : <span id="statsBirdies">0</span></div>
+            <div class="line">— Pars : <span id="statsPars">0</span></div>
+            <div class="line">📈 Bogeys : <span id="statsBogeys">0</span></div>
+            <div class="line">📈📈 Double+ : <span id="statsDoubles">0</span></div>
+            <div class="line">✅ Meilleur trou : <span id="statsBestHole">—</span></div>
+            <div class="line">❌ Pire trou : <span id="statsWorstHole">—</span></div>
+          </div>
         </div>
 
-        <!-- Détail trou par trou -->
-        <div class="stats-detail" id="statsDetail">
-          <!-- lignes trou par trou générées par JS -->
+        <!-- Bloc Trous -->
+        <div id="statsViewTrous" style="display:none;">
+          <div class="stats-detail" id="statsDetail"></div>
         </div>
 
         <!-- Bouton Nouvelle partie -->
@@ -687,6 +690,7 @@
             cursor: pointer;
           ">↩ Nouvelle partie</button>
         </div>
+
       </div>
     </section>
   </main>
@@ -2371,6 +2375,23 @@
       activerBoussole();
       document.getElementById("compassBtn").textContent = "🧭✅";
     }
+  });
+
+  // --- Onglets vue Stats ---
+  function showStatsView(view) {
+    document.getElementById("statsViewResume").style.display = view === "resume" ? "block" : "none";
+    document.getElementById("statsViewAnalyse").style.display = view === "analyse" ? "block" : "none";
+    document.getElementById("statsViewTrous").style.display = view === "trous" ? "block" : "none";
+
+    document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.statsview === view);
+    });
+  }
+
+  document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showStatsView(btn.dataset.statsview);
+    });
   });
 
   // --- Init ---
