@@ -1,74 +1,89 @@
 {
-  "cice-1": {
-    "humour": "Le réveil : « Respire, détends-toi… et oublie que tout le monde te regarde au départ. »",
-    "conseil": "... Du départ attention au hors limite à droite le long du practice ..., s'aligner sur les arbres du départ du trou 2 ... attention à droite du poteau des 135m de ne pas se retrouver sous les arbres ... attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ... Green pentu dans le sens descendant haut vers le bas ... attention à gauche du green l'eau arrive vite et impossible d'arrêter la balle"
+  "categories": [
+    { "id": "decouverte", "label": "🌱 Découverte" },
+    { "id": "franchouillard", "label": "🥖 Franchouillard" },
+    { "id": "britannique", "label": "🎩 Britannique" }
+  ],
+  "conseils": {
+    "cice-1": "Du départ attention au hors limite à droite le long du practice, s'aligner sur les arbres du départ du trou 2, attention à droite du poteau des 135m, attaque de green protégé par 2 bunkers, Green pentu descendant, attention à gauche du green l'eau arrive vite",
+    "cice-2": "Dogleg droit accentué, visée 10m du bunker de gauche, pour le 2ème coup passer au-dessus des arbres ou à droite, attaque longue recommandée",
+    "cice-3": "Green protégé par 1 bunker droite et 2 gauche, ne pas être court au risque d'avoir une approche compliquée",
+    "cice-4": "Trou tout droit, éviter la droite rough dense, éviter la gauche bunkers et arbres, attention au premier bunker droite",
+    "cice-5": "Mise en jeu centre droit, green protégé par 2 bunkers gauche et 1 droite, attention hors limite droite",
+    "cice-6": "Par 3 en montée 3-4m de dénivelé, attaque plutôt gauche, protégé par 2 bunkers",
+    "cice-7": "Mise en jeu droite fairway large, attention bunker gauche, possible en 2 si distance, sinon entre 135m et la rigole",
+    "cice-8": "Léger dogleg gauche, alignement bord gauche bunker droite, attention eau à la corde, drapeau droite protégé par butte",
+    "cice-9": "Dogleg gauche accentué, alignement centre poteaux 135m, green protégé par bunker bas droite et grand bunker latéral",
+    "cice-10": "Conseils à suivre...",
+    "cice-11": "Conseils à suivre...",
+    "cice-12": "Conseils à suivre...",
+    "cice-13": "Conseils à suivre...",
+    "cice-14": "Conseils à suivre...",
+    "cice-15": "Conseils à suivre...",
+    "cice-16": "Conseils à suivre...",
+    "cice-17": "Conseils à suivre...",
+    "cice-18": "Conseils à suivre..."
   },
-  "cice-2": {
-    "humour": "L'ambitieux : « Le fairway est large. Enfin, sur la carte. »",
-    "conseil": "... Dogleg droit accentué, privilégié une mise en jeu dans le virage (attention le fairway est peu large) donc une visée 10 m environ du bunker de gauche ... pour le deuxième coup, soit passer au dessus des arbres, soit un coup à droite (entre la droite du premier arbre et le poteau des 135 m ... attaque du green, protégé par 3 bunker (2 à gauche le long du green, 1 à droite bas) , une pente accentuée en haut du green, mais pour une grande partie assez plat ...  privilégier une attaque longue ..."
-  },
-  "cice-3": {
-    "humour": "Le stratégique : « Si tu hésites entre un fer et un bois, choisis ton club fétiche… et prie un peu. »",
-    "conseil": "... Green protégé par 1 bunker en bas à droite et 2 à gauche toute la longueur du green ... attention de ne pas être court et de se retrouver avec le bunker en jeu au risque d'avoir une approche compliquée, surtout si le drapeau est sur la droit"
-  },
-  "cice-4": {
-    "humour": "L'illusion : « Ce green a l’air plat. Il ment. »",
-    "conseil": "... Trou tout droit ... éviter la partie droite avec un rough très dense et la partie gauche au niveau des bunker avec des arbres qui vous empêchera d'attaquer le green dans de bonnes conditions ... attention au premier bunker à droite, avec une sortie qui peut être longue .."
-  },
-  "cice-5": {
-    "humour": "La tentation : « Oui, tu peux atteindre le green en un coup. Non, tu ne le feras pas. »",
-    "conseil": "... Trou tout droit ... privilégiez une mise en jeu plutôt centre droit pour éviter le bunker sur la gauche ... green protégé par 2 bunker à gauche tout le long du green, et 1 bunker en bas à droite du green ... attention au hors limite à droite de ce dernier qui peut arriver très vite"
-  },
-  "cice-6": {
-    "humour": "Le mental : « Ce n’est pas un slice. C’est une stratégie d’exploration. »",
-    "conseil": "... Par 3 en monté (3 à 4 m de dénivelé) ... privilégiez une attaque de green plutôt sur la gauche ... protégé par 2 bunker, 1 en bas à droite du green, et 1 autre derrière le long du green"
-  },
-  "cice-7": {
-    "humour": "L'humilité : « On dit que le golf révèle le vrai caractère. À ce trou, garde le tien discret. »",
-    "conseil": "... une mise en jeu toute droite (fairway assez large) ... attention au bunker sur la gauche qui peut arriver très vite ... attention aussi à gauche de ce bunker de nombreux arbres, et un rough assez dense ... si vous avez la distance vous pouvez être sur le green en 2 ... sinon vous positionner entre les poteaux des 135 m et la rigole qui se trouve devant le green, fonction de la distance préférée ... attention de ne pas s'enfermez sur la gauche avec une attaque de green qui peut être compliquée ..."
-  },
-  "cice-8": {
-    "humour": "L'endurance : « Bois un coup (d’eau, évidemment). Le green est encore loin. Comme tes rêves de PGA. »",
-    "conseil": "... léger dogleg à gauche ... pour une mise en jeu raisonnable alignez vous sur le bord gauche du bunker de droite en restant 5 à 10 m avant... si vous optez par une mise en jeu à la corde attention l'eau arrive vite ... pour l'attaque du green si le drapeau se trouve sur la droite du green il est protégé par une butte de terre ..."
-  },
-  "cice-9": {
-    "humour": "La pause : « Si ton score fait mal, console-toi au bar. La seconde moitié sera forcément meilleure. »",
-    "conseil": "... Dogleg gauche très accentué ... privilégiez une mise en jeu en s'alignant au centre des poteaux des 135 m ... l'été bonne roule de balle et donc vous pouvez gagner en distance ... le green est protégé par un bunker en bas à droite du green, et 1 grand bunker latéral au green ..."
-  },
-  "cice-10": {
-    "humour": "Le redémarrage : « Nouveau départ, mêmes erreurs. Mais avec le sourire. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-11": {
-    "humour": "Le coup parfait : « Visualise la balle parfaite… puis accepte la réalité. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-12": {
-    "humour": "Le piège : « Attention à ce bunker. Il a plus de victimes qu’un match de rugby. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-13": {
-    "humour": "Le karma : « Si tu te moques du chip raté du copain, prépare-toi à putter trois fois. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-14": {
-    "humour": "La patience : « Le green t’attend… quelque part derrière ces trois arbres. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-15": {
-    "humour": "La philosophie : « Le golf, c’est comme la vie : parfois, il faut accepter la rough. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-16": {
-    "humour": "L’illusion du birdie : « Tu penses qu’un birdie arrive. Il pense la même chose de toi. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-17": {
-    "humour": "La concentration : « À ce stade, c’est ton mental qui joue… et il a déjà pris une bière. »",
-    "conseil": "Conseils à suivre ..."
-  },
-  "cice-18": {
-    "humour": "La clôture : « Respire. Frappe. Et fais comme si les 17 autres trous n’avaient jamais existé. »",
-    "conseil": "Conseils à suivre ..."
+  "humour": {
+    "decouverte": {
+      "cice-1": "Le réveil : Respire, détends-toi et oublie que tout le monde te regarde au départ.",
+      "cice-2": "L'ambitieux : Le fairway est large. Enfin, sur la carte.",
+      "cice-3": "Le stratégique : Si tu hésites entre un fer et un bois, choisis ton club fétiche et prie un peu.",
+      "cice-4": "L'illusion : Ce green a l'air plat. Il ment.",
+      "cice-5": "La tentation : Oui, tu peux atteindre le green en un coup. Non, tu ne le feras pas.",
+      "cice-6": "Le mental : Ce n'est pas un slice. C'est une stratégie d'exploration.",
+      "cice-7": "L'humilité : On dit que le golf révèle le vrai caractère. À ce trou, garde le tien discret.",
+      "cice-8": "L'endurance : Bois un coup d'eau. Le green est encore loin. Comme tes rêves de PGA.",
+      "cice-9": "La pause : Si ton score fait mal, console-toi au bar. La seconde moitié sera forcément meilleure.",
+      "cice-10": "Le redémarrage : Nouveau départ, mêmes erreurs. Mais avec le sourire.",
+      "cice-11": "Le coup parfait : Visualise la balle parfaite puis accepte la réalité.",
+      "cice-12": "Le piège : Attention ce bunker. Il a plus de victimes qu'un match de rugby.",
+      "cice-13": "Le karma : Si tu te moques du chip raté du copain, prépare-toi à putter trois fois.",
+      "cice-14": "La patience : Le green t'attend quelque part derrière ces trois arbres.",
+      "cice-15": "La philosophie : Le golf, c'est comme la vie, parfois il faut accepter la rough.",
+      "cice-16": "L'illusion du birdie : Tu penses qu'un birdie arrive. Il pense la même chose de toi.",
+      "cice-17": "La concentration : À ce stade, c'est ton mental qui joue et il a déjà pris une bière.",
+      "cice-18": "La clôture : Respire. Frappe. Et fais comme si les 17 autres trous n'avaient jamais existé."
+    },
+    "franchouillard": {
+      "cice-1": "Mise en jambe : Respire, aligne-toi et essaie juste de ne pas assassiner le starter.",
+      "cice-2": "Le fairway mythique : Le fairway a l'air large. Comme les promesses de début de saison.",
+      "cice-3": "Le club fétiche : Bois 3, fer 5, hybride... prends surtout celui avec lequel tu rates le moins.",
+      "cice-4": "Le green menteur : Il a l'air plat. Il complote, en fait.",
+      "cice-5": "La tentation héroïque : Tu peux attaquer en deux. Tu peux aussi finir au 19e plus tôt que prévu.",
+      "cice-6": "Exploration : Ce n'est pas un slice. C'est une visite guidée de la forêt.",
+      "cice-7": "La sagesse : Moins tu cries, plus tes partenaires accepteront encore de jouer avec toi.",
+      "cice-8": "Le physique : Bois un coup d'eau, pas de bière. La bière c'est pour expliquer le score.",
+      "cice-9": "La mi-temps : Si la carte fait mal, rappelle-toi qu'on compte aussi les blagues au 19e.",
+      "cice-10": "Reboot : Nouveau neuf trous, nouveau toi. Enfin en théorie.",
+      "cice-11": "Le coup parfait : Visualise le coup parfait. Puis vise surtout à rester sur la même parcelle cadastrale.",
+      "cice-12": "Les bunkers : Tu ne joues pas mal, tu soutiens juste l'industrie du ratissage.",
+      "cice-13": "Le karma : Moque-toi du trois-putts du copain, et les dieux du golf s'occupent du trou suivant.",
+      "cice-14": "Gestion de risque : Les arbres ont tous touché une balle aujourd'hui. À toi de choisir laquelle.",
+      "cice-15": "Philosophie : Souviens-toi, la balle est immobile. Si quelque chose part de travers, ce n'est pas elle.",
+      "cice-16": "Les rêves de birdie : Tu vois un birdie. Le trou voit un bogey. Place tes attentes au milieu.",
+      "cice-17": "Le mental : C'est ton mental qui joue... il est déjà au club-house avec des cacahuètes.",
+      "cice-18": "La sortie : Donne tout. Tu passeras plus de temps à raconter ce coup qu'à le refaire."
+    },
+    "britannique": {
+      "cice-1": "Warm-up : Excellent choix de club. Dommage que ce soit toi qui swingues.",
+      "cice-2": "L'optimisme : Vise le milieu de fairway. On découvrira ensemble où ça finit vraiment.",
+      "cice-3": "La stratégie : Plan A le fairway. Plan B on inventera une excuse.",
+      "cice-4": "Le green : Ce putt est droit selon un architecte très imaginatif.",
+      "cice-5": "L'héroïsme : Tu veux y aller en deux ? J'adore les documentaires sur les espèces en voie de disparition.",
+      "cice-6": "La dispersion : Belle trajectoire. Dommage qu'aucune partie du trou ne soit là-bas.",
+      "cice-7": "Le tempo : Moins vite tu swings, moins vite la balle sort du terrain.",
+      "cice-8": "L'endurance : Tu n'es pas fatigué, tu négocies simplement avec la réalité.",
+      "cice-9": "La pause : La bonne nouvelle tu as fini l'aller. La mauvaise ils en ont mis un autre derrière.",
+      "cice-10": "Fresh start : Nouveau départ. Essayons de ne pas tout reproduire.",
+      "cice-11": "L'illusion du contrôle : Tu contrôles tout, sauf la direction, la distance et le contact. Le reste est parfait.",
+      "cice-12": "Le sable : Tu passes plus de temps dans le bunker qu'un sauveteur de plage.",
+      "cice-13": "Le hasard : Si ça finit près du drapeau, on dira que c'était voulu. Pas besoin de témoins.",
+      "cice-14": "Le bois : Ta balle connaît mieux la forêt que le garde-chasse.",
+      "cice-15": "Le score : Rappelle-toi, on écrit au crayon. La diplomatie du golf.",
+      "cice-16": "Le courage : Swing fort. Au point où on en est, la précision serait déplacée.",
+      "cice-17": "La pression : C'est juste un coup de plus. Sauf que tout le monde s'en souviendra.",
+      "cice-18": "Le final : Fais semblant de savoir ce que tu fais. De loin, ça ressemble à du talent."
+    }
   }
 }
