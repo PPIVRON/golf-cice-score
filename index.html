@@ -1447,29 +1447,6 @@
   // pour les autres trous, tu feras pareil
 };
 
-  const holeTips = {
-    "cice-1": "Le réveil : « Respire, détends-toi… et oublie que tout le monde te regarde au départ. » ... Du départ attention au hors limite à droite le long du practice ..., s'aligner sur les arbres du départ du trou 2 ... attention à droite du poteau des 135m de ne pas se retrouver sous les arbres ... attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ... Green pentu dans le sens descendant haut vers le bas ... attention à gauche du green l'eau arrive vite et impossible d'arrêter la balle",
-    "cice-2": "L'ambitieux : « Le fairway est large. Enfin, sur la carte. » ... Dogleg droit accentué, privilégié une mise en jeu dans le virage (attention le fairway est peu large) donc une visée 10 m environ du bunker de gauche ... pour le deuxième coup, soit passer au dessus des arbres, soit un coup à droite (entre la droite du premier arbre et le poteau des 135 m ... attaque du green, protégé par 3 bunker (2 à gauche le long du green, 1 à droite bas) , une pente accentuée en haut du green, mais pour une grande partie assez plat ...  privilégier une attaque longue ...",
-    "cice-3": "Le stratégique : « Si tu hésites entre un fer et un bois, choisis ton club fétiche… et prie un peu. » ... Green protégé par 1 bunker en bas à droite et 2 à gauche toute la longueur du green ... attention de ne pas être court et de se retrouver avec le bunker en jeu au risque d'avoir une approche compliquée, surtout si le drapeau est sur la droite",
-    "cice-4": "L'illusion : « Ce green a l’air plat. Il ment. » ... Trou tout droit ... éviter la partie droite avec un rough très dense et la partie gauche au niveau des bunker avec des arbres qui vous empêchera d'attaquer le green dans de bonnes conditions ... attention au premier bunker à droite, avec une sortie qui peut être longue ...",
-    "cice-5": "La tentation : « Oui, tu peux atteindre le green en un coup. Non, tu ne le feras pas. » ... Trou tout droit ... privilégiez une mise en jeu plutôt centre droit pour éviter le bunker sur la gauche ... green protégé par 2 bunker à gauche tout le long du green, et 1 bunker en bas à droite du green ... attention au hors limite à droite de ce dernier qui peut arriver très vite",
-    "cice-6": "Le mental : « Ce n’est pas un slice. C’est une stratégie d’exploration. » ... Par 3 en monté (3 à 4 m de dénivelé) ... privilégiez une attaque de green plutôt sur la gauche ... protégé par 2 bunker, 1 en bas à droite du green, et 1 autre derrière le long du green.",
-    "cice-7": "L'humilité : « On dit que le golf révèle le vrai caractère. À ce trou, garde le tien discret. » ... une mise en jeu toute droite (fairway assez large) ... attention au bunker sur la gauche qui peut arriver très vite ... attention aussi à gauche de ce bunker de nombreux arbres, et un rough assez dense ... si vous avez la distance vous pouvez être sur le green en 2 ... sinon vous positionner entre les poteaux des 135 m et la rigole qui se trouve devant le green, fonction de la distance préférée ... attention de ne pas s'enfermez sur la gauche avec une attaque de green qui peut être compliquée ...",
-    "cice-8": "L'endurance « Bois un coup (d’eau, évidemment). Le green est encore loin. Comme tes rêves de PGA. » ... léger dogleg à gauche ... pour une mise en jeu raisonnable alignez vous sur le bord gauche du bunker de droite en restant 5 à 10 avant... si vous optez par une mise en jeu à la corde attention l'eau arrive vite ... pour l'attaque du green si le drapeau se trouve sur la droite du green il est protégé par une butte de terre ...",
-    "cice-9": "La pause : « Si ton score fait mal, console-toi au bar. La seconde moitié sera forcément meilleure. » ... Dogleg gauche très accentué ... privilégiez une mise en jeu en s'alignant au centre des poteaux des 135 m ... l'été bonne roule de balle et donc vous pouvez gagner en distance ... le green est protégé par un bunker en bas à droite du green, et 1 grand bunker latéral au green ... ",
-    "cice-10": "«Le redémarrage : Nouveau départ, mêmes erreurs. Mais avec le sourire. »",
-    "cice-11": "«Le coup parfait : Visualise la balle parfaite… puis accepte la réalité. »",
-    "cice-12": "««Le piège : Attention à ce bunker. Il a plus de victimes qu’un match de rugby. »",
-    "cice-13": "«Le karma : Si tu te moques du chip raté du copain, prépare-toi à putter trois fois. »",
-    "cice-14": "«La patience : Le green t’attend… quelque part derrière ces trois arbres. »",
-    "cice-15": "«La philosophie : Le golf, c’est comme la vie : parfois, il faut accepter la rough. »",
-    "cice-16": "«L’illusion du birdie : Tu penses qu’un birdie arrive. Il pense la même chose de toi. »",
-    "cice-17": "«La concentration : À ce stade, c’est ton mental qui joue… et il a déjà pris une bière. »",
-    "cice-18": "«La clôture : Respire. Frappe. Et fais comme si les 17 autres trous n’avaient jamais existé. »",
-    // ...
-    "rennes-1": "…"
-    // etc.
-  };
 
   function getCurrentHoleKey() {
     const hole = getCurrentHole();
@@ -1887,7 +1864,7 @@
   if (viewScore.classList.contains("active")) {
     showHumourToast();
   }
-  
+
 }
 
 
