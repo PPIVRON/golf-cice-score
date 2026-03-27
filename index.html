@@ -2297,11 +2297,13 @@
     }
   });
 
-  // Chargement tips.json
-    fetch('tips.json')
-      .then(r => r.json())
-      .then(data => { holeTips = data; })
-      .catch(() => { holeTips = {}; });
+  fetch('tips.json')
+    .then(r => r.json())
+    .then(data => {
+      holeTips = data;
+      showHumourToast(); // AJOUT
+    })
+    .catch(() => { holeTips = {}; });
 
     // Toast humour
     function showHumourToast() {
