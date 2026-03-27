@@ -2391,6 +2391,9 @@
   document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
     btn.addEventListener("click", () => {
       showStatsView(btn.dataset.statsview);
+      if (btn.dataset.statsview === "analyse") {
+        updateStatsAnalysis(); // AJOUT
+      }
     });
   });
 
