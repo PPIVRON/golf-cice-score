@@ -3,7 +3,8 @@
     { "id": "decouverte", "label": "🌱 Découverte" },
     { "id": "franchouillard", "label": "🥖 Franchouillard" },
     { "id": "britannique", "label": "🎩 Britannique" },
-    { "id": "taquin", "label": "🎭 Taquin" }
+    { "id": "taquin", "label": "🎭 Taquin" },
+    { "id": "absurde", "label": "⚡ Absurde" }
   ],
   "conseils": {
     "cice-1": "Du départ attention au hors limite à droite le long du practice ...,\n s'aligner sur les arbres du départ du trou 2 ...\n attention à droite du poteau des 135m de ne pas se retrouver sous les arbres ...\n attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ...\n Green pentu dans le sens descendant haut vers le bas ...\n attention à gauche du green l'eau arrive vite et impossible d'arrêter la balle",
@@ -105,6 +106,26 @@
       "cice-16": "Ce trou te juge. Et franchement, il a des raisons. ",
       "cice-17": "Plus tu te concentres, plus la balle sent la panique",
       "cice-18": "Derniers coups : fais comme si tout allait bien depuis le début"
+    },
+    "absurde": {
+      "cice-1": "Ce départ est une aventure. Le club fera le reste, ou l’inverse.",
+      "cice-2": "La balle sait où elle va. Toi, beaucoup moins. ",
+      "cice-3": "Aujourd’hui, tu joues contre le trou, les arbres et un peu la gravité.",
+      "cice-4": "Ce green est plat comme une idée de génie un lundi matin.",
+      "cice-5": "Si ton coup disparaît dans le décor, appelle ça une innovation.",
+      "cice-6": "Le bunker n’est pas un piège. C’est une résidence secondaire.",
+      "cice-7": "N’oublie pas : le golf est le seul sport où l’on applaudit surtout le silence.",
+      "cice-8": "Ta balle part parfois en expédition. Elle a besoin de liberté. ",
+      "cice-9": "L’aller est fini. La carte de score, elle, commence à écrire sa biographie. .",
+      "cice-10": "Deuxième moitié : même parcours, autre forme de déni. ",
+      "cice-11": "Le drapeau a l’air proche. Comme une étoile, en fait.",
+      "cice-12": "Ce coup ne sera pas perdu. Il sera redéfini. ",
+      "cice-13": "Si tu entends un bruit dans les arbres, c’est probablement ton drive qui réfléchit. ",
+      "cice-14": "Le putting est une science exacte, si l’on ignore les maths. ",
+      "cice-15": " Tout est sous contrôle, sauf ce qui vient de se passer. ",
+      "cice-16": "La balle connait un chemin secret que toi seul ne peut pas suivre. ",
+      "cice-17": "Tu ne joues pas mal. Tu explores des solutions inédites. ",
+      "cice-18": "Dernier trous : le moment idéal pour comprendre que le golf a le sens de l'humour. "
     }
   }
 }
