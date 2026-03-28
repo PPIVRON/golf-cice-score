@@ -2,7 +2,8 @@
   "categories": [
     { "id": "decouverte", "label": "🌱 Découverte" },
     { "id": "franchouillard", "label": "🥖 Franchouillard" },
-    { "id": "britannique", "label": "🎩 Britannique" }
+    { "id": "britannique", "label": "🎩 Britannique" },
+    { "id": "taquin", "label": "🎭 Taquin" }
   ],
   "conseils": {
     "cice-1": "Du départ attention au hors limite à droite le long du practice ...,\n s'aligner sur les arbres du départ du trou 2 ...\n attention à droite du poteau des 135m de ne pas se retrouver sous les arbres ...\n attaque de green, protégé par 2 bunker (1 à gauche bas, 1 à droite bas) ...\n Green pentu dans le sens descendant haut vers le bas ...\n attention à gauche du green l'eau arrive vite et impossible d'arrêter la balle",
@@ -84,6 +85,26 @@
       "cice-16": "Le courage : Swing fort. Au point où on en est, la précision serait déplacée.",
       "cice-17": "La pression : C'est juste un coup de plus. Sauf que tout le monde s'en souviendra.",
       "cice-18": "Le final : Fais semblant de savoir ce que tu fais. De loin, ça ressemble à du talent."
+    },
+    "taquin": {
+      "cice-1": "Allez, commence fort : au pire, tu seras déjà déçu dès le départ. ",
+      "cice-2": "Le fairway est là-bas. Enfin, quelque part dans cette direction.",
+      "cice-3": "Si ton coup part à droite, dis que c’était un choix tactique. ",
+      "cice-4": "Ce green a l’air facile. C’est comme ça qu’il piège les gens. ",
+      "cice-5": "Tu peux tenter le coup de l’année. Ou faire un coup normal. Quel suspense. ",
+      "cice-6": "Ton slice s’améliore : maintenant il est cohérent.",
+      "cice-7": "Le bunker est aussi un lieu de réflexion. Surtout quand tu y es souvent. ",
+      "cice-8": "Ne force pas. Le golf adore punir les gens motivés. ",
+      "cice-9": "Bravo, tu as survécu à l’aller. Le score, lui, n’a pas survécu. ",
+      "cice-10": "Nouveau départ, mêmes espoirs, plus d’expérience traumatique. ",
+      "cice-11": "Si tu rates ce coup, au moins il sera élégant. Non ? ",
+      "cice-12": "Ce trou est simple : il suffit de ne pas faire exactement ce que tu avais prévu. ",
+      "cice-13": "Le golf est un sport de précision. Toi, tu fais surtout dans la variété. ",
+      "cice-14": "Si la balle va dans les arbres, considère que tu as visité le parcours. ",
+      "cice-15": "La patience est une vert. Dommage qu'elle ne fasse pas baisser le score. ",
+      "cice-16": "Ce trou te juge. Et franchement, il a des raisons. ",
+      "cice-17": "Plus tu te concentres, plus la balle sent la panique",
+      "cice-18": "Derniers coups : fais comme si tout allait bien depuis le début"
     }
   }
 }
