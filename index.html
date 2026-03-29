@@ -1799,14 +1799,17 @@
       });
     }
 
-  // --- Init ---
+    // Init
+    const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
+    if (teeRadioInit) teeRadioInit.checked = true;
 
-  const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
-  if (teeRadioInit) teeRadioInit.checked = true;
+    initCourseTotals();
+    renderHole();
+    showView("score");
+    showHumourToast();
+  })
+  .catch(err => console.error("Erreur chargement données :", err));
 
-  // initCourseTotals();
-  // renderHole();
-  // showView("score");
 </script>
 
 </body>
