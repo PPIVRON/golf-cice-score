@@ -681,6 +681,8 @@
             <div class="line">Putts : <span id="statsTotalPutts">0</span></div>
             <div class="line">Aller (1-9) : <span id="statsAllerScore">—</span> (<span id="statsAllerVsPar">—</span>)</div>
             <div class="line">Retour (10-18) : <span id="statsRetourScore">—</span> (<span id="statsRetourVsPar">—</span>)</div>
+            <div class="line">📍 Distance parcourue : <span id="statsDistance">0 m</span></div>
+            <div class="line">👟 Pas estimés : <span id="statsSteps">0</span></div>
           </div>
         </div>
 
@@ -805,6 +807,11 @@
 
     let courses = {};
     let holeImageRefs = {};
+    let totalDistanceWalked = 0;
+    let lastGpsPosition = null;
+    let stepCount = 0;
+    let lastAccelMagnitude = 0;
+    let stepThreshold = 1.2; // seuil de détection de pas
 
     
   function getCurrentHoleKey() {
@@ -1519,9 +1526,37 @@
 
   renderMarksDistances(latitude, longitude);
   updateMapPosition(latitude, longitude);
+
+  // Calcul distance parcourue
+    if (lastGpsPosition) {
+      const d = distanceInMeters(
+        lastGpsPosition.lat, lastGpsPosition.lon,
+        latitude, longitude
+      );
+      if (d > 1 && d < 50) { // filtrer les sauts GPS aberrants
+        totalDistanceWalked += d;
+        updateHealthStats();
+      }
+    }
+    lastGpsPosition = { lat: latitude, lon: longitude };
+
 }
 
+  function updateHealthStats() {
+    const distEl = document.getElementById("statsDistance");
+    const stepsEl = document.getElementById("statsSteps");
 
+    if (distEl) {
+      const d = totalDistanceWalked;
+      distEl.textContent = d >= 1000
+        ? `${(d / 1000).toFixed(1)} km`
+        : `${Math.round(d)} m`;
+    }
+
+    if (stepsEl) {
+      stepsEl.textContent = stepCount;
+    }
+  }
 
   function handleGpsError(err) {
     gpsStatusEl.textContent = "Erreur GPS : " + err.message;
@@ -1758,6 +1793,17 @@
       activerBoussole();
       document.getElementById("compassBtn").textContent = "🧭✅";
     }
+
+    // Activer aussi le podomètre
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission()
+        .then(response => {
+          if (response === 'granted') {
+            activerPodometre();
+          }
+        });
+    }
   });
 
   // --- Onglets vue Stats ---
@@ -1803,6 +1849,33 @@
       document.getElementById("satelliteBtn").textContent = "🛰️";
     }
   });
+
+  // --- Podomètre ---
+  function activerPodometre() {
+    window.addEventListener('devicemotion', (e) => {
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+
+      const magnitude = Math.sqrt(
+        acc.x * acc.x + acc.y * acc.y + acc.z * acc.z
+      );
+
+      // Détection d'un pas : pic d'accélération au-dessus du seuil
+      if (magnitude > stepThreshold * 10 && lastAccelMagnitude <= stepThreshold * 10) {
+        stepCount++;
+        updateHealthStats();
+      }
+      lastAccelMagnitude = magnitude;
+    });
+  }
+
+  // Demande permission iOS pour l'accéléromètre
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    // Sur iOS, on demandera la permission au même moment que la boussole
+  } else {
+    activerPodometre();
+  }
 
   // --- Chargement données ---
   Promise.all([
