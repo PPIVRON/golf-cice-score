@@ -801,23 +801,10 @@
      Ici tu copies/colles ton objet courses de index_v12
      (Cicé, Rennes, greenLat/greenLon, etc.) */
 
-   let courses = {};
+    let courses = {};
     let holeImageRefs = {};
 
-    fetch('courses.json')
-      .then(r => r.json())
-      .then(data => {
-        courses = data;
-        holeImageRefs = data.holeImageRefs;
-        // Supprimer holeImageRefs de courses pour ne pas le confondre
-        delete courses.holeImageRefs;
-        initCourseTotals();
-        renderHole();
-        showView("score");
-      })
-      .catch(() => console.error("Erreur chargement courses.json"));
-
-
+    
   function getCurrentHoleKey() {
     const hole = getCurrentHole();
     return `${currentCourseKey}-${hole.number}`;
@@ -1667,23 +1654,6 @@
     }
   });
 
-  fetch('tips.json')
-    .then(r => r.json())
-    .then(data => {
-      const category = golfSetup.tipsCategory || "decouverte";
-      // Extraire les humours de la catégorie choisie
-      holeTips = {};
-      if (data.humour && data.humour[category]) {
-        Object.keys(data.humour[category]).forEach(key => {
-          holeTips[key] = {
-            humour: data.humour[category][key],
-            conseil: data.conseils ? data.conseils[key] : ""
-          };
-        });
-      }
-      showHumourToast();
-    })
-    .catch(() => { holeTips = {}; });
 
     // Toast humour
     function showHumourToast() {
@@ -1805,6 +1775,29 @@
       }
     });
   });
+
+  // --- Chargement données ---
+  Promise.all([
+    fetch('courses.json').then(r => r.json()),
+    fetch('tips.json').then(r => r.json())
+  ])
+  .then(([coursesData, tipsData]) => {
+    // Chargement courses
+    courses = coursesData;
+    holeImageRefs = coursesData.holeImageRefs;
+    delete courses.holeImageRefs;
+
+    // Chargement tips
+    const category = golfSetup.tipsCategory || "decouverte";
+    holeTips = {};
+    if (tipsData.humour && tipsData.humour[category]) {
+      Object.keys(tipsData.humour[category]).forEach(key => {
+        holeTips[key] = {
+          humour: tipsData.humour[category][key],
+          conseil: tipsData.conseils ? tipsData.conseils[key] : ""
+        };
+      });
+    }
 
   // --- Init ---
 
