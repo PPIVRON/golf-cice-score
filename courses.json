@@ -1,0 +1,186 @@
+{
+  "cice": {
+    "name": "Garden Golf de Cicé-Blossac",
+    "holes": [
+      { "number": 1,  "par": 4, "white": 347, "yellow": 336, "greenLat": 48.03783, "greenLon": -1.76912 },
+      { "number": 2,  "par": 5, "white": 489, "yellow": 478, "greenLat": 48.03465, "greenLon": -1.76596 },
+      { "number": 3,  "par": 3, "white": 176, "yellow": 161, "greenLat": 48.03543, "greenLon": -1.76466 },
+      { "number": 4,  "par": 4, "white": 341, "yellow": 330, "greenLat": 48.03724, "greenLon": -1.76335 },
+      { "number": 5,  "par": 4, "white": 380, "yellow": 372, "greenLat": 48.03386, "greenLon": -1.76248 },
+      { "number": 6,  "par": 3, "white": 179, "yellow": 169, "greenLat": 48.03160, "greenLon": -1.76195 },
+      { "number": 7,  "par": 5, "white": 485, "yellow": 474, "greenLat": 48.02861, "greenLon": -1.76482 },
+      { "number": 8,  "par": 4, "white": 307, "yellow": 298, "greenLat": 48.03101, "greenLon": -1.76815 },
+      { "number": 9,  "par": 4, "white": 372, "yellow": 302, "greenLat": 48.03417, "greenLon": -1.77049 },
+      { "number": 10, "par": 4, "white": 320, "yellow": 311, "greenLat": 48.03763, "greenLon": -1.77242 },
+      { "number": 11, "par": 3, "white": 143, "yellow": 137, "greenLat": 48.03853, "greenLon": -1.77024 },
+      { "number": 12, "par": 4, "white": 318, "yellow": 305, "greenLat": 48.03880, "greenLon": -1.76562 },
+      { "number": 13, "par": 5, "white": 446, "yellow": 436, "greenLat": 48.04116, "greenLon": -1.76026 },
+      { "number": 14, "par": 3, "white": 189, "yellow": 172, "greenLat": 48.04137, "greenLon": -1.75736 },
+      { "number": 15, "par": 4, "white": 353, "yellow": 343, "greenLat": 48.03853, "greenLon": -1.75956 },
+      { "number": 16, "par": 5, "white": 518, "yellow": 505, "greenLat": 48.03383, "greenLon": -1.76198 },
+      { "number": 17, "par": 4, "white": 394, "yellow": 383, "greenLat": 48.03129, "greenLon": -1.76657 },
+      { "number": 18, "par": 4, "white": 360, "yellow": 313, "greenLat": 48.03407, "greenLon": -1.77099 }
+    ]
+  },
+  "rennes": {
+    "name": "Golf de Rennes Saint-Jacques",
+    "holes": [
+      { "number": 1,  "par": 4, "white": 434, "yellow": 419, "greenLat": 48.06706, "greenLon": -1.74132 },
+      { "number": 2,  "par": 4, "white": 337, "yellow": 305, "greenLat": 48.06527, "greenLon": -1.73851 },
+      { "number": 3,  "par": 4, "white": 369, "yellow": 339, "greenLat": 48.03543, "greenLon": -1.74027 },
+      { "number": 4,  "par": 3, "white": 157, "yellow": 134, "greenLat": 48.06193, "greenLon": -1.74231 },
+      { "number": 5,  "par": 5, "white": 456, "yellow": 433, "greenLat": 48.06448, "greenLon": -1.74757 },
+      { "number": 6,  "par": 4, "white": 370, "yellow": 336, "greenLat": 48.06207, "greenLon": -1.74506 },
+      { "number": 7,  "par": 4, "white": 365, "yellow": 365, "greenLat": 48.06513, "greenLon": -1.74491 },
+      { "number": 8,  "par": 4, "white": 332, "yellow": 332, "greenLat": 48.06517, "greenLon": -1.74823 },
+      { "number": 9,  "par": 3, "white": 170, "yellow": 170, "greenLat": 48.06728, "greenLon": -1.74937 },
+      { "number": 10, "par": 4, "white": 351, "yellow": 351, "greenLat": 48.06691, "greenLon": -1.74292 },
+      { "number": 11, "par": 3, "white": 183, "yellow": 155, "greenLat": 48.06627, "greenLon": -1.74060 },
+      { "number": 12, "par": 4, "white": 358, "yellow": 358, "greenLat": 48.06237, "greenLon": -1.74150 },
+      { "number": 13, "par": 4, "white": 356, "yellow": 330, "greenLat": 48.06507, "greenLon": -1.74018 },
+      { "number": 14, "par": 5, "white": 461, "yellow": 439, "greenLat": 48.06158, "greenLon": -1.74379 },
+      { "number": 15, "par": 3, "white": 309, "yellow": 278, "greenLat": 48.06397, "greenLon": -1.74437 },
+      { "number": 16, "par": 4, "white": 342, "yellow": 342, "greenLat": 48.06562, "greenLon": -1.74116 },
+      { "number": 17, "par": 3, "white": 156, "yellow": 126, "greenLat": 48.06591, "greenLon": -1.74351 },
+      { "number": 18, "par": 5, "white": 497, "yellow": 426, "greenLat": 48.06714, "greenLon": -1.74861 }
+    ]
+  },
+  "holeImageRefs": {
+    "cice-1": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03660, "lon": -1.76948, "img": { "x": 0.629, "y": 0.332 } },
+        { "label": "Haut bunker droite", "lat": 48.03786, "lon": -1.76898, "img": { "x": 0.699, "y": 0.319 } }
+      ],
+      "green": { "lat": 48.03783, "lon": -1.76912, "img": { "x": 0.537, "y": 0.233 } }
+    },
+    "cice-2": {
+      "marks": [
+        { "label": "Centre virage à droite du bunker de gauche", "lat": 48.03706, "lon": -1.76662, "img": { "x": 0.236, "y": 0.507 } },
+        { "label": "Chêne au fond alignement départ", "lat": 48.03670, "lon": -1.76627, "img": { "x": 0.258, "y": 0.522 } },
+        { "label": "Repère 135 m", "lat": 48.03583, "lon": -1.76644, "img": { "x": 0.416, "y": 0.360 } },
+        { "label": "Haut bunker green droite", "lat": 48.03469, "lon": -1.76623, "img": { "x": 0.532, "y": 0.262 } }
+      ],
+      "green": { "lat": 48.03465, "lon": -1.76596, "img": { "x": 0.504, "y": 0.250 } }
+    },
+    "cice-3": {
+      "marks": [
+        { "label": "Haut bunker de droite", "lat": 48.03532, "lon": -1.76458, "img": { "x": 0.236, "y": 0.507 } }
+      ],
+      "green": { "lat": 48.03543, "lon": -1.76466, "img": { "x": 0.553, "y": 0.239 } }
+    },
+    "cice-4": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03607, "lon": -1.76376, "img": { "x": 0.496, "y": 0.382 } },
+        { "label": "Bas bunker fairway", "lat": 48.03634, "lon": -1.76350, "img": { "x": 0.496, "y": 0.382 } }
+      ],
+      "green": { "lat": 48.03724, "lon": -1.76335, "img": { "x": 0.507, "y": 0.259 } }
+    },
+    "cice-5": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03508, "lon": -1.76274, "img": { "x": 0.587, "y": 0.405 } },
+        { "label": "Bas bunker fairway", "lat": 48.03528, "lon": -1.76264, "img": { "x": 0.587, "y": 0.405 } }
+      ],
+      "green": { "lat": 48.03386, "lon": -1.76248, "img": { "x": 0.513, "y": 0.271 } }
+    },
+    "cice-6": {
+      "marks": [
+        { "label": "Haut bunker droite avant green", "lat": 48.033176, "lon": -1.76205, "img": { "x": 0.587, "y": 0.405 } }
+      ],
+      "green": { "lat": 48.03160, "lon": -1.76195, "img": { "x": 0.483, "y": 0.222 } }
+    },
+    "cice-7": {
+      "marks": [
+        { "label": "Repère 180 du départ", "lat": 48.03003, "lon": -1.76264, "img": { "x": 0.386, "y": 0.419 } },
+        { "label": "Bas premier bunker à droite", "lat": 48.03021, "lon": -1.76289, "img": { "x": 0.386, "y": 0.419 } },
+        { "label": "Repère 135 m", "lat": 48.02941, "lon": -1.76343, "img": { "x": 0.406, "y": 0.328 } },
+        { "label": "Ruisseau", "lat": 48.02873, "lon": -1.76469, "img": { "x": 0.406, "y": 0.328 } }
+      ],
+      "green": { "lat": 48.02861, "lon": -1.76482, "img": { "x": 0.460, "y": 0.264 } }
+    },
+    "cice-8": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03011, "lon": -1.76704, "img": { "x": 0.683, "y": 0.427 } },
+        { "label": "Bas bunker droite", "lat": 48.03035, "lon": -1.76698, "img": { "x": 0.683, "y": 0.427 } }
+      ],
+      "green": { "lat": 48.03101, "lon": -1.76815, "img": { "x": 0.633, "y": 0.252 } }
+    },
+    "cice-9": {
+      "marks": [
+        { "label": "Bord de l'étang à passer", "lat": 48.03329, "lon": -1.76843, "img": { "x": 0.727, "y": 0.379 } },
+        { "label": "Repère 135 m", "lat": 48.03372, "lon": -1.76884, "img": { "x": 0.727, "y": 0.379 } },
+        { "label": "Zone pénalité étang", "lat": 48.03401, "lon": -1.76905, "img": { "x": 0.727, "y": 0.379 } },
+        { "label": "Haut bunker droite green", "lat": 48.03426, "lon": -1.77039, "img": { "x": 0.727, "y": 0.379 } }
+      ],
+      "green": { "lat": 48.03417, "lon": -1.77049, "img": { "x": 0.647, "y": 0.238 } }
+    },
+    "cice-10": {
+      "marks": [
+        { "label": "Arbre centre", "lat": 48.03661, "lon": -1.77180, "img": { "x": 0.629, "y": 0.473 } },
+        { "label": "Repère 135 m", "lat": 48.03653, "lon": -1.77167, "img": { "x": 0.629, "y": 0.473 } },
+        { "label": "Bord étang devant green", "lat": 48.03719, "lon": -1.77214, "img": { "x": 0.629, "y": 0.473 } }
+      ],
+      "green": { "lat": 48.03763, "lon": -1.77242, "img": { "x": 0.566, "y": 0.314 } }
+    },
+    "cice-11": {
+      "marks": [
+        { "label": "Bord green deuxième étang", "lat": 48.03848, "lon": -1.77049, "img": { "x": 0.629, "y": 0.473 } },
+        { "label": "Bunker de gauche derrère green", "lat": 48.03863, "lon": -1.77012, "img": { "x": 0.629, "y": 0.473 } }
+      ],
+      "green": { "lat": 48.03853, "lon": -1.77024, "img": { "x": 0.549, "y": 0.325 } }
+    },
+    "cice-12": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03851, "lon": -1.76738, "img": { "x": 0.500, "y": 0.388 } },
+        { "label": "Bord deuxième bunker de gauche", "lat": 48.03866, "lon": -1.76556, "img": { "x": 0.500, "y": 0.388 } }
+      ],
+      "green": { "lat": 48.03880, "lon": -1.76562, "img": { "x": 0.456, "y": 0.223 } }
+    },
+    "cice-13": {
+      "marks": [
+        { "label": "Bord bas bunker de gauche", "lat": 48.03973, "lon": -1.76212, "img": { "x": 0.580, "y": 0.443 } },
+        { "label": "Bord bas bunker de droite", "lat": 48.03928, "lon": -1.76207, "img": { "x": 0.580, "y": 0.443 } },
+        { "label": "Repère 135 m", "lat": 48.04019, "lon": -1.76129, "img": { "x": 0.500, "y": 0.294 } },
+        { "label": "Bord bas bunker green de droite", "lat": 48.04109, "lon": -1.76009, "img": { "x": 0.500, "y": 0.294 } },
+        { "label": "Bord bas bunker derrière green de gauche", "lat": 48.04131, "lon": -1.76012, "img": { "x": 0.500, "y": 0.294 } }
+      ],
+      "green": { "lat": 48.04116, "lon": -1.76026, "img": { "x": 0.420, "y": 0.217 } }
+    },
+    "cice-14": {
+      "marks": [
+        { "label": "Bord bas green de gauche", "lat": 48.04127, "lon": -1.75778, "img": { "x": 0.629, "y": 0.473 } },
+        { "label": "Derrière green", "lat": 48.04147, "lon": -1.75718, "img": { "x": 0.629, "y": 0.473 } }
+      ],
+      "green": { "lat": 48.04137, "lon": -1.75736, "img": { "x": 0.533, "y": 0.327 } }
+    },
+    "cice-15": {
+      "marks": [
+        { "label": "Repère 135 m", "lat": 48.03950, "lon": -1.75851, "img": { "x": 0.557, "y": 0.355 } },
+        { "label": "Bord haut bunker green à droite", "lat": 48.03865, "lon": -1.75958, "img": { "x": 0.557, "y": 0.355 } }
+      ],
+      "green": { "lat": 48.03853, "lon": -1.75956, "img": { "x": 0.533, "y": 0.244 } }
+    },
+    "cice-16": {
+      "marks": [
+        { "label": "Arbre de gauche centre fairway", "lat": 48.03602, "lon": -1.75967, "img": { "x": 0.419, "y": 0.391 } },
+        { "label": "Repère 135 m", "lat": 48.03489, "lon": -1.76112, "img": { "x": 0.531, "y": 0.316 } },
+        { "label": "Bord centre bunker green de droite", "lat": 48.03386, "lon": -1.76207, "img": { "x": 0.531, "y": 0.316 } }
+      ],
+      "green": { "lat": 48.03383, "lon": -1.76198, "img": { "x": 0.564, "y": 0.218 } }
+    },
+    "cice-17": {
+      "marks": [
+        { "label": "Bord centre bunker de gauche", "lat": 48.03164, "lon": -1.76418, "img": { "x": 0.434, "y": 0.329 } },
+        { "label": "Repère 135 m", "lat": 48.03155, "lon": -1.76482, "img": { "x": 0.434, "y": 0.329 } },
+        { "label": "Bord centre bunker green de droite", "lat": 48.03119, "lon": -1.76643, "img": { "x": 0.434, "y": 0.329 } }
+      ],
+      "green": { "lat": 48.03129, "lon": -1.76657, "img": { "x": 0.579, "y": 0.229 } }
+    },
+    "cice-18": {
+      "marks": [
+        { "label": "Pour les blanches, bord étang passé", "lat": 48.03238, "lon": -1.77021, "img": { "x": 0.397, "y": 0.322 } },
+        { "label": "Repère 135 m", "lat": 48.03291, "lon": -1.77062, "img": { "x": 0.397, "y": 0.322 } }
+      ],
+      "green": { "lat": 48.03407, "lon": -1.77099, "img": { "x": 0.484, "y": 0.233 } }
+    }
+  }
+}
