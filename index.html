@@ -650,6 +650,7 @@
             <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
             <button class="btn-secondary" id="centerMapBtn">📍</button>
             <button class="btn-secondary" id="compassBtn">🧭</button>
+            <button class="btn-secondary" id="satelliteBtn">🛰️</button>
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
           <div class="gps-status-line" id="gpsMarksDistances"></div>
@@ -1421,10 +1422,12 @@
       userInteracting = true;
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+   let currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
       maxZoom: 19
     }).addTo(map);
+    map._currentTileLayer = currentTileLayer;
+    map._isSatellite = false;
 
     greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
       icon: L.divIcon({
@@ -1775,6 +1778,30 @@
         updateStatsAnalysis(); // AJOUT
       }
     });
+  });
+
+  document.getElementById("satelliteBtn").addEventListener("click", () => {
+    if (!map) return;
+
+    if (map._currentTileLayer) {
+      map.removeLayer(map._currentTileLayer);
+    }
+
+    map._isSatellite = !map._isSatellite;
+
+    if (map._isSatellite) {
+      map._currentTileLayer = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { attribution: '© Esri', maxZoom: 19 }
+      ).addTo(map);
+      document.getElementById("satelliteBtn").textContent = "🗺️";
+    } else {
+      map._currentTileLayer = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { attribution: '© OpenStreetMap', maxZoom: 19 }
+      ).addTo(map);
+      document.getElementById("satelliteBtn").textContent = "🛰️";
+    }
   });
 
   // --- Chargement données ---
