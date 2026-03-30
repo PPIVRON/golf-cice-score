@@ -713,6 +713,27 @@
         <div id="traceMapContainer" style="width:100%; height:300px; border-radius:8px;"></div>
       </div>
 
+      <!-- Bouton fermeture plein écran tracé -->
+      <button id="closeFullscreenTraceBtn" style="
+        display: none;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 10000;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 600;
+      ">✕ Réduire</button>
+
+      <div class="gps-actions" style="margin-top:8px;">
+        <button class="btn-secondary" id="fullscreenTraceBtn">Plein écran</button>
+      </div>
+    </div>
+
         <!-- Bouton Nouvelle partie -->
         <div style="margin-top: 16px; text-align: center;">
           <button id="btnNewGame" style="
@@ -1952,6 +1973,45 @@
   } else {
     activerPodometre();
   }
+
+  document.getElementById("fullscreenTraceBtn").addEventListener("click", () => {
+    const container = document.getElementById("traceMapContainer");
+    const closeBtn = document.getElementById("closeFullscreenTraceBtn");
+
+    if (container.style.height === "100vh") {
+      container.style.height = "300px";
+      container.style.position = "relative";
+      container.style.top = "";
+      container.style.left = "";
+      container.style.zIndex = "1";
+      container.style.width = "100%";
+      closeBtn.style.display = "none";
+      document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
+    } else {
+      container.style.height = "100vh";
+      container.style.position = "fixed";
+      container.style.top = "0";
+      container.style.left = "0";
+      container.style.zIndex = "9999";
+      container.style.width = "100%";
+      closeBtn.style.display = "block";
+      document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
+    }
+    setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
+  });
+
+  document.getElementById("closeFullscreenTraceBtn").addEventListener("click", () => {
+    const container = document.getElementById("traceMapContainer");
+    container.style.height = "300px";
+    container.style.position = "relative";
+    container.style.top = "";
+    container.style.left = "";
+    container.style.zIndex = "1";
+    container.style.width = "100%";
+    document.getElementById("closeFullscreenTraceBtn").style.display = "none";
+    document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
+    setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
+  });
 
   // --- Chargement données ---
   Promise.all([
