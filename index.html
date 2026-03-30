@@ -841,7 +841,7 @@
     let lastGpsPosition = null;
     let stepCount = 0;
     let lastAccelMagnitude = 0;
-    let stepThreshold = 1.8; // seuil de détection de pas
+    let stepThreshold = 1.4; // seuil de détection de pas
     let tracePoints = []; // points GPS du trou courant
     let tracePolyline = null; // polyline Leaflet
 
@@ -1561,8 +1561,10 @@
     renderMarksDistances(latitude, longitude);
     updateMapPosition(latitude, longitude);
 
-    // Enregistrement du tracé (sans affichage sur la carte GPS)
-    tracePoints.push([latitude, longitude]);
+    // Enregistrement du tracé uniquement si GPS précis
+    if (accuracy < 20) { // ignorer si précision > 20m
+      tracePoints.push([latitude, longitude]);
+    }
 
     // Calcul distance parcourue
       if (lastGpsPosition) {
@@ -1570,7 +1572,7 @@
           lastGpsPosition.lat, lastGpsPosition.lon,
           latitude, longitude
         );
-        if (d > 3 && d < 50) { // filtrer les sauts GPS aberrants
+        if (d > 1.5 && d < 50) { // filtrer les sauts GPS aberrants
           totalDistanceWalked += d;
           updateHealthStats();
         }
@@ -1593,7 +1595,34 @@
     if (stepsEl) {
       stepsEl.textContent = stepCount;
     }
+
+    // Mettre à jour la polyline du tracé si la carte est visible
+    updateTraceOnMap();
+
   }
+
+  function updateTraceOnMap() {
+    if (!traceMap) return;
+    if (tracePoints.length < 2) return;
+
+    // Supprimer l'ancienne polyline sur traceMap
+    traceMap.eachLayer(layer => {
+      if (layer instanceof L.Polyline) {
+        traceMap.removeLayer(layer);
+      }
+    });
+
+    // Redessiner
+    L.polyline(tracePoints, {
+      color: '#ef4444',
+      weight: 2,
+      opacity: 0.8
+    }).addTo(traceMap);
+
+    // Recentrer
+    traceMap.fitBounds(L.polyline(tracePoints).getBounds(), { padding: [20, 20] });
+  }
+
 
   function handleGpsError(err) {
     gpsStatusEl.textContent = "Erreur GPS : " + err.message;
@@ -1955,7 +1984,7 @@
       const now = Date.now();
       if (magnitude > stepThreshold * 10 && 
           lastAccelMagnitude <= stepThreshold * 10 &&
-          now - lastStepTime > 300) { // 300ms minimum entre 2 pas
+          now - lastStepTime > 250) { // 300ms minimum entre 2 pas
         stepCount++;
         lastStepTime = now;
         updateHealthStats();
