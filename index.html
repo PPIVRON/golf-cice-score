@@ -841,7 +841,7 @@
     let lastGpsPosition = null;
     let stepCount = 0;
     let lastAccelMagnitude = 0;
-    let stepThreshold = 1.2; // seuil de détection de pas
+    let stepThreshold = 1.8; // seuil de détection de pas
     let tracePoints = []; // points GPS du trou courant
     let tracePolyline = null; // polyline Leaflet
 
@@ -1546,47 +1546,38 @@
 
 
   function handleGpsSuccess(pos) {
-  const { latitude, longitude, accuracy } = pos.coords;
-  gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-  gpsStatusEl.textContent = "GPS OK";
+    const { latitude, longitude, accuracy } = pos.coords;
+    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+    gpsStatusEl.textContent = "GPS OK";
 
-  const hole = getCurrentHole();
-  if (hole.greenLat && hole.greenLon) {
-    const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-    gpsDistanceValueEl.textContent = Math.round(d);
-  } else {
-    gpsDistanceValueEl.textContent = "‑‑‑";
-  }
-
-  renderMarksDistances(latitude, longitude);
-  updateMapPosition(latitude, longitude);
-
-  // Enregistrement du tracé
-  tracePoints.push([latitude, longitude]);
-  if (tracePolyline) {
-    tracePolyline.setLatLngs(tracePoints);
-  } else {
-    tracePolyline = L.polyline(tracePoints, {
-      color: '#ef4444',
-      weight: 3,
-      opacity: 0.8
-    }).addTo(map);
-  }
-
-  // Calcul distance parcourue
-    if (lastGpsPosition) {
-      const d = distanceInMeters(
-        lastGpsPosition.lat, lastGpsPosition.lon,
-        latitude, longitude
-      );
-      if (d > 1 && d < 50) { // filtrer les sauts GPS aberrants
-        totalDistanceWalked += d;
-        updateHealthStats();
-      }
+    const hole = getCurrentHole();
+    if (hole.greenLat && hole.greenLon) {
+      const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+      gpsDistanceValueEl.textContent = Math.round(d);
+    } else {
+      gpsDistanceValueEl.textContent = "‑‑‑";
     }
-    lastGpsPosition = { lat: latitude, lon: longitude };
 
-}
+    renderMarksDistances(latitude, longitude);
+    updateMapPosition(latitude, longitude);
+
+    // Enregistrement du tracé (sans affichage sur la carte GPS)
+    tracePoints.push([latitude, longitude]);
+
+    // Calcul distance parcourue
+      if (lastGpsPosition) {
+        const d = distanceInMeters(
+          lastGpsPosition.lat, lastGpsPosition.lon,
+          latitude, longitude
+        );
+        if (d > 3 && d < 50) { // filtrer les sauts GPS aberrants
+          totalDistanceWalked += d;
+          updateHealthStats();
+        }
+      }
+      lastGpsPosition = { lat: latitude, lon: longitude };
+
+  }
 
   function updateHealthStats() {
     const distEl = document.getElementById("statsDistance");
@@ -1639,6 +1630,8 @@
   gpsDistanceValueEl.textContent = "‑‑‑";
   gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
   gpsMarksDistancesEl.textContent = "";
+  tracePoints = [];    // AJOUT
+  tracePolyline = null; // AJOUT
 }
 
 
@@ -1905,7 +1898,7 @@
     if (tracePoints.length > 1) {
       L.polyline(tracePoints, {
         color: '#ef4444',
-        weight: 3,
+        weight: 2,
         opacity: 0.8
       }).addTo(traceMap);
 
@@ -1948,6 +1941,8 @@
   });
 
   // --- Podomètre ---
+  let lastStepTime = 0;
+
   function activerPodometre() {
     window.addEventListener('devicemotion', (e) => {
       const acc = e.accelerationIncludingGravity;
@@ -1957,9 +1952,12 @@
         acc.x * acc.x + acc.y * acc.y + acc.z * acc.z
       );
 
-      // Détection d'un pas : pic d'accélération au-dessus du seuil
-      if (magnitude > stepThreshold * 10 && lastAccelMagnitude <= stepThreshold * 10) {
+      const now = Date.now();
+      if (magnitude > stepThreshold * 10 && 
+          lastAccelMagnitude <= stepThreshold * 10 &&
+          now - lastStepTime > 300) { // 300ms minimum entre 2 pas
         stepCount++;
+        lastStepTime = now;
         updateHealthStats();
       }
       lastAccelMagnitude = magnitude;
@@ -2040,6 +2038,10 @@
     const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
     if (teeRadioInit) teeRadioInit.checked = true;
 
+    // Réinitialisation du tracé au démarrage
+    tracePoints = [];
+    tracePolyline = null;
+
     initCourseTotals();
     renderHole();
     showView("score");
@@ -2049,6 +2051,6 @@
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v28</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v29</div>
 </body>
 </html>
