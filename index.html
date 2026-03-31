@@ -1566,16 +1566,16 @@
 
     // Enregistrement du tracé uniquement si GPS précis
     // Enregistrement du tracé avec double filtre
-    if (accuracy < 20) {
+    if (accuracy < 15) { // précision plus stricte
       const now = Date.now();
-      if (!lastTraceTime || now - lastTraceTime > 5000) { // 5 secondes minimum entre 2 points
+      if (!lastTraceTime || now - lastTraceTime > 5000) {
         if (tracePoints.length === 0) {
           tracePoints.push([latitude, longitude]);
           lastTraceTime = now;
         } else {
           const lastPoint = tracePoints[tracePoints.length - 1];
           const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
-          if (d > 5) { // minimum 5m de déplacement réel
+          if (d > 15) { // seuil plus élevé
             tracePoints.push([latitude, longitude]);
             lastTraceTime = now;
           }
