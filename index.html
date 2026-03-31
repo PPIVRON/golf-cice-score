@@ -845,6 +845,8 @@
     let tracePoints = []; // points GPS du trou courant
     let tracePolyline = null; // polyline Leaflet
 
+    let lastTraceTime = null;
+
     
   function getCurrentHoleKey() {
     const hole = getCurrentHole();
@@ -1270,6 +1272,7 @@
   // Réinitialise la carte au nouveau trou
   tracePoints = [];
   tracePolyline = null;
+  lastTraceTime = null;
   initMap();
 }
 
@@ -1562,8 +1565,22 @@
     updateMapPosition(latitude, longitude);
 
     // Enregistrement du tracé uniquement si GPS précis
-    if (accuracy < 20) { // ignorer si précision > 20m
-      tracePoints.push([latitude, longitude]);
+    // Enregistrement du tracé avec double filtre
+    if (accuracy < 20) {
+      const now = Date.now();
+      if (!lastTraceTime || now - lastTraceTime > 5000) { // 5 secondes minimum entre 2 points
+        if (tracePoints.length === 0) {
+          tracePoints.push([latitude, longitude]);
+          lastTraceTime = now;
+        } else {
+          const lastPoint = tracePoints[tracePoints.length - 1];
+          const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
+          if (d > 5) { // minimum 5m de déplacement réel
+            tracePoints.push([latitude, longitude]);
+            lastTraceTime = now;
+          }
+        }
+      }
     }
 
     // Calcul distance parcourue
@@ -1661,6 +1678,7 @@
   gpsMarksDistancesEl.textContent = "";
   tracePoints = [];    // AJOUT
   tracePolyline = null; // AJOUT
+  lastTraceTime = null;
 }
 
 
