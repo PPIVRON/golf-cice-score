@@ -521,7 +521,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-  <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
 
 
 </head>
@@ -2071,27 +2070,73 @@
     setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
   });
 
-  document.getElementById("saveTraceBtn").addEventListener("click", () => {
-    if (!traceMap) return;
+  document.getElementById("saveTraceBtn").addEventListener("click", async () => {
+    if (!traceMap || tracePoints.length < 2) {
+      alert("Pas assez de points de tracé enregistrés.");
+      return;
+    }
 
-    leafletImage(traceMap, (err, canvas) => {
-      if (err) {
-        console.error('Erreur:', err);
-        return;
-      }
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const file = new File([blob], `trace_trou_${getCurrentHole().number}.png`, { type: 'image/png' });
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, 400, 400);
 
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Tracé trou ${getCurrentHole().number}`
-          });
-        }
-      }, 'image/png');
+    // Calculer les bornes du tracé
+    const lats = tracePoints.map(p => p[0]);
+    const lons = tracePoints.map(p => p[1]);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+    const padding = 40;
+
+    const scaleX = (400 - padding * 2) / (maxLon - minLon || 0.001);
+    const scaleY = (400 - padding * 2) / (maxLat - minLat || 0.001);
+    const scale = Math.min(scaleX, scaleY);
+
+    // Dessiner le tracé
+    ctx.beginPath();
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    tracePoints.forEach((p, i) => {
+      const x = padding + (p[1] - minLon) * scale;
+      const y = 400 - padding - (p[0] - minLat) * scale;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
+    ctx.stroke();
+
+    // Point départ (vert)
+    const startX = padding + (tracePoints[0][1] - minLon) * scale;
+    const startY = 400 - padding - (tracePoints[0][0] - minLat) * scale;
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath();
+    ctx.arc(startX, startY, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Point arrivée (rouge)
+    const endX = padding + (tracePoints[tracePoints.length-1][1] - minLon) * scale;
+    const endY = 400 - padding - (tracePoints[tracePoints.length-1][0] - minLat) * scale;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Titre
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px sans-serif';
+    ctx.fillText(`Tracé Trou ${getCurrentHole().number}`, 10, 20);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], `trace_trou_${getCurrentHole().number}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: `Tracé trou ${getCurrentHole().number}` });
+      }
+    }, 'image/png');
   });
 
   // --- Chargement données ---
