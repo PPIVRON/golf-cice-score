@@ -522,6 +522,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
+  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 
 </head>
 <body>
@@ -731,6 +733,7 @@
 
       <div class="gps-actions" style="margin-top:8px;">
         <button class="btn-secondary" id="fullscreenTraceBtn">Plein écran</button>
+        <button class="btn-secondary" id="saveTraceBtn">💾 Sauver</button>
       </div>
     </div>
 
@@ -2069,6 +2072,42 @@
     setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
   });
 
+  document.getElementById("saveTraceBtn").addEventListener("click", async () => {
+    if (!traceMap) return;
+
+    try {
+      const container = document.getElementById("traceMapContainer");
+      const canvas = await html2canvas(container, {
+        useCORS: true,
+        allowTaint: false,
+        logging: false
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], `trace_trou_${getCurrentHole().number}.png`, { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Tracé trou ${getCurrentHole().number}`,
+          });
+        } else {
+          // Fallback : téléchargement direct
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `trace_trou_${getCurrentHole().number}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
+
+    } catch (err) {
+      console.error('Erreur capture:', err);
+    }
+  });
+
   // --- Chargement données ---
   Promise.all([
     fetch('courses.json').then(r => r.json()),
@@ -2109,6 +2148,6 @@
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v29</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v30</div>
 </body>
 </html>
