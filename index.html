@@ -1542,6 +1542,10 @@ function renderEtalonnageTabs() {
       return [];
     }
 
+    // Si le score du trou est déjà saisi, pas de repères
+    const playerHole = getCurrentPlayerHole();
+    if (playerHole.score !== null) return [];
+
     const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
 
     return ref.marks
