@@ -1584,17 +1584,19 @@
     }
 
     // Calcul distance parcourue
-      if (lastGpsPosition) {
-        const d = distanceInMeters(
-          lastGpsPosition.lat, lastGpsPosition.lon,
-          latitude, longitude
-        );
-        if (d > 1.5 && d < 50) { // filtrer les sauts GPS aberrants
-          totalDistanceWalked += d;
-          updateHealthStats();
-        }
+      if (accuracy < 15 && lastGpsPosition) {
+      const d = distanceInMeters(
+        lastGpsPosition.lat, lastGpsPosition.lon,
+        latitude, longitude
+      );
+      if (d > 15 && d < 50) {
+        totalDistanceWalked += d;
+        updateHealthStats();
       }
+    }
+    if (accuracy < 15) {
       lastGpsPosition = { lat: latitude, lon: longitude };
+    }
 
   }
 
@@ -1858,7 +1860,7 @@
     window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        map.setBearing(-e.webkitCompassHeading);
+        map.setBearing(e.webkitCompassHeading);
       }
     });
   }
@@ -1922,7 +1924,7 @@
     traceMap = L.map('traceMapContainer', {
       zoomControl: true,
       tap: false
-    }).setView([hole.greenLat, hole.greenLon], 17);
+    }).setView([hole.greenLat, hole.greenLon], 17); // centré sur le green par défaut
 
     setTimeout(() => { traceMap.invalidateSize(); }, 100);
 
@@ -1941,7 +1943,7 @@
       })
     }).addTo(traceMap);
 
-    // Tracé du joueur
+    // Tracé du joueur uniquement si suffisamment de points
     if (tracePoints.length > 1) {
       L.polyline(tracePoints, {
         color: '#ef4444',
@@ -1949,9 +1951,13 @@
         opacity: 0.8
       }).addTo(traceMap);
 
-      // Centrer sur le tracé
-      traceMap.fitBounds(L.polyline(tracePoints).getBounds(), { padding: [20, 20] });
+      // Centrer sur le tracé seulement si assez de points
+      traceMap.fitBounds(
+        L.polyline(tracePoints).getBounds(),
+        { padding: [20, 20] }
+      );
     }
+    // Si pas assez de points, on reste centré sur le green
   }
 
   document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
