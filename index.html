@@ -672,7 +672,6 @@
           <button class="player-tab active" data-statsview="resume">Résumé</button>
           <button class="player-tab" data-statsview="analyse">Analyse</button>
           <button class="player-tab" data-statsview="trous">Trous</button>
-          <button class="player-tab" data-statsview="trace">Tracé</button>
         </div>
 
 
@@ -684,8 +683,6 @@
             <div class="line">Putts : <span id="statsTotalPutts">0</span></div>
             <div class="line">Aller (1-9) : <span id="statsAllerScore">—</span> (<span id="statsAllerVsPar">—</span>)</div>
             <div class="line">Retour (10-18) : <span id="statsRetourScore">—</span> (<span id="statsRetourVsPar">—</span>)</div>
-            <div class="line">📍 Distance parcourue : <span id="statsDistance">0 m</span></div>
-            <div class="line">👟 Pas estimés : <span id="statsSteps">0</span></div>
           </div>
         </div>
 
@@ -707,36 +704,7 @@
           <div class="stats-detail" id="statsDetail"></div>
         </div>
 
-        <!-- Bloc Tracé -->
-      <div id="statsViewTrace" style="display:none;">
-        <div style="font-size:12px; color:#6b7280; margin-bottom:6px; text-align:center;">
-          Tracé du trou en cours
-        </div>
-        <div id="traceMapContainer" style="width:100%; height:300px; border-radius:8px;"></div>
-
-      <!-- Bouton fermeture plein écran tracé -->
-      <button id="closeFullscreenTraceBtn" style="
-        display: none;
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 10000;
-        background: rgba(0,0,0,0.7);
-        color: white;
-        border: none;
-        border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 14px;
-        font-weight: 600;
-      ">✕ Réduire</button>
-
-      <div class="gps-actions" style="margin-top:8px;">
-        <button class="btn-secondary" id="fullscreenTraceBtn">Plein écran</button>
-        <button class="btn-secondary" id="saveTraceBtn">💾 Sauver</button>
-      </div>
-    </div>
-
-        <!-- Bouton Nouvelle partie -->
+       <!-- Bouton Nouvelle partie -->
         <div style="margin-top: 16px; text-align: center;">
           <button id="btnNewGame" style="
             background: none;
@@ -890,16 +858,7 @@ let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
 
     let courses = {};
     let holeImageRefs = {};
-    let totalDistanceWalked = 0;
-    let lastGpsPosition = null;
-    let stepCount = 0;
-    let lastAccelMagnitude = 0;
-    let stepThreshold = 1.4; // seuil de détection de pas
-    let tracePoints = []; // points GPS du trou courant
-    let tracePolyline = null; // polyline Leaflet
-
-
-    
+  
   function getCurrentHoleKey() {
     const hole = getCurrentHole();
     return `${currentCourseKey}-${hole.number}`;
@@ -1041,9 +1000,6 @@ let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
   let greenMarkerLeaflet = null;
   let marksMarkersLeaflet = [];
   let userInteracting = false;
-
-  let lastTraceTime = null;
-  let traceMap = null;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
@@ -1441,11 +1397,6 @@ function renderEtalonnageTabs() {
 
 
  function updateGpsHoleImage() {
-    tracePoints = [];
-    tracePolyline = null;
-    lastTraceTime = null;
-    // On ne détruit plus traceMap ici
-    // Il sera recréé quand on clique sur l'onglet Tracé
     initMap();
   }
 
@@ -1762,82 +1713,6 @@ function renderEtalonnageTabs() {
 
     updateMapPosition(latitude, longitude);
 
-    // Enregistrement du tracé uniquement si GPS précis
-    // Enregistrement du tracé avec double filtre
-    if (accuracy < 15) { // précision plus stricte
-      const now = Date.now();
-      if (!lastTraceTime || now - lastTraceTime > 5000) {
-        if (tracePoints.length === 0) {
-          tracePoints.push([latitude, longitude]);
-          lastTraceTime = now;
-        } else {
-          const lastPoint = tracePoints[tracePoints.length - 1];
-          const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
-          if (d > 15) { // seuil plus élevé
-            tracePoints.push([latitude, longitude]);
-            lastTraceTime = now;
-          }
-        }
-      }
-    }
-
-    // Calcul distance parcourue
-      if (accuracy < 15 && lastGpsPosition) {
-      const d = distanceInMeters(
-        lastGpsPosition.lat, lastGpsPosition.lon,
-        latitude, longitude
-      );
-      if (d > 15 && d < 50) {
-        totalDistanceWalked += d;
-        updateHealthStats();
-      }
-    }
-    if (accuracy < 15) {
-      lastGpsPosition = { lat: latitude, lon: longitude };
-    }
-
-  }
-
-  function updateHealthStats() {
-    const distEl = document.getElementById("statsDistance");
-    const stepsEl = document.getElementById("statsSteps");
-
-    if (distEl) {
-      const d = totalDistanceWalked;
-      distEl.textContent = d >= 1000
-        ? `${(d / 1000).toFixed(1)} km`
-        : `${Math.round(d)} m`;
-    }
-
-    if (stepsEl) {
-      stepsEl.textContent = stepCount;
-    }
-
-    // Mettre à jour la polyline du tracé si la carte est visible
-    updateTraceOnMap();
-
-  }
-
-  function updateTraceOnMap() {
-    if (!traceMap) return;
-    if (tracePoints.length < 2) return;
-
-    // Supprimer l'ancienne polyline sur traceMap
-    traceMap.eachLayer(layer => {
-      if (layer instanceof L.Polyline) {
-        traceMap.removeLayer(layer);
-      }
-    });
-
-    // Redessiner
-    L.polyline(tracePoints, {
-      color: '#ef4444',
-      weight: 2,
-      opacity: 0.8
-    }).addTo(traceMap);
-
-    // Recentrer
-    traceMap.fitBounds(L.polyline(tracePoints).getBounds(), { padding: [20, 20] });
   }
 
 
@@ -1876,9 +1751,6 @@ function renderEtalonnageTabs() {
   gpsDistanceValueEl.textContent = "‑‑‑";
   gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
   gpsMarksDistancesEl.textContent = "";
-  tracePoints = [];    // AJOUT
-  tracePolyline = null; // AJOUT
-  lastTraceTime = null;
   const clubEl = document.getElementById("gpsClubRecommande");
   if (clubEl) clubEl.textContent = "";
 }
@@ -2082,16 +1954,6 @@ function renderEtalonnageTabs() {
       document.getElementById("compassBtn").textContent = "🧭✅";
     }
 
-    // Activer aussi le podomètre
-    if (typeof DeviceMotionEvent !== 'undefined' &&
-        typeof DeviceMotionEvent.requestPermission === 'function') {
-      DeviceMotionEvent.requestPermission()
-        .then(response => {
-          if (response === 'granted') {
-            activerPodometre();
-          }
-        });
-    }
   });
 
   // --- Onglets vue Stats ---
@@ -2099,67 +1961,11 @@ function renderEtalonnageTabs() {
     document.getElementById("statsViewResume").style.display = view === "resume" ? "block" : "none";
     document.getElementById("statsViewAnalyse").style.display = view === "analyse" ? "block" : "none";
     document.getElementById("statsViewTrous").style.display = view === "trous" ? "block" : "none";
-    document.getElementById("statsViewTrace").style.display = view === "trace" ? "block" : "none";
 
     document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.statsview === view);
     });
 
-    // Initialiser la mini-carte du tracé
-    if (view === "trace") {
-      if (traceMap) {
-        traceMap.remove();
-        traceMap = null;
-      }
-      initTraceMap();
-    }
-  }
-
-  function initTraceMap() {
-    if (traceMap) {
-      traceMap.remove();
-      traceMap = null;
-    }
-
-    const hole = getCurrentHole();
-
-    traceMap = L.map('traceMapContainer', {
-      zoomControl: true,
-      tap: false
-    }).setView([hole.greenLat, hole.greenLon], 17); // centré sur le green par défaut
-
-    setTimeout(() => { traceMap.invalidateSize(); }, 100);
-
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '© Esri',
-      maxZoom: 19
-    }).addTo(traceMap);
-
-    // Marqueur green
-    L.marker([hole.greenLat, hole.greenLon], {
-      icon: L.divIcon({
-        className: '',
-        html: '<div style="font-size:20px;">⛳</div>',
-        iconSize: [20, 20],
-        iconAnchor: [10, 20]
-      })
-    }).addTo(traceMap);
-
-    // Tracé du joueur uniquement si suffisamment de points
-    if (tracePoints.length > 1) {
-      L.polyline(tracePoints, {
-        color: '#ef4444',
-        weight: 2,
-        opacity: 0.8
-      }).addTo(traceMap);
-
-      // Centrer sur le tracé seulement si assez de points
-      traceMap.fitBounds(
-        L.polyline(tracePoints).getBounds(),
-        { padding: [20, 20] }
-      );
-    }
-    // Si pas assez de points, on reste centré sur le green
   }
 
   document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
@@ -2195,145 +2001,6 @@ function renderEtalonnageTabs() {
     }
   });
 
-  // --- Podomètre ---
-  let lastStepTime = 0;
-
-  function activerPodometre() {
-    window.addEventListener('devicemotion', (e) => {
-      const acc = e.accelerationIncludingGravity;
-      if (!acc) return;
-
-      const magnitude = Math.sqrt(
-        acc.x * acc.x + acc.y * acc.y + acc.z * acc.z
-      );
-
-      const now = Date.now();
-      if (magnitude > stepThreshold * 10 && 
-          lastAccelMagnitude <= stepThreshold * 10 &&
-          now - lastStepTime > 250) { // 300ms minimum entre 2 pas
-        stepCount++;
-        lastStepTime = now;
-        updateHealthStats();
-      }
-      lastAccelMagnitude = magnitude;
-    });
-  }
-
-  // Demande permission iOS pour l'accéléromètre
-  if (typeof DeviceMotionEvent !== 'undefined' &&
-      typeof DeviceMotionEvent.requestPermission === 'function') {
-    // Sur iOS, on demandera la permission au même moment que la boussole
-  } else {
-    activerPodometre();
-  }
-
-  document.getElementById("fullscreenTraceBtn").addEventListener("click", () => {
-    const container = document.getElementById("traceMapContainer");
-    const closeBtn = document.getElementById("closeFullscreenTraceBtn");
-
-    if (container.style.height === "100vh") {
-      container.style.height = "300px";
-      container.style.position = "relative";
-      container.style.top = "";
-      container.style.left = "";
-      container.style.zIndex = "1";
-      container.style.width = "100%";
-      closeBtn.style.display = "none";
-      document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
-    } else {
-      container.style.height = "100vh";
-      container.style.position = "fixed";
-      container.style.top = "0";
-      container.style.left = "0";
-      container.style.zIndex = "9999";
-      container.style.width = "100%";
-      closeBtn.style.display = "block";
-      document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
-    }
-    setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
-  });
-
-  document.getElementById("closeFullscreenTraceBtn").addEventListener("click", () => {
-    const container = document.getElementById("traceMapContainer");
-    container.style.height = "300px";
-    container.style.position = "relative";
-    container.style.top = "";
-    container.style.left = "";
-    container.style.zIndex = "1";
-    container.style.width = "100%";
-    document.getElementById("closeFullscreenTraceBtn").style.display = "none";
-    document.getElementById("fullscreenTraceBtn").textContent = "Plein écran";
-    setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
-  });
-
-  document.getElementById("saveTraceBtn").addEventListener("click", async () => {
-    if (!traceMap || tracePoints.length < 2) {
-      alert("Pas assez de points de tracé enregistrés.");
-      return;
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 400;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, 400, 400);
-
-    // Calculer les bornes du tracé
-    const lats = tracePoints.map(p => p[0]);
-    const lons = tracePoints.map(p => p[1]);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
-    const padding = 40;
-
-    const scaleX = (400 - padding * 2) / (maxLon - minLon || 0.001);
-    const scaleY = (400 - padding * 2) / (maxLat - minLat || 0.001);
-    const scale = Math.min(scaleX, scaleY);
-
-    // Dessiner le tracé
-    ctx.beginPath();
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
-    tracePoints.forEach((p, i) => {
-      const x = padding + (p[1] - minLon) * scale;
-      const y = 400 - padding - (p[0] - minLat) * scale;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    // Point départ (vert)
-    const startX = padding + (tracePoints[0][1] - minLon) * scale;
-    const startY = 400 - padding - (tracePoints[0][0] - minLat) * scale;
-    ctx.fillStyle = '#16a34a';
-    ctx.beginPath();
-    ctx.arc(startX, startY, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Point arrivée (rouge)
-    const endX = padding + (tracePoints[tracePoints.length-1][1] - minLon) * scale;
-    const endY = 400 - padding - (tracePoints[tracePoints.length-1][0] - minLat) * scale;
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.arc(endX, endY, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Titre
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '16px sans-serif';
-    ctx.fillText(`Tracé Trou ${getCurrentHole().number}`, 10, 20);
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], `trace_trou_${getCurrentHole().number}.png`, { type: 'image/png' });
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Tracé trou ${getCurrentHole().number}` });
-      }
-    }, 'image/png');
-  });
 
   // --- Étalonnage ---
     document.getElementById("saveClubsBtn").addEventListener("click", () => {
@@ -2376,10 +2043,6 @@ function renderEtalonnageTabs() {
     // Init
     const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
     if (teeRadioInit) teeRadioInit.checked = true;
-
-    // Réinitialisation du tracé au démarrage
-    tracePoints = [];
-    tracePolyline = null;
 
     initPlayersClubs();
     initCourseTotals();
