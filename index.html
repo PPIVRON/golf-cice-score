@@ -654,6 +654,7 @@
           </div>
           <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
           <div class="gps-status-line" id="gpsMarksDistances"></div>
+          <div class="gps-status-line" id="gpsClubRecommande" style="font-weight:600; color:#111827;"></div>
         </div>
       </div>
     </section>
@@ -673,6 +674,36 @@
           <button class="player-tab" data-statsview="trous">Trous</button>
           <button class="player-tab" data-statsview="trace">Tracé</button>
         </div>
+
+    <!-- Vue ÉTALONNAGE -->
+    <section id="view-etalonnage" class="view">
+      <div class="stats-main">
+
+        <!-- Onglets joueurs -->
+        <div class="players-tabs" id="etalonnageTabs"></div>
+
+        <div class="stats-summary">
+          <h2>🏌️ Distances par club</h2>
+          <div style="font-size:12px; color:#6b7280; margin-top:4px;">
+            Modifiez vos distances moyennes par club
+          </div>
+        </div>
+
+        <!-- Tableau clubs -->
+        <div class="stats-detail" id="clubsTable"></div>
+
+        <!-- Boutons actions -->
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn-primary" id="saveClubsBtn" style="flex:1; padding:10px;">
+            💾 Sauvegarder
+          </button>
+          <button class="btn-secondary" id="resetClubsBtn" style="flex:1; padding:10px;">
+            🔄 Réinitialiser
+          </button>
+        </div>
+
+      </div>
+    </section>
 
         <!-- Bloc Résumé -->
         <div id="statsViewResume">
@@ -781,6 +812,9 @@
   <button class="nav-btn" data-view="stats" id="btnNavStats">
     <span>Stats</span>
   </button>
+  <button class="nav-btn" data-view="etalonnage" id="btnNavEtalonnage">
+    <span>Clubs</span>
+  </button>
 </div>
 
 
@@ -807,6 +841,23 @@
       teeColor: p.teeColor,
       holes: []
     }));
+
+    const defaultClubs = [
+      { nom: "Driver",    distance: 220 },
+      { nom: "Bois 3",    distance: 195 },
+      { nom: "Hybride",   distance: 175 },
+      { nom: "Fer 4",     distance: 165 },
+      { nom: "Fer 5",     distance: 155 },
+      { nom: "Fer 6",     distance: 145 },
+      { nom: "Fer 7",     distance: 135 },
+      { nom: "Fer 8",     distance: 125 },
+      { nom: "Fer 9",     distance: 115 },
+      { nom: "Pitching",  distance: 100 },
+      { nom: "Sand",      distance:  80 },
+      { nom: "Lob",       distance:  60 }
+    ];
+
+let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
 
     let currentCourseKey   = golfSetup.courseKey;
     let currentPlayerIndex = 0;
@@ -1153,6 +1204,123 @@
     }
   }
 
+  // --- Étalonnage clubs ---
+
+function loadPlayerClubs(trigram) {
+  const key = `clubs_${trigram.toLowerCase()}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  // Essayer de charger depuis JSON sur GitHub
+  return JSON.parse(JSON.stringify(defaultClubs)); // copie des valeurs par défaut
+}
+
+function savePlayerClubs(trigram, clubs) {
+  const key = `clubs_${trigram.toLowerCase()}`;
+  localStorage.setItem(key, JSON.stringify(clubs));
+}
+
+function initPlayersClubs() {
+  players.forEach(player => {
+    playersClubs[player.trigram] = loadPlayerClubs(player.trigram);
+  });
+}
+
+function getCurrentEtalonnagePlayer() {
+  const tabsEl = document.getElementById("etalonnageTabs");
+  const activeTab = tabsEl ? tabsEl.querySelector(".player-tab.active") : null;
+  return activeTab ? activeTab.dataset.trigram : players[0].trigram;
+}
+
+function renderEtalonnageTabs() {
+  const tabsEl = document.getElementById("etalonnageTabs");
+  if (!tabsEl) return;
+  tabsEl.innerHTML = "";
+
+  players.forEach((player, index) => {
+    const tab = document.createElement("button");
+    const isActive = index === 0 || tab.classList.contains("active");
+    const isYellow = player.teeColor === "yellow";
+
+    tab.className = "player-tab" + (index === 0 ? " active" : "");
+    tab.dataset.trigram = player.trigram;
+
+    if (index !== 0) {
+      tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+      tab.style.color = isYellow ? "#78350f" : "#6b7280";
+      tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+    }
+
+    tab.textContent = player.trigram;
+    tab.addEventListener("click", () => {
+      tabsEl.querySelectorAll(".player-tab").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "";
+        b.style.color = "";
+        b.style.borderColor = "";
+      });
+      tab.classList.add("active");
+      tab.style.background = "";
+      tab.style.color = "";
+      tab.style.borderColor = "";
+      renderClubsTable(player.trigram);
+    });
+    tabsEl.appendChild(tab);
+  });
+}
+
+  function renderClubsTable(trigram) {
+    const clubs = playersClubs[trigram] || defaultClubs;
+    const container = document.getElementById("clubsTable");
+    if (!container) return;
+    container.innerHTML = "";
+
+    clubs.forEach((club, index) => {
+      const row = document.createElement("div");
+      row.className = "stats-detail-row";
+      row.style.alignItems = "center";
+      row.innerHTML = `
+        <div style="flex:1; font-size:13px; font-weight:600;">${club.nom}</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="score-btn" style="width:28px;height:28px;font-size:16px;"
+            data-trigram="${trigram}" data-index="${index}" data-action="minus">−</button>
+          <span style="font-size:14px; font-weight:700; min-width:40px; text-align:center;"
+            id="club-dist-${trigram}-${index}">${club.distance} m</span>
+          <button class="score-btn" style="width:28px;height:28px;font-size:16px;"
+            data-trigram="${trigram}" data-index="${index}" data-action="plus">+</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+
+    // Listeners +/-
+    container.querySelectorAll(".score-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const trigram = btn.dataset.trigram;
+        const idx = parseInt(btn.dataset.index);
+        const action = btn.dataset.action;
+        const clubs = playersClubs[trigram];
+        if (action === "plus") clubs[idx].distance += 5;
+        if (action === "minus" && clubs[idx].distance > 10) clubs[idx].distance -= 5;
+        document.getElementById(`club-dist-${trigram}-${idx}`).textContent = `${clubs[idx].distance} m`;
+      });
+    });
+  }
+
+  function getRecommendedClubs(trigram, distance) {
+    const clubs = playersClubs[trigram] || defaultClubs;
+    // Trier par distance décroissante
+    const sorted = [...clubs].sort((a, b) => b.distance - a.distance);
+    // Trouver les 2 clubs encadrant la distance
+    let above = null, below = null;
+    for (const club of sorted) {
+      if (club.distance >= distance) above = club;
+      else if (!below) below = club;
+    }
+    return { above, below };
+  }
+
 
   function renderHoleScore() {
     const hole = getCurrentPlayerHole(); // scores/putts du joueur actif
@@ -1342,12 +1510,19 @@
     viewScore.classList.remove("active");
     viewGps.classList.remove("active");
     viewStats.classList.remove("active");
+    document.getElementById("view-etalonnage").classList.remove("active");
+
     if (view === "score") viewScore.classList.add("active");
     if (view === "gps") {
       viewGps.classList.add("active");
       setTimeout(() => { if (map) map.invalidateSize(); }, 100);
     }
     if (view === "stats") viewStats.classList.add("active");
+    if (view === "etalonnage") {
+      document.getElementById("view-etalonnage").classList.add("active");
+      renderEtalonnageTabs();
+      renderClubsTable(players[0].trigram);
+    }
 
     navBtns.forEach(btn => {
       btn.classList.toggle("active", btn.dataset.view === view);
@@ -1565,6 +1740,24 @@
     }
 
     renderMarksDistances(latitude, longitude);
+
+    // Club recommandé pour le joueur actif
+    const player = getCurrentPlayer();
+    const distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+    const { above, below } = getRecommendedClubs(player.trigram, Math.round(distToGreen));
+    const clubEl = document.getElementById("gpsClubRecommande");
+    if (clubEl) {
+      if (above && below) {
+        clubEl.textContent = `🏌️ ${above.nom} (${above.distance}m) ↔ ${below.nom} (${below.distance}m)`;
+      } else if (above) {
+        clubEl.textContent = `🏌️ ${above.nom} (${above.distance}m)`;
+      } else if (below) {
+        clubEl.textContent = `🏌️ ${below.nom} (${below.distance}m)`;
+      } else {
+        clubEl.textContent = "";
+      }
+    }
+
     updateMapPosition(latitude, longitude);
 
     // Enregistrement du tracé uniquement si GPS précis
@@ -1684,6 +1877,8 @@
   tracePoints = [];    // AJOUT
   tracePolyline = null; // AJOUT
   lastTraceTime = null;
+  const clubEl = document.getElementById("gpsClubRecommande");
+  if (clubEl) clubEl.textContent = "";
 }
 
 
@@ -2138,6 +2333,21 @@
     }, 'image/png');
   });
 
+  // --- Étalonnage ---
+    document.getElementById("saveClubsBtn").addEventListener("click", () => {
+      const trigram = getCurrentEtalonnagePlayer();
+      savePlayerClubs(trigram, playersClubs[trigram]);
+      alert(`Distances de ${trigram} sauvegardées !`);
+    });
+
+    document.getElementById("resetClubsBtn").addEventListener("click", () => {
+      const trigram = getCurrentEtalonnagePlayer();
+      if (confirm(`Réinitialiser les distances de ${trigram} aux valeurs par défaut ?`)) {
+        playersClubs[trigram] = JSON.parse(JSON.stringify(defaultClubs));
+        renderClubsTable(trigram);
+      }
+    });
+
   // --- Chargement données ---
   Promise.all([
     fetch('courses.json').then(r => r.json()),
@@ -2169,6 +2379,7 @@
     tracePoints = [];
     tracePolyline = null;
 
+    initPlayersClubs();
     initCourseTotals();
     renderHole();
     showView("score");
@@ -2178,6 +2389,6 @@
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v30</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v31</div>
 </body>
 </html>
