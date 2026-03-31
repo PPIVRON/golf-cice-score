@@ -845,7 +845,6 @@
     let tracePoints = []; // points GPS du trou courant
     let tracePolyline = null; // polyline Leaflet
 
-    let lastTraceTime = null;
 
     
   function getCurrentHoleKey() {
@@ -989,6 +988,9 @@
   let greenMarkerLeaflet = null;
   let marksMarkersLeaflet = [];
   let userInteracting = false;
+
+  let lastTraceTime = null;
+  let traceMap = null;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
@@ -1914,8 +1916,7 @@
       }
       initTraceMap();
     }
-
-  let traceMap = null;
+  }
 
   function initTraceMap() {
     if (traceMap) {
