@@ -521,8 +521,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-
-  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
 
 
 </head>
@@ -2072,16 +2071,14 @@
     setTimeout(() => { if (traceMap) traceMap.invalidateSize(); }, 100);
   });
 
-  document.getElementById("saveTraceBtn").addEventListener("click", async () => {
+  document.getElementById("saveTraceBtn").addEventListener("click", () => {
     if (!traceMap) return;
 
-    try {
-      const container = document.getElementById("traceMapContainer");
-      const canvas = await html2canvas(container, {
-        useCORS: true,
-        allowTaint: false,
-        logging: false
-      });
+    leafletImage(traceMap, (err, canvas) => {
+      if (err) {
+        console.error('Erreur:', err);
+        return;
+      }
 
       canvas.toBlob(async (blob) => {
         if (!blob) return;
@@ -2090,22 +2087,11 @@
         if (navigator.share && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: `Tracé trou ${getCurrentHole().number}`,
+            title: `Tracé trou ${getCurrentHole().number}`
           });
-        } else {
-          // Fallback : téléchargement direct
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `trace_trou_${getCurrentHole().number}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
         }
       }, 'image/png');
-
-    } catch (err) {
-      console.error('Erreur capture:', err);
-    }
+    });
   });
 
   // --- Chargement données ---
