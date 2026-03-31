@@ -1269,10 +1269,13 @@
 
 
  function updateGpsHoleImage() {
-  // Réinitialise la carte au nouveau trou
   tracePoints = [];
   tracePolyline = null;
   lastTraceTime = null;
+  // if (traceMap) {
+  //  traceMap.remove();
+  //  traceMap = null;
+  // }
   initMap();
 }
 
@@ -1860,7 +1863,7 @@
     window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        map.setBearing(e.webkitCompassHeading);
+        map.setBearing(-e.webkitCompassHeading); // AJOUT du -
       }
     });
   }
