@@ -1269,15 +1269,13 @@
 
 
  function updateGpsHoleImage() {
-  tracePoints = [];
-  tracePolyline = null;
-  lastTraceTime = null;
-  // if (traceMap) {
-  //  traceMap.remove();
-  //  traceMap = null;
-  // }
-  initMap();
-}
+    tracePoints = [];
+    tracePolyline = null;
+    lastTraceTime = null;
+    // On ne détruit plus traceMap ici
+    // Il sera recréé quand on clique sur l'onglet Tracé
+    initMap();
+  }
 
 
   // --- Listeners score +/- ---
@@ -1910,9 +1908,12 @@
 
     // Initialiser la mini-carte du tracé
     if (view === "trace") {
+      if (traceMap) {
+        traceMap.remove();
+        traceMap = null;
+      }
       initTraceMap();
     }
-  }
 
   let traceMap = null;
 
