@@ -1538,31 +1538,35 @@ function renderEtalonnageTabs() {
     const hole = getCurrentHole();
     const key = `${currentCourseKey}-${hole.number}`;
     const ref = holeImageRefs[key];
+
     if (!ref || !ref.marks || ref.marks.length === 0) {
       return [];
     }
 
-    // Si le score du trou est déjà saisi, pas de repères
     const playerHole = getCurrentPlayerHole();
-    if (playerHole.score !== null) return [];
-
-    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+    if (playerHole.score !== null) {
+      return [];
+    }
 
     return ref.marks
-    .filter(mark => {
-      const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-      return distToMark < 400;
-    })
-      .map(mark => {
-        const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-        return {
-          label: mark.label,
-          distance: Math.round(distToMark)
-        };
-      });
+      .filter(mark => isMarkStillRelevant(lat, lon, mark, hole))
+      .map(mark => ({
+        label: mark.label,
+        distance: Math.round(distanceInMeters(lat, lon, mark.lat, mark.lon))
+      }));
   }
 
+  function isMarkStillRelevant(lat, lon, mark, hole) {
+    const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
 
+    // Le repère reste affiché seulement s'il :
+    // - est encore à moins de 400 m
+    // - n'est pas quasiment atteint
+    // - n'est pas "dépassé" par rapport au green, avec marge GPS
+    return distToMark < 400 && distToMark > 12 && distToGreen > (markToGreen + 8);
+  }
 
   function renderMarksDistances(lat, lon) {
     const marksDistances = computeDistancesToMarks(lat, lon);
@@ -1655,7 +1659,7 @@ function renderEtalonnageTabs() {
 
       // Mise à jour des tooltips repères
       const hole = getCurrentHole();
-      const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+      // const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
       const key = `${currentCourseKey}-${hole.number}`;
       const ref = holeImageRefs[key];
 
@@ -1663,12 +1667,14 @@ function renderEtalonnageTabs() {
         ref.marks.forEach((mark, i) => {
           const m = marksMarkersLeaflet[i];
           if (!m) return;
-          const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
-          const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
 
-          if (distToMark < 400) {
+          const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+          const visible = isMarkStillRelevant(lat, lon, mark, hole);
+
+          if (visible) {
             m.setStyle({ fillOpacity: 1, opacity: 1 });
             m.setTooltipContent(`${Math.round(distToMark)} m`);
+            m.openTooltip();
           } else {
             m.setStyle({ fillOpacity: 0, opacity: 0 });
             m.closeTooltip();
@@ -2060,6 +2066,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v31</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v32</div>
 </body>
 </html>
