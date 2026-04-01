@@ -1931,19 +1931,26 @@ function renderEtalonnageTabs() {
     map.setView(playerMarkerLeaflet.getLatLng(), 17);
   });
 
-  // --- Boussole globale ---
   function activerBoussole() {
+    let lastBearing = null;
+    
     window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        // map.setBearing(-e.webkitCompassHeading); // AJOUT du -
         const newBearing = -e.webkitCompassHeading;
-        const currentBearing = map.getBearing ? map.getBearing() : 0;
-        const smoothedBearing = currentBearing * 0.95 + newBearing * 0.05;
-        map.setBearing(smoothedBearing);
+        
+        // N'appliquer la rotation que si le changement est > 5 degrés
+        if (lastBearing === null || Math.abs(newBearing - lastBearing) > 5) {
+          const currentBearing = map.getBearing ? map.getBearing() : 0;
+          const smoothedBearing = currentBearing * 0.8 + newBearing * 0.2;
+          map.setBearing(smoothedBearing);
+          lastBearing = newBearing;
+        }
       }
     });
   }
+
+  // map.setBearing(-e.webkitCompassHeading); // AJOUT du -
 
   document.getElementById("compassBtn").addEventListener("click", () => {
     if (typeof DeviceOrientationEvent !== 'undefined' &&
