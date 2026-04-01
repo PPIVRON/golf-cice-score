@@ -1666,7 +1666,7 @@ function renderEtalonnageTabs() {
           const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
           const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
 
-          if (distToGreen > markToGreen) {
+          if (distToMark < 400) {
             m.setStyle({ fillOpacity: 1, opacity: 1 });
             m.setTooltipContent(`${Math.round(distToMark)} m`);
           } else {
@@ -1936,7 +1936,10 @@ function renderEtalonnageTabs() {
     window.addEventListener('deviceorientation', (e) => {
       if (!map || userInteracting) return;
       if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
-        map.setBearing(-e.webkitCompassHeading); // AJOUT du -
+        const newBearing = -e.webkitCompassHeading;
+        const currentBearing = map.getBearing ? map.getBearing() : 0;
+        const smoothedBearing = currentBearing * 0.7 + newBearing * 0.3;
+        map.setBearing(smoothedBearing);
       }
     });
   }
