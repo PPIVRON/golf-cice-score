@@ -1549,10 +1549,10 @@ function renderEtalonnageTabs() {
     const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
 
     return ref.marks
-      .filter(mark => {
-        const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
-        return distToGreen > markToGreen;
-      })
+    .filter(mark => {
+      const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+      return distToMark < 400;
+    })
       .map(mark => {
         const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
         return {
