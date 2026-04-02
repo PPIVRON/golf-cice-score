@@ -738,12 +738,9 @@
           🎯 Distance de confort (m)
         </label>
         <input
-          type="number"
+          type="text"
           id="comfortDistanceInput"
-          min="0"
-          max="200"
-          step="1"
-          placeholder="Ex : 95"
+          placeholder="Ex : 95-85"
           style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:16px;"
         >
         <div style="font-size:12px; color:#6b7280; margin-top:6px;">
@@ -1200,11 +1197,16 @@ function savePlayerClubs(trigram, clubs) {
   localStorage.setItem(key, JSON.stringify(clubs));
 }
 
-function loadPlayerComfort(trigram) {
-  const key = `comfort_${trigram.toLowerCase()}`;
-  const saved = localStorage.getItem(key);
-  return saved ? JSON.parse(saved) : 95;
-}
+  function loadPlayerComfort(trigram) {
+    const key = `comfort_${trigram.toLowerCase()}`;
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      return JSON.parse(saved);
+    }
+
+    return { max: 95, min: 85 };
+  }
 
 function savePlayerComfort(trigram, comfortDistance) {
   const key = `comfort_${trigram.toLowerCase()}`;
@@ -1268,7 +1270,30 @@ function renderEtalonnageTabs() {
     const input = document.getElementById("comfortDistanceInput");
     if (!input) return;
 
-    input.value = playersComfort[trigram] ?? 95;
+    const comfort = playersComfort[trigram];
+
+    if (comfort && typeof comfort === "object") {
+      input.value = `${comfort.max}-${comfort.min}`;
+    } else {
+      input.value = "95-85";
+    }
+  }
+
+  function parseComfortRange(value) {
+    if (!value) return null;
+
+    const cleaned = value.replace(/\s/g, "");
+    const parts = cleaned.split("-");
+
+    if (parts.length !== 2) return null;
+
+    const max = parseInt(parts[0], 10);
+    const min = parseInt(parts[1], 10);
+
+    if (Number.isNaN(max) || Number.isNaN(min)) return null;
+    if (max <= min) return null;
+
+    return { max, min };
   }
 
   function renderClubsTable(trigram) {
@@ -1323,7 +1348,10 @@ function renderEtalonnageTabs() {
   }
 
   function getLayupToComfortAdvice(trigram, distToGreen) {
-    const comfortDistance = playersComfort[trigram] ?? 95;
+    const comfort = playersComfort[trigram];
+    const comfortDistance = comfort && typeof comfort === 'object' 
+      ? comfort.max 
+      : (comfort ?? 95);
     const advanceNeeded = Math.round(distToGreen - comfortDistance);
 
     if (advanceNeeded <= 0) {
@@ -1352,18 +1380,6 @@ function renderEtalonnageTabs() {
       advanceNeeded,
       text: `Pour te laisser ${comfortDistance} m, il te faut avancer de ${advanceNeeded} m (${clubText})`
     };
-  }
-
-  function loadPlayerComfort(trigram) {
-    const key = `golf_comfort_${trigram}`;
-    const saved = localStorage.getItem(key);
-    if (saved !== null) return parseInt(saved, 10);
-    return 95; // valeur par défaut
-  }
-
-  function savePlayerComfort(trigram, comfortDistance) {
-    const key = `golf_comfort_${trigram}`;
-    localStorage.setItem(key, String(comfortDistance));
   }
 
   function initPlayersComfort() {
@@ -1783,66 +1799,66 @@ function renderEtalonnageTabs() {
 
 
   function handleGpsSuccess(pos) {
-  const { latitude, longitude, accuracy } = pos.coords;
-  gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-  gpsStatusEl.textContent = "GPS OK";
+    const { latitude, longitude, accuracy } = pos.coords;
+    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+    gpsStatusEl.textContent = "GPS OK";
 
-  const hole = getCurrentHole();
-  let distToGreen = null;
+    const hole = getCurrentHole();
+    let distToGreen = null;
 
-  if (hole.greenLat && hole.greenLon) {
-    distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-    gpsDistanceValueEl.textContent = Math.round(distToGreen);
-  } else {
-    gpsDistanceValueEl.textContent = "‑‑‑";
-  }
+    if (hole.greenLat && hole.greenLon) {
+      distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+      gpsDistanceValueEl.textContent = Math.round(distToGreen);
+    } else {
+      gpsDistanceValueEl.textContent = "‑‑‑";
+    }
 
-  renderMarksDistances(latitude, longitude);
+    renderMarksDistances(latitude, longitude);
 
-  const player = getCurrentPlayer();
-  const clubEl = document.getElementById("gpsClubRecommande");
+    const player = getCurrentPlayer();
+    const clubEl = document.getElementById("gpsClubRecommande");
 
-  if (clubEl && distToGreen !== null) {
-    const layupAdvice = getLayupToComfortAdvice(player.trigram, Math.round(distToGreen));
-    clubEl.innerHTML = `<div>🎯 ${layupAdvice.text}</div>`;
-  } else if (clubEl) {
-    clubEl.textContent = "";
-  }
+    if (clubEl && distToGreen !== null) {
+      const layupAdvice = getLayupToComfortAdvice(player.trigram, Math.round(distToGreen));
+      clubEl.innerHTML = `<div>🎯 ${layupAdvice.text}</div>`;
+    } else if (clubEl) {
+      clubEl.textContent = "";
+    }
 
-  updateMapPosition(latitude, longitude);
+    updateMapPosition(latitude, longitude);
 
-  if (accuracy < 15) {
-    const now = Date.now();
-    if (!lastTraceTime || now - lastTraceTime > 5000) {
-      if (tracePoints.length === 0) {
-        tracePoints.push([latitude, longitude]);
-        lastTraceTime = now;
-      } else {
-        const lastPoint = tracePoints[tracePoints.length - 1];
-        const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
-        if (d > 15) {
+    if (accuracy < 15) {
+      const now = Date.now();
+      if (!lastTraceTime || now - lastTraceTime > 5000) {
+        if (tracePoints.length === 0) {
           tracePoints.push([latitude, longitude]);
           lastTraceTime = now;
+        } else {
+          const lastPoint = tracePoints[tracePoints.length - 1];
+          const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
+          if (d > 15) {
+            tracePoints.push([latitude, longitude]);
+            lastTraceTime = now;
+          }
         }
       }
     }
-  }
 
-  if (accuracy < 15 && lastGpsPosition) {
-    const d = distanceInMeters(
-      lastGpsPosition.lat, lastGpsPosition.lon,
-      latitude, longitude
-    );
-    if (d > 15 && d < 50) {
-      totalDistanceWalked += d;
-      updateHealthStats();
+    if (accuracy < 15 && lastGpsPosition) {
+      const d = distanceInMeters(
+        lastGpsPosition.lat, lastGpsPosition.lon,
+        latitude, longitude
+      );
+      if (d > 15 && d < 50) {
+        totalDistanceWalked += d;
+        updateHealthStats();
+      }
+    }
+
+    if (accuracy < 15) {
+      lastGpsPosition = { lat: latitude, lon: longitude };
     }
   }
-
-  if (accuracy < 15) {
-    lastGpsPosition = { lat: latitude, lon: longitude };
-  }
-}
 
 
   function handleGpsError(err) {
@@ -2066,7 +2082,6 @@ function renderEtalonnageTabs() {
     });
   }
 
-  // map.setBearing(-e.webkitCompassHeading); // AJOUT du -
 
   document.getElementById("compassBtn").addEventListener("click", () => {
     if (typeof DeviceOrientationEvent !== 'undefined' &&
@@ -2140,11 +2155,14 @@ function renderEtalonnageTabs() {
       const trigram = getCurrentEtalonnagePlayer();
 
       const comfortInput = document.getElementById("comfortDistanceInput");
-      const comfortValue = parseInt(comfortInput.value, 10);
+      const comfortRange = parseComfortRange(comfortInput.value);
 
-      if (!Number.isNaN(comfortValue)) {
-        playersComfort[trigram] = comfortValue;
-        savePlayerComfort(trigram, comfortValue);
+      if (comfortRange) {
+        playersComfort[trigram] = comfortRange;
+        savePlayerComfort(trigram, comfortRange);
+      } else {
+        alert("Format zone confort invalide. Utilise par exemple : 95-85");
+        return;
       }
 
       savePlayerClubs(trigram, playersClubs[trigram]);
@@ -2198,6 +2216,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v33</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v34</div>
 </body>
 </html>
