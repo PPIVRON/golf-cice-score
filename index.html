@@ -733,6 +733,24 @@
           </div>
         </div>
 
+        <div style="margin:12px 0 16px 0; padding:12px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;">
+        <label for="comfortDistanceInput" style="display:block; font-weight:600; margin-bottom:6px;">
+          🎯 Distance de confort (m)
+        </label>
+        <input
+          type="number"
+          id="comfortDistanceInput"
+          min="0"
+          max="200"
+          step="1"
+          placeholder="Ex : 95"
+          style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:16px;"
+        >
+        <div style="font-size:12px; color:#6b7280; margin-top:6px;">
+          Distance idéale à te laisser pour le coup suivant.
+        </div>
+      </div>
+
         <!-- Tableau clubs -->
         <div class="stats-detail" id="clubsTable"></div>
 
@@ -827,7 +845,8 @@
       { nom: "Lob",       distance:  60 }
     ];
 
-let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
+    let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
+    let playersComfort = {}; // { "PPV": 95, "APV": 110 }
 
     let currentCourseKey   = golfSetup.courseKey;
     let currentPlayerIndex = 0;
@@ -848,6 +867,8 @@ let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
     const rankingModal    = document.getElementById("rankingModal");
     const closeRankingBtn = document.getElementById("closeRanking");
     const rankingDetailEl = document.getElementById("rankingDetail");
+
+    const saveClubsBtn = document.getElementById("saveClubsBtn");
 
 
 
@@ -1179,9 +1200,21 @@ function savePlayerClubs(trigram, clubs) {
   localStorage.setItem(key, JSON.stringify(clubs));
 }
 
+function loadPlayerComfort(trigram) {
+  const key = `comfort_${trigram.toLowerCase()}`;
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : 95;
+}
+
+function savePlayerComfort(trigram, comfortDistance) {
+  const key = `comfort_${trigram.toLowerCase()}`;
+  localStorage.setItem(key, JSON.stringify(comfortDistance));
+}
+
 function initPlayersClubs() {
   players.forEach(player => {
     playersClubs[player.trigram] = loadPlayerClubs(player.trigram);
+    playersComfort[player.trigram] = loadPlayerComfort(player.trigram);
   });
 }
 
@@ -1211,22 +1244,32 @@ function renderEtalonnageTabs() {
     }
 
     tab.textContent = player.trigram;
-    tab.addEventListener("click", () => {
+      tab.addEventListener("click", () => {
       tabsEl.querySelectorAll(".player-tab").forEach(b => {
         b.classList.remove("active");
         b.style.background = "";
         b.style.color = "";
         b.style.borderColor = "";
       });
+
       tab.classList.add("active");
       tab.style.background = "";
       tab.style.color = "";
       tab.style.borderColor = "";
+
       renderClubsTable(player.trigram);
+      renderComfortDistance(player.trigram);
     });
     tabsEl.appendChild(tab);
   });
 }
+
+  function renderComfortDistance(trigram) {
+    const input = document.getElementById("comfortDistanceInput");
+    if (!input) return;
+
+    input.value = playersComfort[trigram] ?? 95;
+  }
 
   function renderClubsTable(trigram) {
     const clubs = playersClubs[trigram] || defaultClubs;
@@ -1279,6 +1322,55 @@ function renderEtalonnageTabs() {
     return { above, below };
   }
 
+  function getLayupToComfortAdvice(trigram, distToGreen) {
+    const comfortDistance = playersComfort[trigram] ?? 95;
+    const advanceNeeded = Math.round(distToGreen - comfortDistance);
+
+    if (advanceNeeded <= 0) {
+      return {
+        comfortDistance,
+        advanceNeeded: 0,
+        text: `Tu es déjà dans ta zone de confort : ${Math.round(distToGreen)} m restants`
+      };
+    }
+
+    const { above, below } = getRecommendedClubs(trigram, advanceNeeded);
+
+    let clubText = "";
+    if (above && below) {
+      clubText = `${above.nom} ou ${below.nom}`;
+    } else if (above) {
+      clubText = above.nom;
+    } else if (below) {
+      clubText = below.nom;
+    } else {
+      clubText = "club non trouvé";
+    }
+
+    return {
+      comfortDistance,
+      advanceNeeded,
+      text: `Pour te laisser ${comfortDistance} m, il te faut avancer de ${advanceNeeded} m (${clubText})`
+    };
+  }
+
+  function loadPlayerComfort(trigram) {
+    const key = `golf_comfort_${trigram}`;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) return parseInt(saved, 10);
+    return 95; // valeur par défaut
+  }
+
+  function savePlayerComfort(trigram, comfortDistance) {
+    const key = `golf_comfort_${trigram}`;
+    localStorage.setItem(key, String(comfortDistance));
+  }
+
+  function initPlayersComfort() {
+    players.forEach(player => {
+      playersComfort[player.trigram] = loadPlayerComfort(player.trigram);
+    });
+  }
 
   function renderHoleScore() {
     const hole = getCurrentPlayerHole(); // scores/putts du joueur actif
@@ -1475,6 +1567,7 @@ function renderEtalonnageTabs() {
       document.getElementById("view-etalonnage").classList.add("active");
       renderEtalonnageTabs();
       renderClubsTable(players[0].trigram);
+      renderComfortDistance(players[0].trigram);
     }
 
     navBtns.forEach(btn => {
@@ -1690,40 +1783,66 @@ function renderEtalonnageTabs() {
 
 
   function handleGpsSuccess(pos) {
-    const { latitude, longitude, accuracy } = pos.coords;
-    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-    gpsStatusEl.textContent = "GPS OK";
+  const { latitude, longitude, accuracy } = pos.coords;
+  gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+  gpsStatusEl.textContent = "GPS OK";
 
-    const hole = getCurrentHole();
-    if (hole.greenLat && hole.greenLon) {
-      const d = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-      gpsDistanceValueEl.textContent = Math.round(d);
-    } else {
-      gpsDistanceValueEl.textContent = "‑‑‑";
-    }
+  const hole = getCurrentHole();
+  let distToGreen = null;
 
-    renderMarksDistances(latitude, longitude);
+  if (hole.greenLat && hole.greenLon) {
+    distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
+    gpsDistanceValueEl.textContent = Math.round(distToGreen);
+  } else {
+    gpsDistanceValueEl.textContent = "‑‑‑";
+  }
 
-    // Club recommandé pour le joueur actif
-    const player = getCurrentPlayer();
-    const distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
-    const { above, below } = getRecommendedClubs(player.trigram, Math.round(distToGreen));
-    const clubEl = document.getElementById("gpsClubRecommande");
-    if (clubEl) {
-      if (above && below) {
-        clubEl.textContent = `🏌️ ${above.nom} (${above.distance}m) ↔ ${below.nom} (${below.distance}m)`;
-      } else if (above) {
-        clubEl.textContent = `🏌️ ${above.nom} (${above.distance}m)`;
-      } else if (below) {
-        clubEl.textContent = `🏌️ ${below.nom} (${below.distance}m)`;
+  renderMarksDistances(latitude, longitude);
+
+  const player = getCurrentPlayer();
+  const clubEl = document.getElementById("gpsClubRecommande");
+
+  if (clubEl && distToGreen !== null) {
+    const layupAdvice = getLayupToComfortAdvice(player.trigram, Math.round(distToGreen));
+    clubEl.innerHTML = `<div>🎯 ${layupAdvice.text}</div>`;
+  } else if (clubEl) {
+    clubEl.textContent = "";
+  }
+
+  updateMapPosition(latitude, longitude);
+
+  if (accuracy < 15) {
+    const now = Date.now();
+    if (!lastTraceTime || now - lastTraceTime > 5000) {
+      if (tracePoints.length === 0) {
+        tracePoints.push([latitude, longitude]);
+        lastTraceTime = now;
       } else {
-        clubEl.textContent = "";
+        const lastPoint = tracePoints[tracePoints.length - 1];
+        const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
+        if (d > 15) {
+          tracePoints.push([latitude, longitude]);
+          lastTraceTime = now;
+        }
       }
     }
-
-    updateMapPosition(latitude, longitude);
-
   }
+
+  if (accuracy < 15 && lastGpsPosition) {
+    const d = distanceInMeters(
+      lastGpsPosition.lat, lastGpsPosition.lon,
+      latitude, longitude
+    );
+    if (d > 15 && d < 50) {
+      totalDistanceWalked += d;
+      updateHealthStats();
+    }
+  }
+
+  if (accuracy < 15) {
+    lastGpsPosition = { lat: latitude, lon: longitude };
+  }
+}
 
 
   function handleGpsError(err) {
@@ -2015,9 +2134,21 @@ function renderEtalonnageTabs() {
 
 
   // --- Étalonnage ---
+  // --- Étalonnage ---
+  // --- Étalonnage ---
     document.getElementById("saveClubsBtn").addEventListener("click", () => {
       const trigram = getCurrentEtalonnagePlayer();
+
+      const comfortInput = document.getElementById("comfortDistanceInput");
+      const comfortValue = parseInt(comfortInput.value, 10);
+
+      if (!Number.isNaN(comfortValue)) {
+        playersComfort[trigram] = comfortValue;
+        savePlayerComfort(trigram, comfortValue);
+      }
+
       savePlayerClubs(trigram, playersClubs[trigram]);
+
       alert(`Distances de ${trigram} sauvegardées !`);
     });
 
@@ -2057,6 +2188,7 @@ function renderEtalonnageTabs() {
     if (teeRadioInit) teeRadioInit.checked = true;
 
     initPlayersClubs();
+    initPlayersComfort();
     initCourseTotals();
     renderHole();
     showView("score");
@@ -2066,6 +2198,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v32</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v33</div>
 </body>
 </html>
