@@ -1688,7 +1688,7 @@ function renderEtalonnageTabs() {
   }
 
   function getHoleKey(courseKey, holeNumber) {
-    return `${courseKey}`.trim().toLowerCase() + "-" + holeNumber;
+    return String(courseKey).trim().toLowerCase() + "-" + holeNumber;
   }
 
 
@@ -1772,7 +1772,7 @@ function renderEtalonnageTabs() {
       // Mise à jour des tooltips repères
       const hole = getCurrentHole();
       // const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
-      const key = `${currentCourseKey}-${hole.number}`;
+      const key = getHoleKey(currentCourseKey, hole.number);
       const ref = holeImageRefs[key];
 
       if (ref && ref.marks) {
