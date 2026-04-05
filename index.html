@@ -1349,36 +1349,34 @@ function renderEtalonnageTabs() {
 
   function getLayupToComfortAdvice(trigram, distToGreen) {
     const comfort = playersComfort[trigram];
-    const comfortDistance = comfort && typeof comfort === 'object' 
-      ? comfort.max 
-      : (comfort ?? 95);
-    const advanceNeeded = Math.round(distToGreen - comfortDistance);
+    const comfortMax = comfort && typeof comfort === "object" ? comfort.max : (comfort ?? 95);
+    const comfortMin = comfort && typeof comfort === "object" ? comfort.min : 85;
 
-    if (advanceNeeded <= 0) {
+    if (distToGreen <= comfortMin) {
+      return null; // on ne doit plus rien afficher sous la borne basse
+    }
+
+    if (distToGreen <= comfortMax) {
       return {
-        comfortDistance,
+        comfortDistance: comfortMax,
         advanceNeeded: 0,
-        text: `Tu es déjà dans ta zone de confort : ${Math.round(distToGreen)} m restants`
+        text: `Tu es dans ta zone de confort (${comfortMax}-${comfortMin} m)`
       };
     }
 
+    const advanceNeeded = Math.round(distToGreen - comfortMax);
     const { above, below } = getRecommendedClubs(trigram, advanceNeeded);
 
     let clubText = "";
-    if (above && below) {
-      clubText = `${above.nom} ou ${below.nom}`;
-    } else if (above) {
-      clubText = above.nom;
-    } else if (below) {
-      clubText = below.nom;
-    } else {
-      clubText = "club non trouvé";
-    }
+    if (above && below) clubText = `${above.nom} ou ${below.nom}`;
+    else if (above) clubText = above.nom;
+    else if (below) clubText = below.nom;
+    else clubText = "club non trouvé";
 
     return {
-      comfortDistance,
+      comfortDistance: comfortMax,
       advanceNeeded,
-      text: `Pour te laisser ${comfortDistance} m, il te faut avancer de ${advanceNeeded} m (${clubText})`
+      text: `Pour te laisser ${comfortMax} m, il te faut avancer de ${advanceNeeded} m (${clubText})`
     };
   }
 
@@ -1645,7 +1643,7 @@ function renderEtalonnageTabs() {
 
    function computeDistancesToMarks(lat, lon) {
     const hole = getCurrentHole();
-    const key = `${currentCourseKey}-${hole.number}`;
+    const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
 
     if (!ref || !ref.marks || ref.marks.length === 0) {
@@ -1653,7 +1651,7 @@ function renderEtalonnageTabs() {
     }
 
     const playerHole = getCurrentPlayerHole();
-    if (playerHole.score !== null) {
+    if (playerHole.score != null) {
       return [];
     }
 
@@ -1687,6 +1685,10 @@ function renderEtalonnageTabs() {
     gpsMarksDistancesEl.innerHTML = marksDistances
       .map(m => `${m.label} : ${m.distance} m`)
       .join("<br>");
+  }
+
+  function getHoleKey(courseKey, holeNumber) {
+    return `${courseKey}`.trim().toLowerCase() + "-" + holeNumber;
   }
 
 
@@ -1730,7 +1732,8 @@ function renderEtalonnageTabs() {
       })
     }).addTo(map).bindPopup('Green');
 
-    const key = `${currentCourseKey}-${hole.number}`;
+    const hole = getCurrentHole();
+    const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
     if (ref && ref.marks) {
       ref.marks.forEach(mark => {
@@ -1797,6 +1800,21 @@ function renderEtalonnageTabs() {
       }
     }
 
+  function getClubAdviceForShot(trigram, distToGreen) {
+    const { above, below } = getRecommendedClubs(trigram, distToGreen);
+
+    if (above && below) {
+      return `Club conseillé : ${above.nom} ou ${below.nom} pour ${distToGreen} m`;
+    }
+    if (above) {
+      return `Club conseillé : ${above.nom} pour ${distToGreen} m`;
+    }
+    if (below) {
+      return `Club conseillé : ${below.nom} pour ${distToGreen} m`;
+    }
+    return "";
+  }
+
 
   function handleGpsSuccess(pos) {
     const { latitude, longitude, accuracy } = pos.coords;
@@ -1816,13 +1834,22 @@ function renderEtalonnageTabs() {
     renderMarksDistances(latitude, longitude);
 
     const player = getCurrentPlayer();
-    const clubEl = document.getElementById("gpsClubRecommande");
 
-    if (clubEl && distToGreen !== null) {
-      const layupAdvice = getLayupToComfortAdvice(player.trigram, Math.round(distToGreen));
-      clubEl.innerHTML = `<div>🎯 ${layupAdvice.text}</div>`;
-    } else if (clubEl) {
-      clubEl.textContent = "";
+    const clubEl = document.getElementById("gpsClubRecommande");
+    if (clubEl && distToGreen != null) {
+      const d = Math.round(distToGreen);
+      const comfort = playersComfort[player.trigram];
+      const comfortMin = comfort && typeof comfort === "object" ? comfort.min : 85;
+      const comfortMax = comfort && typeof comfort === "object" ? comfort.max : (comfort ?? 95);
+
+      if (d > comfortMax) {
+        const layupAdvice = getLayupToComfortAdvice(player.trigram, d);
+        clubEl.innerHTML = layupAdvice ? `<div>${layupAdvice.text}</div>` : "";
+      } else if (d > comfortMin) {
+        clubEl.innerHTML = `<div>${getClubAdviceForShot(player.trigram, d)}</div>`;
+      } else {
+        clubEl.textContent = "";
+      }
     }
 
     updateMapPosition(latitude, longitude);
@@ -2216,6 +2243,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v34</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v35</div>
 </body>
 </html>
