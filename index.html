@@ -1646,7 +1646,7 @@ function renderEtalonnageTabs() {
     const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
 
-    if (!ref || !ref.marks || ref.marks.length === 0) {
+    if (!ref || !Array.isArray(ref.marks) || ref.marks.length === 0) {
       return [];
     }
 
@@ -1696,59 +1696,58 @@ function renderEtalonnageTabs() {
     if (map) {
       map.remove();
       map = null;
-      playerMarkerLeaflet = null;
-      greenMarkerLeaflet = null;
-      marksMarkersLeaflet = [];
     }
+
+    playerMarkerLeaflet = null;
+    greenMarkerLeaflet = null;
+    marksMarkersLeaflet = [];
 
     const hole = getCurrentHole();
 
-    map = L.map('mapContainer', {
+    map = L.map("mapContainer", {
       zoomControl: false,
       tap: false,
       rotate: true,
       touchRotate: false
     }).setView([hole.greenLat, hole.greenLon], 17);
 
-    setTimeout(() => { map.invalidateSize(); }, 100);
+    setTimeout(() => map.invalidateSize(), 100);
+    map.on("dragstart zoomstart", () => { userInteracting = true; });
 
-    map.on('dragstart zoomstart', () => {
-      userInteracting = true;
-    });
-
-   let currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
+    let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "OpenStreetMap",
       maxZoom: 19
     }).addTo(map);
-    map._currentTileLayer = currentTileLayer;
-    map._isSatellite = false;
+
+    map.currentTileLayer = currentTileLayer;
+    map.isSatellite = false;
 
     greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
       icon: L.divIcon({
-        className: '',
+        className: "",
         html: '<div style="font-size:20px;">⛳</div>',
         iconSize: [20, 20],
         iconAnchor: [10, 20]
       })
-    }).addTo(map).bindPopup('Green');
+    }).addTo(map).bindPopup("Green");
 
-    const hole = getCurrentHole();
     const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
-    if (ref && ref.marks) {
+
+    if (ref && Array.isArray(ref.marks)) {
       ref.marks.forEach(mark => {
         const m = L.circleMarker([mark.lat, mark.lon], {
           radius: 6,
-          fillColor: '#f59e0b',
-          color: '#ffffff',
+          fillColor: "#f59e0b",
+          color: "#ffffff",
           weight: 2,
           fillOpacity: 1
-        }).addTo(map)
-          .bindTooltip('...', {
-            permanent: true,
-            direction: 'right',
-            className: 'mark-tooltip'
-          });
+        }).addTo(map).bindTooltip(mark.label, {
+          permanent: true,
+          direction: "right",
+          className: "mark-tooltip"
+        });
+
         marksMarkersLeaflet.push(m);
       });
     }
@@ -1762,20 +1761,18 @@ function renderEtalonnageTabs() {
       } else {
         playerMarkerLeaflet = L.circleMarker([lat, lon], {
           radius: 8,
-          fillColor: '#ef4444',
-          color: '#ffffff',
+          fillColor: "#ef4444",
+          color: "#ffffff",
           weight: 2,
           fillOpacity: 1
-        }).addTo(map).bindPopup('Vous êtes ici');
+        }).addTo(map).bindPopup("Vous êtes ici");
       }
 
-      // Mise à jour des tooltips repères
       const hole = getCurrentHole();
-      // const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
       const key = getHoleKey(currentCourseKey, hole.number);
       const ref = holeImageRefs[key];
 
-      if (ref && ref.marks) {
+      if (ref && Array.isArray(ref.marks)) {
         ref.marks.forEach((mark, i) => {
           const m = marksMarkersLeaflet[i];
           if (!m) return;
@@ -1794,7 +1791,6 @@ function renderEtalonnageTabs() {
         });
       }
 
-      
       if (!userInteracting) {
         map.setView([lat, lon], 17);
       }
