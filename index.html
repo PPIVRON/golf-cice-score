@@ -1641,10 +1641,17 @@ function renderEtalonnageTabs() {
     return R * c;
   }
 
+  function setDebugText(text) {
+    const el = document.getElementById("gpsStatus");
+    if (el) el.textContent = text;
+  }
+
    function computeDistancesToMarks(lat, lon) {
     const hole = getCurrentHole();
     const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
+
+    setDebugText(`Trou ${hole.number} | clé ${key} | marks ${ref?.marks?.length || 0}`);
 
     if (!ref || !Array.isArray(ref.marks) || ref.marks.length === 0) {
       return [];
@@ -1673,6 +1680,32 @@ function renderEtalonnageTabs() {
     // - n'est pas quasiment atteint
     // - n'est pas "dépassé" par rapport au green, avec marge GPS
     return distToMark < 400 && distToMark > 12 && distToGreen > (markToGreen + 8);
+  }
+
+  function isMarkStillRelevant(lat, lon, mark, hole) {
+    const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
+
+    const visible =
+      distToMark < 400 &&
+      distToMark > 12 &&
+      distToGreen > markToGreen + 8;
+
+    const debugEl = document.getElementById("gpsClubRecommande");
+    if (debugEl) {
+      debugEl.innerHTML = `
+        <div style="font-size:12px; line-height:1.4;">
+          ${mark.label}<br>
+          repère: ${Math.round(distToMark)} m<br>
+          green: ${Math.round(distToGreen)} m<br>
+          repère→green: ${Math.round(markToGreen)} m<br>
+          visible: ${visible ? "OUI" : "NON"}
+        </div>
+      `;
+    }
+
+    return visible;
   }
 
   function renderMarksDistances(lat, lon) {
@@ -2239,6 +2272,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v35</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v35test</div>
 </body>
 </html>
