@@ -1024,6 +1024,8 @@
   let lastTraceTime = null;
   let tracePoints = [];
   let totalDistanceWalked = 0;
+  let linePlayerToTarget = null;
+  let lineTargetToGreen = null;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
@@ -1748,112 +1750,87 @@ function renderEtalonnageTabs() {
   }
 
   function initMap() {
-  if (map) map.remove();
-  map = null;
-  playerMarkerLeaflet = null;
-  greenMarkerLeaflet = null;
-  targetMarkerLeaflet = null;
-  marksMarkersLeaflet = [];
+    function initMap() {
+    if (map) map.remove();
+    map = null;
+    playerMarkerLeaflet = null;
+    greenMarkerLeaflet = null;
+    targetMarkerLeaflet = null;
+    marksMarkersLeaflet = [];
+    linePlayerToTarget = null;
+    lineTargetToGreen = null;
 
-  const hole = getCurrentHole();
-  initTargetForCurrentHole();
-
-  map = L.map("mapContainer", {
-    zoomControl: false,
-    tap: false,
-    rotate: true,
-    touchRotate: false
-  }).setView([hole.greenLat, hole.greenLon], 17);
-
-  setTimeout(() => map.invalidateSize(), 100);
-
-  // L'utilisateur prend la main sur la carte
-  map.on("dragstart zoomstart", () => {
-    userInteracting = true;
-  });
-
-  // On lui rend la boussole après le mouvement
-  map.on("dragend zoomend", () => {
-    setTimeout(() => {
-      userInteracting = false;
-    }, 300);
-  });
-
-  // Quand il a fini, on réautorise la boussole après un léger délai
-  map.on("dragend zoomend", () => {
-    setTimeout(() => {
-      userInteracting = false;
-    }, 300);
-  });
-
-  let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "OpenStreetMap",
-    maxZoom: 19
-  }).addTo(map);
-
-  map.currentTileLayer = currentTileLayer;
-  map.isSatellite = false;
-
-  greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
-    icon: L.divIcon({
-      className: "",
-      html: `<div style="font-size:20px;">⛳</div>`,
-      iconSize: [20, 20],
-      iconAnchor: [10, 20]
-    })
-  }).addTo(map).bindPopup("Green");
-
-  targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
-    draggable: true,
-    icon: L.divIcon({
-      className: "",
-      html: `<div style="font-size:22px;">🎯</div>`,
-      iconSize: [22, 22],
-      iconAnchor: [11, 22]
-    })
-  }).addTo(map).bindPopup("Cible mobile");
-
-  targetMarkerLeaflet.on("dragstart", () => {
-    userInteracting = true;
-  });
-
-  targetMarkerLeaflet.on("dragend", (e) => {
-    const latlng = e.target.getLatLng();
-    currentTarget.lat = latlng.lat;
-    currentTarget.lon = latlng.lng;
-
-    // IMPORTANT : synchroniser avec le trou courant
     const hole = getCurrentHole();
-    hole.targetLat = latlng.lat;
-    hole.targetLon = latlng.lng;
+    initTargetForCurrentHole();
 
-    // Recalcule l’affichage si on a déjà une position GPS
-    if (lastGpsPosition) {
-      refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
-    }
-  });
+    map = L.map("mapContainer", {
+      zoomControl: false,
+      tap: false,
+      rotate: true,
+      touchRotate: false
+    }).setView([hole.greenLat, hole.greenLon], 17);
 
-  const key = getHoleKey(currentCourseKey, hole.number);
-  const ref = holeImageRefs[key];
+    setTimeout(() => map.invalidateSize(), 100);
 
-  if (ref && Array.isArray(ref.marks)) {
-    ref.marks.forEach(mark => {
-      const m = L.circleMarker([mark.lat, mark.lon], {
-        radius: 6,
-        fillColor: "#f59e0b",
-        color: "#ffffff",
-        weight: 2,
-        fillOpacity: 1
-      }).addTo(map).bindTooltip(mark.label, {
-        permanent: true,
-        direction: "right",
-        className: "mark-tooltip"
-      });
+    // L'utilisateur prend la main sur la carte
+    map.on("dragstart zoomstart", () => {
+      userInteracting = true;
+    });
 
-      marksMarkersLeaflet.push(m);
+    // On lui rend la boussole après le mouvement
+    map.on("dragend zoomend", () => {
+      setTimeout(() => {
+        userInteracting = false;
+      }, 300);
+    });
+
+    let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "OpenStreetMap",
+      maxZoom: 19
+    }).addTo(map);
+
+    map.currentTileLayer = currentTileLayer;
+    map.isSatellite = false;
+
+    greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+      icon: L.divIcon({
+        className: "",
+        html: `<div style="font-size:20px;">⛳</div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
+      })
+    }).addTo(map).bindPopup("Green");
+
+    targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
+      draggable: true,
+      icon: L.divIcon({
+        className: "",
+        html: `<div style="font-size:22px;">🎯</div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 22]
+      })
+    }).addTo(map).bindPopup("Cible mobile");
+
+    targetMarkerLeaflet.on("dragstart", () => {
+      userInteracting = true;
+    });
+
+    targetMarkerLeaflet.on("dragend", (e) => {
+      const latlng = e.target.getLatLng();
+      currentTarget.lat = latlng.lat;
+      currentTarget.lon = latlng.lng;
+
+      const hole = getCurrentHole();
+      hole.targetLat = latlng.lat;
+      hole.targetLon = latlng.lng;
+
+      updateTargetLines();
+
+      if (lastGpsPosition) {
+        refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
+      }
     });
   }
-}
 
     function updateMapPosition(lat, lon) {
       if (!map) initMap();
@@ -1870,28 +1847,7 @@ function renderEtalonnageTabs() {
         }).addTo(map).bindPopup("Vous êtes ici");
       }
 
-      const hole = getCurrentHole();
-      const key = getHoleKey(currentCourseKey, hole.number);
-      const ref = holeImageRefs[key];
-
-      if (ref && Array.isArray(ref.marks)) {
-        ref.marks.forEach((mark, i) => {
-          const m = marksMarkersLeaflet[i];
-          if (!m) return;
-
-          const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-          const visible = isMarkStillRelevant(lat, lon, mark, hole);
-
-          if (visible) {
-            m.setStyle({ fillOpacity: 1, opacity: 1 });
-            m.setTooltipContent(`${Math.round(distToMark)} m`);
-            m.openTooltip();
-          } else {
-            m.setStyle({ fillOpacity: 0, opacity: 0 });
-            m.closeTooltip();
-          }
-        });
-      }
+      updateTargetLines();
 
       if (!userInteracting) {
         map.setView([lat, lon], 17);
@@ -1913,65 +1869,118 @@ function renderEtalonnageTabs() {
     return "";
   }
 
-  function refreshTargetDisplayFromPosition(playerLat, playerLon) {
+  function updateTargetLines() {
+    if (!map) return;
+
     const hole = getCurrentHole();
-    const clubEl = document.getElementById("gpsClubRecommande");
 
-    // Si pas de cible définie, on affiche au moins la distance au green
-    if (!currentTarget) {
-      if (hole.greenLat && hole.greenLon) {
-        const distToGreen = distanceInMeters(playerLat, playerLon, hole.greenLat, hole.greenLon);
-        gpsDistanceValueEl.textContent = Math.round(distToGreen);
-        if (clubEl) {
-          const player = getCurrentPlayer();
-          const advice = getClubAdviceForShot(player.trigram, Math.round(distToGreen));
-          clubEl.innerHTML = `
-            <div>Distance joueur → green : ${Math.round(distToGreen)} m</div>
-            <div>${advice}</div>
-          `;
-        }
+    // Ligne joueur → cible
+    if (lastGpsPosition && currentTarget) {
+      const playerCoords = [lastGpsPosition.lat, lastGpsPosition.lon];
+      const targetCoords = [currentTarget.lat, currentTarget.lon];
+
+      if (linePlayerToTarget) {
+        linePlayerToTarget.setLatLngs([playerCoords, targetCoords]);
       } else {
-        gpsDistanceValueEl.textContent = "—";
-        if (clubEl) clubEl.textContent = "";
+        linePlayerToTarget = L.polyline([playerCoords, targetCoords], {
+          color: "#ef4444",
+          weight: 2,
+          dashArray: "6, 6"
+        }).addTo(map);
       }
-      return;
     }
 
-    // Cible définie : distance joueur → cible
-    const distPlayerToTarget = distanceInMeters(
-      playerLat, playerLon,
-      currentTarget.lat, currentTarget.lon
-    );
+    // Ligne cible → green
+    if (currentTarget && hole.greenLat && hole.greenLon) {
+      const targetCoords = [currentTarget.lat, currentTarget.lon];
+      const greenCoords = [hole.greenLat, hole.greenLon];
 
-    gpsDistanceValueEl.textContent = Math.round(distPlayerToTarget);
-
-    // Distance cible → green
-    let distTargetToGreen = null;
-    if (hole.greenLat && hole.greenLon) {
-      distTargetToGreen = distanceInMeters(
-        currentTarget.lat, currentTarget.lon,
-        hole.greenLat, hole.greenLon
-      );
-    }
-
-    if (clubEl) {
-      const player = getCurrentPlayer();
-      const advice = getClubAdviceForShot(player.trigram, Math.round(distPlayerToTarget));
-
-      if (distTargetToGreen != null) {
-        clubEl.innerHTML = `
-          <div>Distance joueur → cible : ${Math.round(distPlayerToTarget)} m</div>
-          <div>Distance cible → green : ${Math.round(distTargetToGreen)} m</div>
-          <div>${advice}</div>
-        `;
+      if (lineTargetToGreen) {
+        lineTargetToGreen.setLatLngs([targetCoords, greenCoords]);
       } else {
-        clubEl.innerHTML = `
-          <div>Distance joueur → cible : ${Math.round(distPlayerToTarget)} m</div>
-          <div>${advice}</div>
-        `;
+        lineTargetToGreen = L.polyline([targetCoords, greenCoords], {
+          color: "#22c55e",
+          weight: 2,
+          dashArray: "6, 6"
+        }).addTo(map);
       }
     }
   }
+
+ function refreshTargetDisplayFromPosition(playerLat, playerLon) {
+  const hole = getCurrentHole();
+  const clubEl = document.getElementById("gpsClubRecommande");
+
+  // Si pas de cible définie, on affiche au moins la distance au green
+  if (!currentTarget) {
+    if (hole.greenLat && hole.greenLon) {
+      const distToGreen = distanceInMeters(playerLat, playerLon, hole.greenLat, hole.greenLon);
+      gpsDistanceValueEl.textContent = Math.round(distToGreen);
+      if (clubEl) {
+        const player = getCurrentPlayer();
+        const advice = getClubAdviceForShot(player.trigram, Math.round(distToGreen));
+        clubEl.innerHTML = `
+          <div style="font-size:22px;font-weight:800;line-height:1.1;">
+            ${Math.round(distToGreen)} m
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+            joueur → green
+          </div>
+          <div style="margin-top:6px;">${advice}</div>
+        `;
+      }
+    } else {
+      gpsDistanceValueEl.textContent = "—";
+      if (clubEl) clubEl.textContent = "";
+    }
+    return;
+  }
+
+  // Cible définie : distance joueur → cible
+  const distPlayerToTarget = distanceInMeters(
+    playerLat, playerLon,
+    currentTarget.lat, currentTarget.lon
+  );
+
+  gpsDistanceValueEl.textContent = Math.round(distPlayerToTarget);
+  updateTargetLines();
+
+  // Distance cible → green
+  let distTargetToGreen = null;
+  if (hole.greenLat && hole.greenLon) {
+    distTargetToGreen = distanceInMeters(
+      currentTarget.lat, currentTarget.lon,
+      hole.greenLat, hole.greenLon
+    );
+  }
+
+  if (clubEl) {
+    const player = getCurrentPlayer();
+    const advice = getClubAdviceForShot(player.trigram, Math.round(distPlayerToTarget));
+
+    if (distTargetToGreen !== null) {
+      clubEl.innerHTML = `
+        <div style="font-size:22px;font-weight:800;line-height:1.1;">
+          ${Math.round(distPlayerToTarget)} m → ${Math.round(distTargetToGreen)} m
+        </div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+          joueur → cible / cible → green
+        </div>
+        <div style="margin-top:6px;">${advice}</div>
+      `;
+    } else {
+      clubEl.innerHTML = `
+        <div style="font-size:22px;font-weight:800;line-height:1.1;">
+          ${Math.round(distPlayerToTarget)} m
+        </div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px;">
+          joueur → cible
+        </div>
+        <div style="margin-top:6px;">${advice}</div>
+      `;
+    }
+  }
+}
 
   function handleGpsSuccess(pos) {
   const { latitude, longitude, accuracy } = pos.coords;
