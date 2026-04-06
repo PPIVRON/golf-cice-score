@@ -231,11 +231,19 @@
     </div>
   </div>
 
-  <!-- Ambiance humour -->
+    <!-- Mode GPS -->
   <div class="card">
-    <h2>Ambiance</h2>
-    <div class="course-btns" id="tipsCategoryBtns" style="flex-wrap: wrap;">
-      <!-- généré dynamiquement -->
+    <h2>Mode GPS</h2>
+    <div class="course-btns" style="flex-wrap: wrap;">
+      <label style="display:flex; align-items:center; gap:8px; width:100%; margin-bottom:8px;">
+        <input type="radio" name="appMode" value="standard" checked>
+        <span>Version standard</span>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:8px; width:100%;">
+        <input type="radio" name="appMode" value="cible">
+        <span>Version cible sur image du trou</span>
+      </label>
     </div>
   </div>
 
@@ -380,13 +388,15 @@
 
     errorMsgEl.style.display = "none";
 
-    const activeTipsBtn = document.querySelector("#tipsCategoryBtns .tips-btn.active");
-    const tipsCategory = activeTipsBtn ? activeTipsBtn.dataset.tips : "decouverte";
+    const tipsCategory = "decouverte";
+    const appMode =
+      document.querySelector('input[name="appMode"]:checked')?.value || "standard";
 
     const setupData = {
       courseKey: selectedCourse,
       players: players,
-      tipsCategory: tipsCategory
+      tipsCategory: tipsCategory,
+      appMode: appMode
     };
 
     sessionStorage.setItem("golfSetup", JSON.stringify(setupData));
