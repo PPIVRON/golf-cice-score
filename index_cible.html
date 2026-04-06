@@ -1020,6 +1020,10 @@
   let userInteracting = false;
   let targetMarkerLeaflet = null;
   let currentTarget = null;
+  let lastGpsPosition = null;
+  let lastTraceTime = null;
+  let tracePoints = [];
+  let totalDistanceWalked = 0;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
