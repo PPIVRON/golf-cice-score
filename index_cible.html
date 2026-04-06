@@ -1756,7 +1756,25 @@ function renderEtalonnageTabs() {
   }).setView([hole.greenLat, hole.greenLon], 17);
 
   setTimeout(() => map.invalidateSize(), 100);
-  map.on("dragstart zoomstart", () => userInteracting = true);
+
+  // L'utilisateur prend la main sur la carte
+  map.on("dragstart zoomstart", () => {
+    userInteracting = true;
+  });
+
+  // On lui rend la boussole après le mouvement
+  map.on("dragend zoomend", () => {
+    setTimeout(() => {
+      userInteracting = false;
+    }, 300);
+  });
+
+  // Quand il a fini, on réautorise la boussole après un léger délai
+  map.on("dragend zoomend", () => {
+    setTimeout(() => {
+      userInteracting = false;
+    }, 300);
+  });
 
   let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "OpenStreetMap",
@@ -1794,6 +1812,12 @@ function renderEtalonnageTabs() {
     currentTarget.lat = latlng.lat;
     currentTarget.lon = latlng.lng;
 
+    // IMPORTANT : synchroniser avec le trou courant
+    const hole = getCurrentHole();
+    hole.targetLat = latlng.lat;
+    hole.targetLon = latlng.lng;
+
+    // Recalcule l’affichage si on a déjà une position GPS
     if (lastGpsPosition) {
       refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
     }
