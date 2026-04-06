@@ -1749,88 +1749,87 @@ function renderEtalonnageTabs() {
     return target;
   }
 
-  function initMap() {
     function initMap() {
-    if (map) map.remove();
-    map = null;
-    playerMarkerLeaflet = null;
-    greenMarkerLeaflet = null;
-    targetMarkerLeaflet = null;
-    marksMarkersLeaflet = [];
-    linePlayerToTarget = null;
-    lineTargetToGreen = null;
-
-    const hole = getCurrentHole();
-    initTargetForCurrentHole();
-
-    map = L.map("mapContainer", {
-      zoomControl: false,
-      tap: false,
-      rotate: true,
-      touchRotate: false
-    }).setView([hole.greenLat, hole.greenLon], 17);
-
-    setTimeout(() => map.invalidateSize(), 100);
-
-    // L'utilisateur prend la main sur la carte
-    map.on("dragstart zoomstart", () => {
-      userInteracting = true;
-    });
-
-    // On lui rend la boussole après le mouvement
-    map.on("dragend zoomend", () => {
-      setTimeout(() => {
-        userInteracting = false;
-      }, 300);
-    });
-
-    let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "OpenStreetMap",
-      maxZoom: 19
-    }).addTo(map);
-
-    map.currentTileLayer = currentTileLayer;
-    map.isSatellite = false;
-
-    greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
-      icon: L.divIcon({
-        className: "",
-        html: `<div style="font-size:20px;">⛳</div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 20]
-      })
-    }).addTo(map).bindPopup("Green");
-
-    targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
-      draggable: true,
-      icon: L.divIcon({
-        className: "",
-        html: `<div style="font-size:22px;">🎯</div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 22]
-      })
-    }).addTo(map).bindPopup("Cible mobile");
-
-    targetMarkerLeaflet.on("dragstart", () => {
-      userInteracting = true;
-    });
-
-    targetMarkerLeaflet.on("dragend", (e) => {
-      const latlng = e.target.getLatLng();
-      currentTarget.lat = latlng.lat;
-      currentTarget.lon = latlng.lng;
+      if (map) map.remove();
+      map = null;
+      playerMarkerLeaflet = null;
+      greenMarkerLeaflet = null;
+      targetMarkerLeaflet = null;
+      marksMarkersLeaflet = [];
+      linePlayerToTarget = null;
+      lineTargetToGreen = null;
 
       const hole = getCurrentHole();
-      hole.targetLat = latlng.lat;
-      hole.targetLon = latlng.lng;
+      initTargetForCurrentHole();
 
-      updateTargetLines();
+      map = L.map("mapContainer", {
+        zoomControl: false,
+        tap: false,
+        rotate: true,
+        touchRotate: false
+      }).setView([hole.greenLat, hole.greenLon], 17);
 
-      if (lastGpsPosition) {
-        refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
-      }
-    });
-  }
+      setTimeout(() => map.invalidateSize(), 100);
+
+      // L'utilisateur prend la main sur la carte
+      map.on("dragstart zoomstart", () => {
+        userInteracting = true;
+      });
+
+      // On lui rend la boussole après le mouvement
+      map.on("dragend zoomend", () => {
+        setTimeout(() => {
+          userInteracting = false;
+        }, 300);
+      });
+
+      let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "OpenStreetMap",
+        maxZoom: 19
+      }).addTo(map);
+
+      map.currentTileLayer = currentTileLayer;
+      map.isSatellite = false;
+
+      greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div style="font-size:20px;">⛳</div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 20]
+        })
+      }).addTo(map).bindPopup("Green");
+
+      targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
+        draggable: true,
+        icon: L.divIcon({
+          className: "",
+          html: `<div style="font-size:22px;">🎯</div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 22]
+        })
+      }).addTo(map).bindPopup("Cible mobile");
+
+      targetMarkerLeaflet.on("dragstart", () => {
+        userInteracting = true;
+      });
+
+      targetMarkerLeaflet.on("dragend", (e) => {
+        const latlng = e.target.getLatLng();
+        currentTarget.lat = latlng.lat;
+        currentTarget.lon = latlng.lng;
+
+        const hole = getCurrentHole();
+        hole.targetLat = latlng.lat;
+        hole.targetLon = latlng.lng;
+
+        updateTargetLines();
+
+        if (lastGpsPosition) {
+          refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
+        }
+      });
+    }
 
     function updateMapPosition(lat, lon) {
       if (!map) initMap();
@@ -2384,11 +2383,10 @@ function renderEtalonnageTabs() {
     showView("score");
     showHumourToast();
   })
-
   .catch(err => console.error("Erreur chargement données :", err));
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v36_cible</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v2_cible</div>
 </body>
 </html>
