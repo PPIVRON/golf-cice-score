@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Golf – Score & GPS</title>
+  <meta name="version" content="v26">  <!-- ICI -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5f7;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #ffffff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    header {
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    header .course-name {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    header .hole-line {
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    header .hole-line span.small {
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    main {
+      flex: 1;
+      padding: 10px 14px 72px; /* laisser la place à la nav bas */
+      overflow-y: auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* --- Vue SCORE --- */
+
+    .score-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .score-current {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .score-current-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .score-current-top .label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .score-current-top .total {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .score-current-number {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .score-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: none;
+      font-size: 22px;
+      font-weight: 500;
+      color: #111827;
+      background: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .score-btn:active {
+      transform: scale(0.96);
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .score-extra {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .score-extra > div:first-child {
+      display: flex;
+      align-items: center;
+      gap: 6px; /* espace entre Putts, -, 2, + */
+    }
+
+    .score-extra span {
+      margin-right: 6px;
+    }
+
+    .score-extra button {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+    }
+
+    .score-extra .score-btn {
+      width: 28px;
+      height: 28px;
+      font-size: 18px;
+    }
+
+
+    .score-holes {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .score-holes table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .score-holes th,
+    .score-holes td {
+      padding: 3px 4px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .score-holes th {
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .score-holes tr:last-child td {
+      border-bottom: none;
+    }
+
+    .score-holes input {
+      width: 32px;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 11px;
+      padding: 1px 2px;
+    }
+
+    /* --- Vue GPS / CARTE --- */
+
+    .gps-main {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .gps-distance {
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .gps-distance .label {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .gps-distance .value {
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .gps-distance .unit {
+      font-size: 13px;
+      margin-left: 2px;
+      opacity: 0.9;
+    }
+
+    .gps-status {
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 4px;
+    }
+
+    .gps-card {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+    }
+
+    .gps-card img {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+    }
+
+    .gps-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      flex: 1;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-primary:active,
+    .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .gps-status-line {
+      font-size: 12px;
+      color: #4b5563;
+      margin-top: 6px;
+    }
+
+    /* Modal ZOOM (tu réintègres ta logique existante) */
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: rgba(0,0,0,0.7);
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;        /* largeur fixe */
+      max-width: 520px;   /* ou 100% si tu veux plein écran sur mobile */
+      height: auto;
+      max-height: 90%;
+      background-color: #111827;
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+
+    .modal-content img {
+      width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    .modal .close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      color: #f9fafb;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+   /* --- Vue STATS --- */
+
+    .stats-main {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stats-summary {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 10px 12px;
+    }
+
+    .stats-summary h2 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .stats-summary .line {
+      font-size: 13px;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+
+    .stats-detail {
+      background: #f9fafb;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .stats-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .stats-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    /* --- NAVIGATION BAS --- */
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      padding: 6px 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      z-index: 40;
+    }
+
+    .nav-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 6px 4px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: #6b7280;
+      background: #f9fafb;
+    }
+
+    .nav-btn span {
+      font-size: 11px;
+    }
+
+    .nav-btn.active {
+      background: #111827;
+      color: #f9fafb;
+      font-weight: 500;
+    }
+
+    
+    .players-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .player-tab {
+      flex: 1;
+      padding: 7px 4px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7280;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .player-tab.active {
+      border-color: #111827;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    #rankingBand {
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 12px;
+      padding: 5px 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      cursor: pointer;
+    }
+
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ranking-item.leader {
+      color: #fbbf24; /* or pour le leader */
+      font-weight: 700;
+    }
+
+    .mark-tooltip {
+    background: rgba(245,158,11,0.9);
+    border: none;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 999px;
+    box-shadow: none;
+  }
+
+    #holeToast {
+    display: none;
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17,24,39,0.92);
+    color: #f9fafb;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-style: italic;
+    z-index: 999;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+    
+
+  </style>
+
+  <!-- Leaflet - à ajouter juste avant </head> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+
+
+</head>
+<body>
+
+  <div id="holeToast"></div>
+
+<div class="app">
+
+  <header>
+    <div class="course-name" id="courseName">Garden Golf de Cicé-Blossac</div>
+    <div class="hole-line">
+      <div>
+        Trou <span id="holeNumber">1</span>
+        <span class="small">• Par <span id="holePar">4</span> • <span id="holeDistance">347 m (Blanc)</span></span>
+      </div>
+      <div class="small">
+        Total <span id="totalScore">0</span>
+        <span id="totalVsPar">(E)</span>
+      </div>
+    </div>
+
+    <!-- AJOUTER ICI le sélecteur de repère -->
+    <div style="margin-top:4px; font-size:12px;">
+      <label>
+        <input type="radio" name="teeColor" value="white" checked>
+        Blanc
+      </label>
+      <label style="margin-left:8px;">
+        <input type="radio" name="teeColor" value="yellow">
+        Jaune
+      </label>
+    </div>
+
+  </header>
+
+  <!-- Bandeau classement multi-joueurs -->
+  <div id="rankingBand" style="display:none;">
+    <!-- généré dynamiquement -->
+  </div>
+
+
+  <main>
+    <!-- Vue SCORE -->
+    <section id="view-score" class="view active">
+      <div class="score-main">
+        <!-- Onglets joueurs -->
+      <div class="players-tabs" id="playersTabs"></div>
+        <div class="score-current">
+          <div class="score-current-top">
+            <div class="label">Score du trou</div>
+            <div class="total">
+              Cumul: <span id="totalScore2">0</span> <span id="totalVsPar2">(E)</span>
+            </div>
+          </div>
+          <div class="score-current-number">
+            <button class="score-btn" id="decreaseScore">−</button>
+            <div class="score-value" id="currentHoleScore">4</div>
+            <button class="score-btn" id="increaseScore">+</button>
+          </div>
+          <div class="score-extra">
+          <div>
+            <span>Putts :</span>
+            <button class="score-btn" id="decreasePutts">−</button>
+            <span id="currentHolePutts">2</span>
+            <button class="score-btn" id="increasePutts">+</button>
+          </div>
+          <div>
+            <button id="editExtrasBtn">Conseils</button>
+          </div>
+        </div>
+
+        </div>
+
+        <div class="score-holes">
+          <table>
+            <thead>
+            <tr>
+              <th>Trou</th>
+              <th>Par</th>
+              <th>Score</th>
+              <th>±</th>
+            </tr>
+            </thead>
+            <tbody id="holesTableBody">
+            <!-- rempli par JS à partir de tes données courses -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vue GPS / CARTE -->
+    <section id="view-gps" class="view">
+      <div class="gps-main">
+        <div class="gps-distance">
+          <div class="label">Distance au centre du green</div>
+          <div>
+            <span class="value" id="gpsDistanceValue">‑‑‑</span><span class="unit">m</span>
+          </div>
+        </div>
+        <div class="gps-status">
+          <span id="gpsStatus">GPS inactif</span>
+        </div>
+
+        <div class="gps-card">
+          <div id="mapContainer" style="width:100%; height:300px; border-radius:8px; z-index:1;"></div>
+
+          <!-- Bouton fermeture plein écran -->
+          <button id="closeFullscreenBtn" style="
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+          ">✕ Réduire</button>
+
+          <div class="gps-actions">
+            <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
+            <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
+            <button class="btn-secondary" id="centerMapBtn">📍</button>
+            <button class="btn-secondary" id="compassBtn">🧭</button>
+            <button class="btn-secondary" id="satelliteBtn">🛰️</button>
+          </div>
+          <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
+          <div class="gps-status-line" id="gpsMarksDistances"></div>
+          <div class="gps-status-line" id="gpsClubRecommande" style="font-weight:600; color:#111827;"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Vue STATS -->
+    <section id="view-stats" class="view">
+      <div class="stats-main">
+
+        <!-- Onglets joueurs stats -->
+        <div class="players-tabs" id="statsTabs"></div>
+
+        <!-- Onglets Résumé / Analyse / Trous -->
+        <div class="players-tabs" id="statsViewTabs">
+          <button class="player-tab active" data-statsview="resume">Résumé</button>
+          <button class="player-tab" data-statsview="analyse">Analyse</button>
+          <button class="player-tab" data-statsview="trous">Trous</button>
+        </div>
+
+
+        <!-- Bloc Résumé -->
+        <div id="statsViewResume">
+          <div class="stats-summary">
+            <h2>Résumé de la partie</h2>
+            <div class="line">Score total : <span id="statsTotalScore">0</span> (<span id="statsTotalVsPar">E</span>)</div>
+            <div class="line">Putts : <span id="statsTotalPutts">0</span></div>
+            <div class="line">Aller (1-9) : <span id="statsAllerScore">—</span> (<span id="statsAllerVsPar">—</span>)</div>
+            <div class="line">Retour (10-18) : <span id="statsRetourScore">—</span> (<span id="statsRetourVsPar">—</span>)</div>
+          </div>
+        </div>
+
+        <!-- Bloc Analyse -->
+        <div id="statsViewAnalyse" style="display:none;">
+          <div class="stats-summary">
+            <h2>Analyse</h2>
+            <div class="line">🐦 Birdies : <span id="statsBirdies">0</span></div>
+            <div class="line">— Pars : <span id="statsPars">0</span></div>
+            <div class="line">📈 Bogeys : <span id="statsBogeys">0</span></div>
+            <div class="line">📈📈 Double+ : <span id="statsDoubles">0</span></div>
+            <div class="line">✅ Meilleur trou : <span id="statsBestHole">—</span></div>
+            <div class="line">❌ Pire trou : <span id="statsWorstHole">—</span></div>
+          </div>
+        </div>
+
+        <!-- Bloc Trous -->
+        <div id="statsViewTrous" style="display:none;">
+          <div class="stats-detail" id="statsDetail"></div>
+        </div>
+
+       <!-- Bouton Nouvelle partie -->
+        <div style="margin-top: 16px; text-align: center;">
+          <button id="btnNewGame" style="
+            background: none;
+            border: none;
+            color: #dc2626;
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+          ">↩ Nouvelle partie</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Vue ÉTALONNAGE -->
+    <section id="view-etalonnage" class="view">
+      <div class="stats-main">
+
+        <!-- Onglets joueurs -->
+        <div class="players-tabs" id="etalonnageTabs"></div>
+
+        <div class="stats-summary">
+          <h2>🏌️ Distances par club</h2>
+          <div style="font-size:12px; color:#6b7280; margin-top:4px;">
+            Modifiez vos distances moyennes par club
+          </div>
+        </div>
+
+        <div style="margin:12px 0 16px 0; padding:12px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px;">
+        <label for="comfortDistanceInput" style="display:block; font-weight:600; margin-bottom:6px;">
+          🎯 Distance de confort (m)
+        </label>
+        <input
+          type="text"
+          id="comfortDistanceInput"
+          placeholder="Ex : 95-85"
+          style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:16px;"
+        >
+        <div style="font-size:12px; color:#6b7280; margin-top:6px;">
+          Distance idéale à te laisser pour le coup suivant.
+        </div>
+      </div>
+
+        <!-- Tableau clubs -->
+        <div class="stats-detail" id="clubsTable"></div>
+
+        <!-- Boutons actions -->
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button class="btn-primary" id="saveClubsBtn" style="flex:1; padding:10px;">
+            💾 Sauvegarder
+          </button>
+          <button class="btn-secondary" id="resetClubsBtn" style="flex:1; padding:10px;">
+            🔄 Réinitialiser
+          </button>
+        </div>
+
+      </div>
+    </section>
+    
+  </main>
+
+</div>
+
+<!-- Modal CLASSEMENT -->
+<div id="rankingModal" class="modal">
+  <div class="modal-content" style="background:#ffffff; color:#111827; max-width:90%; max-height:60%;">
+    <span class="close" id="closeRanking">&times;</span>
+    <h2 style="font-size:15px; margin-bottom:12px;">Classement</h2>
+    <div id="rankingDetail"></div>
+  </div>
+</div>
+
+<div id="tipsModal" class="modal">
+  <div class="modal-content" style="max-width: 90%; max-height: 70%; background:#ffffff; color:#111827;">
+    <span class="close" id="closeTips">&times;</span>
+    <h2 style="font-size:16px; margin-bottom:8px;">Conseils pour le trou</h2>
+    <div id="tipsText" style="font-size:14px; line-height:1.6; white-space:pre-line;"></div>
+  </div>
+</div>
+
+
+<!-- Navigation bas -->
+<div class="bottom-nav">
+  <button class="nav-btn active" data-view="score" id="btnNavScore">
+    <span>Score</span>
+  </button>
+  <button class="nav-btn" data-view="gps" id="btnNavGps">
+    <span>GPS / Carte</span>
+  </button>
+  <button class="nav-btn" data-view="stats" id="btnNavStats">
+    <span>Stats</span>
+  </button>
+  <button class="nav-btn" data-view="etalonnage" id="btnNavEtalonnage">
+    <span>Clubs</span>
+  </button>
+</div>
+
+
+<script>
+
+    let holeTips = {};
+
+   (function () {
+      const ok = sessionStorage.getItem("golfAccessOK");
+      if (ok !== "1") {
+        window.location.href = "ppv.html";
+      }
+    })();
+
+    // Lecture config partie depuis setup.html
+    const golfSetup = JSON.parse(sessionStorage.getItem("golfSetup"));
+    if (!golfSetup) {
+      window.location.href = "setup.html";
+    }
+
+    // Initialisation des joueurs
+    const players = golfSetup.players.map(p => ({
+      trigram: p.trigram,
+      teeColor: p.teeColor,
+      holes: []
+    }));
+
+    const defaultClubs = [
+      { nom: "Driver",    distance: 220 },
+      { nom: "Bois 3",    distance: 195 },
+      { nom: "Hybride",   distance: 175 },
+      { nom: "Fer 4",     distance: 165 },
+      { nom: "Fer 5",     distance: 155 },
+      { nom: "Fer 6",     distance: 145 },
+      { nom: "Fer 7",     distance: 135 },
+      { nom: "Fer 8",     distance: 125 },
+      { nom: "Fer 9",     distance: 115 },
+      { nom: "Pitching",  distance: 100 },
+      { nom: "Sand",      distance:  80 },
+      { nom: "Lob",       distance:  60 }
+    ];
+
+    let playersClubs = {}; // { "PPV": [...clubs], "APV": [...clubs] }
+    let playersComfort = {}; // { "PPV": 95, "APV": 110 }
+
+    let currentCourseKey   = golfSetup.courseKey;
+    let currentPlayerIndex = 0;
+
+    
+    const gpsMarksDistancesEl = document.getElementById("gpsMarksDistances");
+    const decreasePuttsBtn = document.getElementById("decreasePutts");
+    const increasePuttsBtn = document.getElementById("increasePutts");
+    let currentTeeColor = players[0].teeColor; // couleur du premier joueur
+
+
+    const editExtrasBtn = document.getElementById("editExtrasBtn");
+    const tipsModal = document.getElementById("tipsModal");
+    const closeTipsBtn = document.getElementById("closeTips");
+    const tipsTextEl = document.getElementById("tipsText");
+
+    const rankingBandEl   = document.getElementById("rankingBand");
+    const rankingModal    = document.getElementById("rankingModal");
+    const closeRankingBtn = document.getElementById("closeRanking");
+    const rankingDetailEl = document.getElementById("rankingDetail");
+
+    const saveClubsBtn = document.getElementById("saveClubsBtn");
+
+
+
+
+  /* ------------- DONNÉES PARCOURS -------------
+     Ici tu copies/colles ton objet courses de index_v12
+     (Cicé, Rennes, greenLat/greenLon, etc.) */
+
+    let courses = {};
+    let holeImageRefs = {};
+  
+  function getCurrentHoleKey() {
+    const hole = getCurrentHole();
+    return `${currentCourseKey}-${hole.number}`;
+  }
+
+  function getCurrentPlayer() {
+  return players[currentPlayerIndex];
+  }
+
+  function getCurrentPlayerHole() {
+    return getCurrentPlayer().holes[currentHoleIndex];
+  }
+
+  function renderPlayersTabs() {
+    const tabsEl = document.getElementById("playersTabs");
+    if (!tabsEl) return;
+    tabsEl.innerHTML = "";
+
+    players.forEach((player, index) => {
+      const tab = document.createElement("button");
+      const isActive = index === currentPlayerIndex;
+      const isYellow = player.teeColor === "yellow";
+
+      tab.className = "player-tab" + (isActive ? " active" : "");
+
+      // Couleur de fond selon la couleur de départ
+      if (!isActive) {
+        tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+        tab.style.color = isYellow ? "#78350f" : "#6b7280";
+        tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+      }
+
+      tab.textContent = player.trigram;
+      tab.addEventListener("click", () => {
+        currentPlayerIndex = index;
+        currentTeeColor = players[index].teeColor;
+        const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
+        if (teeRadio) teeRadio.checked = true;
+        renderPlayersTabs();
+        renderStatsTabs();
+        renderHoleScore();
+        renderHolesTable();
+        renderStatsDetail();
+        updateTotals();
+        renderHeader();
+      });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+
+   function renderStatsTabs() {
+    const tabsEl = document.getElementById("statsTabs");
+    if (!tabsEl) return;
+    tabsEl.innerHTML = "";
+
+    players.forEach((player, index) => {
+      const tab = document.createElement("button");
+      const isActive = index === currentPlayerIndex;
+      const isYellow = player.teeColor === "yellow";
+
+      tab.className = "player-tab" + (isActive ? " active" : "");
+
+      // Couleur de fond selon la couleur de départ
+      if (!isActive) {
+        tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+        tab.style.color = isYellow ? "#78350f" : "#6b7280";
+        tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+      }
+
+      tab.textContent = player.trigram;
+      tab.addEventListener("click", () => {
+      currentPlayerIndex = index;
+      currentTeeColor = players[index].teeColor; // AJOUT
+      // Mettre à jour le radio button visuellement
+      const teeRadio = document.querySelector(`input[name="teeColor"][value="${players[index].teeColor}"]`);
+      if (teeRadio) teeRadio.checked = true; // AJOUT
+      renderStatsTabs();
+      renderPlayersTabs();
+      renderStatsDetail();
+      updateTotals();
+      updateStatsAnalysis(); // AJOUT
+    });
+      tabsEl.appendChild(tab);
+    });
+  }
+
+
+
+  function openTipsModal() {
+    const key = getCurrentHoleKey();
+    const tip = holeTips[key]?.conseil || "Aucun conseil spécifique pour ce trou pour l'instant.";
+    tipsTextEl.textContent = tip;
+    tipsModal.style.display = "block";
+  }
+
+  function closeTipsModal() {
+    tipsModal.style.display = "none";
+  }
+
+  editExtrasBtn.addEventListener("click", openTipsModal);
+  closeTipsBtn.addEventListener("click", closeTipsModal);
+  tipsModal.addEventListener("click", (e) => {
+    if (e.target === tipsModal) closeTipsModal();
+  });
+
+
+
+  // Variables d’état global (course sélectionnée, index du trou, etc.)
+  // let currentCourseKey = "cice"; // par ex.
+  let currentHoleIndex = 0;
+  let watchId = null;
+  let gpsActive = false;
+
+  const courseNameEl = document.getElementById("courseName");
+  const holeNumberEl = document.getElementById("holeNumber");
+  const holeParEl = document.getElementById("holePar");
+  const holeDistanceEl = document.getElementById("holeDistance");
+  const totalScoreEls = [document.getElementById("totalScore"), document.getElementById("totalScore2")];
+  const totalVsParEls = [document.getElementById("totalVsPar"), document.getElementById("totalVsPar2")];
+
+  const viewScore = document.getElementById("view-score");
+  const viewGps = document.getElementById("view-gps");
+  const viewStats = document.getElementById("view-stats");
+
+  const navBtns = document.querySelectorAll(".nav-btn");
+
+  const currentHoleScoreEl = document.getElementById("currentHoleScore");
+  const currentHolePuttsEl = document.getElementById("currentHolePutts");
+  const holesTableBody = document.getElementById("holesTableBody");
+
+  const gpsDistanceValueEl = document.getElementById("gpsDistanceValue");
+  const gpsStatusEl = document.getElementById("gpsStatus");
+  const gpsCoordsTextEl = document.getElementById("gpsCoordsText");
+  const toggleGpsBtn = document.getElementById("toggleGpsBtn");
+
+  let map = null;
+  let playerMarkerLeaflet = null;
+  let greenMarkerLeaflet = null;
+  let marksMarkersLeaflet = [];
+  let userInteracting = false;
+  let targetMarkerLeaflet = null;
+  let currentTarget = null;
+
+
+  const statsTotalScoreEl = document.getElementById("statsTotalScore");
+  const statsTotalVsParEl = document.getElementById("statsTotalVsPar");
+  const statsTotalPuttsEl = document.getElementById("statsTotalPutts");
+  const statsDetailEl = document.getElementById("statsDetail");
+
+  const decreaseScoreBtn = document.getElementById("decreaseScore");
+  const increaseScoreBtn = document.getElementById("increaseScore");
+
+  // Sélecteur de repère (tee blanc/jaune)  <-- BLOc ICI
+  const teeRadios = document.querySelectorAll('input[name="teeColor"]');
+  teeRadios.forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      currentTeeColor = e.target.value; // "white" ou "yellow"
+      renderHeader();
+    });
+  });
+
+  // --- Fonctions utilitaires (à adapter avec ton code existant) ---
+
+  function initTargetForCurrentHole() {
+    const hole = getCurrentHole();
+    const key = getHoleKey(currentCourseKey, hole.number);
+    const ref = holeImageRefs[key];
+
+    if (currentTarget && currentTarget.holeKey === key) return;
+
+    if (ref && Array.isArray(ref.marks) && ref.marks.length > 0) {
+      currentTarget = {
+        holeKey: key,
+        lat: ref.marks[0].lat,
+        lon: ref.marks[0].lon
+      };
+    } else {
+      currentTarget = {
+        holeKey: key,
+        lat: hole.greenLat,
+        lon: hole.greenLon
+      };
+    }
+  }
+
+  function getCurrentCourse() {
+    return courses[currentCourseKey];
+  }
+
+  function getCurrentHole() {
+    return getCurrentCourse().holes[currentHoleIndex];
+  }
+
+   function initCourseTotals() {
+    const course = courses[currentCourseKey];
+
+    // Pour chaque joueur, on crée son propre tableau de trous
+    players.forEach(player => {
+      player.holes = course.holes.map(hole => ({
+        number: hole.number,
+        par:    hole.par,
+        score:  null,
+        putts:  null
+      }));
+    });
+
+    updateTotals();
+  }
+
+
+  function renderHeader() {
+    const course = getCurrentCourse();
+    const hole = getCurrentHole();
+    courseNameEl.textContent = course.name;
+    holeNumberEl.textContent = hole.number;
+    holeParEl.textContent = hole.par;
+
+    const distance = currentTeeColor === "yellow" ? hole.yellow : hole.white;
+    const label = currentTeeColor === "yellow" ? "Jaune" : "Blanc";
+    holeDistanceEl.textContent = `${distance} m (${label})`;
+  }
+
+  function updateTotals() {
+    const player = getCurrentPlayer();
+    let total = 0;
+    let parTotal = 0;
+    let totalPutts = 0;
+
+    player.holes.forEach(h => {
+      if (h.score !== null && h.score !== undefined) {
+        total += h.score;
+        parTotal += h.par;
+      }
+      if (h.putts !== null && h.putts !== undefined) {
+        totalPutts += h.putts;
+      }
+    });
+
+    const diff = total - parTotal;
+    const vsParText =
+      parTotal === 0
+        ? "E"
+        : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+
+    totalScoreEls.forEach(el => el.textContent = total);
+    totalVsParEls.forEach(el => el.textContent = `(${vsParText})`);
+
+    statsTotalScoreEl.textContent = total;
+    statsTotalVsParEl.textContent = vsParText;
+    statsTotalPuttsEl.textContent = totalPutts;
+  }
+
+  function updateStatsAnalysis() {
+    const player = getCurrentPlayer();
+
+    let allerScore = 0, allerPar = 0;
+    let retourScore = 0, retourPar = 0;
+    let birdies = 0, pars = 0, bogeys = 0, doubles = 0;
+    let bestHole = null, worstHole = null;
+
+    player.holes.forEach((hole, index) => {
+      if (hole.score === null) return;
+
+      const diff = hole.score - hole.par;
+
+      if (index < 9) {
+        allerScore += hole.score;
+        allerPar += hole.par;
+      } else {
+        retourScore += hole.score;
+        retourPar += hole.par;
+      }
+
+      if (diff <= -1) birdies++;
+      else if (diff === 0) pars++;
+      else if (diff === 1) bogeys++;
+      else if (diff >= 2) doubles++;
+
+      if (bestHole === null || diff < bestHole.diff) {
+        bestHole = { number: hole.number, score: hole.score, diff };
+      }
+      if (worstHole === null || diff > worstHole.diff) {
+        worstHole = { number: hole.number, score: hole.score, diff };
+      }
+    });
+
+    if (allerScore > 0) {
+      const d = allerScore - allerPar;
+      document.getElementById("statsAllerScore").textContent = allerScore;
+      document.getElementById("statsAllerVsPar").textContent =
+        d === 0 ? "E" : (d > 0 ? "+" + d : d.toString());
+    } else {
+      document.getElementById("statsAllerScore").textContent = "—";
+      document.getElementById("statsAllerVsPar").textContent = "—";
+    }
+
+    if (retourScore > 0) {
+      const d = retourScore - retourPar;
+      document.getElementById("statsRetourScore").textContent = retourScore;
+      document.getElementById("statsRetourVsPar").textContent =
+        d === 0 ? "E" : (d > 0 ? "+" + d : d.toString());
+    } else {
+      document.getElementById("statsRetourScore").textContent = "—";
+      document.getElementById("statsRetourVsPar").textContent = "—";
+    }
+
+    document.getElementById("statsBirdies").textContent = birdies;
+    document.getElementById("statsPars").textContent = pars;
+    document.getElementById("statsBogeys").textContent = bogeys;
+    document.getElementById("statsDoubles").textContent = doubles;
+
+    if (bestHole) {
+      const d = bestHole.diff;
+      const ds = d === 0 ? "E" : (d > 0 ? "+" + d : d.toString());
+      document.getElementById("statsBestHole").textContent =
+        `Trou ${bestHole.number} : ${bestHole.score} (${ds})`;
+    }
+
+    if (worstHole) {
+      const d = worstHole.diff;
+      const ds = d === 0 ? "E" : (d > 0 ? "+" + d : d.toString());
+      document.getElementById("statsWorstHole").textContent =
+        `Trou ${worstHole.number} : ${worstHole.score} (${ds})`;
+    }
+  }
+
+  // --- Étalonnage clubs ---
+
+function loadPlayerClubs(trigram) {
+  const key = `clubs_${trigram.toLowerCase()}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    return JSON.parse(saved);
+  }
+  // Essayer de charger depuis JSON sur GitHub
+  return JSON.parse(JSON.stringify(defaultClubs)); // copie des valeurs par défaut
+}
+
+function savePlayerClubs(trigram, clubs) {
+  const key = `clubs_${trigram.toLowerCase()}`;
+  localStorage.setItem(key, JSON.stringify(clubs));
+}
+
+  function loadPlayerComfort(trigram) {
+    const key = `comfort_${trigram.toLowerCase()}`;
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      return JSON.parse(saved);
+    }
+
+    return { max: 95, min: 85 };
+  }
+
+function savePlayerComfort(trigram, comfortDistance) {
+  const key = `comfort_${trigram.toLowerCase()}`;
+  localStorage.setItem(key, JSON.stringify(comfortDistance));
+}
+
+function initPlayersClubs() {
+  players.forEach(player => {
+    playersClubs[player.trigram] = loadPlayerClubs(player.trigram);
+    playersComfort[player.trigram] = loadPlayerComfort(player.trigram);
+  });
+}
+
+function getCurrentEtalonnagePlayer() {
+  const tabsEl = document.getElementById("etalonnageTabs");
+  const activeTab = tabsEl ? tabsEl.querySelector(".player-tab.active") : null;
+  return activeTab ? activeTab.dataset.trigram : players[0].trigram;
+}
+
+function renderEtalonnageTabs() {
+  const tabsEl = document.getElementById("etalonnageTabs");
+  if (!tabsEl) return;
+  tabsEl.innerHTML = "";
+
+  players.forEach((player, index) => {
+    const tab = document.createElement("button");
+    const isActive = index === 0 || tab.classList.contains("active");
+    const isYellow = player.teeColor === "yellow";
+
+    tab.className = "player-tab" + (index === 0 ? " active" : "");
+    tab.dataset.trigram = player.trigram;
+
+    if (index !== 0) {
+      tab.style.background = isYellow ? "#fef08a" : "#f9fafb";
+      tab.style.color = isYellow ? "#78350f" : "#6b7280";
+      tab.style.borderColor = isYellow ? "#fcd34d" : "#e5e7eb";
+    }
+
+    tab.textContent = player.trigram;
+      tab.addEventListener("click", () => {
+      tabsEl.querySelectorAll(".player-tab").forEach(b => {
+        b.classList.remove("active");
+        b.style.background = "";
+        b.style.color = "";
+        b.style.borderColor = "";
+      });
+
+      tab.classList.add("active");
+      tab.style.background = "";
+      tab.style.color = "";
+      tab.style.borderColor = "";
+
+      renderClubsTable(player.trigram);
+      renderComfortDistance(player.trigram);
+    });
+    tabsEl.appendChild(tab);
+  });
+}
+
+  function renderComfortDistance(trigram) {
+    const input = document.getElementById("comfortDistanceInput");
+    if (!input) return;
+
+    const comfort = playersComfort[trigram];
+
+    if (comfort && typeof comfort === "object") {
+      input.value = `${comfort.max}-${comfort.min}`;
+    } else {
+      input.value = "95-85";
+    }
+  }
+
+  function parseComfortRange(value) {
+    if (!value) return null;
+
+    const cleaned = value.replace(/\s/g, "");
+    const parts = cleaned.split("-");
+
+    if (parts.length !== 2) return null;
+
+    const max = parseInt(parts[0], 10);
+    const min = parseInt(parts[1], 10);
+
+    if (Number.isNaN(max) || Number.isNaN(min)) return null;
+    if (max <= min) return null;
+
+    return { max, min };
+  }
+
+  function renderClubsTable(trigram) {
+    const clubs = playersClubs[trigram] || defaultClubs;
+    const container = document.getElementById("clubsTable");
+    if (!container) return;
+    container.innerHTML = "";
+
+    clubs.forEach((club, index) => {
+      const row = document.createElement("div");
+      row.className = "stats-detail-row";
+      row.style.alignItems = "center";
+      row.innerHTML = `
+        <div style="flex:1; font-size:13px; font-weight:600;">${club.nom}</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="score-btn" style="width:28px;height:28px;font-size:16px;"
+            data-trigram="${trigram}" data-index="${index}" data-action="minus">−</button>
+          <span style="font-size:14px; font-weight:700; min-width:40px; text-align:center;"
+            id="club-dist-${trigram}-${index}">${club.distance} m</span>
+          <button class="score-btn" style="width:28px;height:28px;font-size:16px;"
+            data-trigram="${trigram}" data-index="${index}" data-action="plus">+</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+
+    // Listeners +/-
+    container.querySelectorAll(".score-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const trigram = btn.dataset.trigram;
+        const idx = parseInt(btn.dataset.index);
+        const action = btn.dataset.action;
+        const clubs = playersClubs[trigram];
+        if (action === "plus") clubs[idx].distance += 5;
+        if (action === "minus" && clubs[idx].distance > 10) clubs[idx].distance -= 5;
+        document.getElementById(`club-dist-${trigram}-${idx}`).textContent = `${clubs[idx].distance} m`;
+      });
+    });
+  }
+
+  function getRecommendedClubs(trigram, distance) {
+    const clubs = playersClubs[trigram] || defaultClubs;
+    // Trier par distance décroissante
+    const sorted = [...clubs].sort((a, b) => b.distance - a.distance);
+    // Trouver les 2 clubs encadrant la distance
+    let above = null, below = null;
+    for (const club of sorted) {
+      if (club.distance >= distance) above = club;
+      else if (!below) below = club;
+    }
+    return { above, below };
+  }
+
+  function getLayupToComfortAdvice(trigram, distToGreen) {
+    const comfort = playersComfort[trigram];
+    const comfortMax = comfort && typeof comfort === "object" ? comfort.max : (comfort ?? 95);
+    const comfortMin = comfort && typeof comfort === "object" ? comfort.min : 85;
+
+    if (distToGreen <= comfortMin) {
+      return null; // on ne doit plus rien afficher sous la borne basse
+    }
+
+    if (distToGreen <= comfortMax) {
+      return {
+        comfortDistance: comfortMax,
+        advanceNeeded: 0,
+        text: `Tu es dans ta zone de confort (${comfortMax}-${comfortMin} m)`
+      };
+    }
+
+    const advanceNeeded = Math.round(distToGreen - comfortMax);
+    const { above, below } = getRecommendedClubs(trigram, advanceNeeded);
+
+    let clubText = "";
+    if (above && below) clubText = `${above.nom} ou ${below.nom}`;
+    else if (above) clubText = above.nom;
+    else if (below) clubText = below.nom;
+    else clubText = "club non trouvé";
+
+    return {
+      comfortDistance: comfortMax,
+      advanceNeeded,
+      text: `Pour te laisser ${comfortMax} m, il te faut avancer de ${advanceNeeded} m (${clubText})`
+    };
+  }
+
+  function initPlayersComfort() {
+    players.forEach(player => {
+      playersComfort[player.trigram] = loadPlayerComfort(player.trigram);
+    });
+  }
+
+  function renderHoleScore() {
+    const hole = getCurrentPlayerHole(); // scores/putts du joueur actif
+
+    const displayedScore =
+      (hole.score === null || hole.score === undefined) ? getCurrentHole().par : hole.score;
+    currentHoleScoreEl.textContent = displayedScore;
+
+    const displayedPutts =
+      (hole.putts === null || hole.putts === undefined) ? "-" : hole.putts;
+    currentHolePuttsEl.textContent = displayedPutts;
+  }
+
+
+  function renderHolesTable() {
+    const player = getCurrentPlayer();
+    holesTableBody.innerHTML = "";
+
+    player.holes.forEach((hole, index) => {
+      const score = (hole.score === null || hole.score === undefined)
+        ? ""
+        : hole.score;
+      const diff =
+        (hole.score === null || hole.score === undefined)
+          ? ""
+          : hole.score - hole.par;
+      const diffText =
+        diff === ""
+          ? ""
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${hole.number}</td>
+        <td>${hole.par}</td>
+        <td><input type="number" min="1" data-index="${index}" value="${score}"></td>
+        <td>${diffText}</td>
+      `;
+      holesTableBody.appendChild(tr);
+    });
+
+    holesTableBody.querySelectorAll("input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const idx = parseInt(e.target.dataset.index, 10);
+        const val = parseInt(e.target.value, 10);
+        const player = getCurrentPlayer();
+        if (!isNaN(val) && val > 0) {
+          player.holes[idx].score = val;
+        } else {
+          player.holes[idx].score = null;
+        }
+        updateTotals();
+        if (idx === currentHoleIndex) {
+          renderHoleScore();
+        }
+        renderHolesTable();
+        renderStatsDetail();
+      });
+    });
+  }
+
+
+  function renderStatsDetail() {
+    const player = getCurrentPlayer();
+    statsDetailEl.innerHTML = "";
+
+    player.holes.forEach(hole => {
+      const score = (hole.score === null || hole.score === undefined)
+        ? ""
+        : hole.score;
+
+      const diff =
+        (hole.score === null || hole.score === undefined)
+          ? ""
+          : hole.score - hole.par;
+
+      const diffText =
+        diff === ""
+          ? ""
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+
+      const displayText =
+        score === ""
+          ? "—"
+          : `${score} (${diffText || "E"})`;
+
+      const row = document.createElement("div");
+      row.className = "stats-detail-row";
+      row.innerHTML = `
+        <div>Trou ${hole.number}</div>
+        <div>${displayText}</div>
+      `;
+      statsDetailEl.appendChild(row);
+    });
+  }
+
+
+ function renderHole() {
+  renderHeader();
+  renderPlayersTabs();  // onglets joueurs
+  renderStatsTabs();   // AJOUT
+  renderHoleScore();
+  renderHolesTable();
+  renderStatsDetail();
+  updateTotals();
+  updateStatsAnalysis(); // AJOUT
+  updateGpsHoleImage();
+  renderRankingBand(); // MANQUANT
+
+  // Toast humour sur vue Score uniquement
+  if (viewScore.classList.contains("active")) {
+    showHumourToast();
+  }
+
+}
+
+
+ function updateGpsHoleImage() {
+    initMap();
+  }
+
+
+  // --- Listeners score +/- ---
+
+  increaseScoreBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let score = hole.score ?? getCurrentHole().par;
+    score++;
+    hole.score = score;
+    currentHoleScoreEl.textContent = score;
+    updateTotals();
+    renderHolesTable();
+    renderStatsDetail();
+    renderRankingBand(); // AJOUT
+  });
+
+  decreaseScoreBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let score = hole.score ?? getCurrentHole().par;
+    if (score > 1) {
+      score--;
+      hole.score = score;
+      currentHoleScoreEl.textContent = score;
+      updateTotals();
+      renderHolesTable();
+      renderStatsDetail();
+      renderRankingBand(); // AJOUT
+    }
+  });
+
+  increasePuttsBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let putts = hole.putts ?? 0;
+    putts++;
+    hole.putts = putts;
+    currentHolePuttsEl.textContent = putts;
+    updateTotals();
+    renderStatsDetail();
+    renderRankingBand(); // AJOUT
+  });
+
+  decreasePuttsBtn.addEventListener("click", () => {
+    const hole = getCurrentPlayerHole();
+    let putts = hole.putts ?? 0;
+    if (putts > 0) {
+      putts--;
+      hole.putts = putts;
+      currentHolePuttsEl.textContent = putts;
+      updateTotals();
+      renderStatsDetail();
+      renderRankingBand(); // AJOUT
+    }
+  });
+
+
+
+
+
+  // --- Navigation vues ---
+
+  function showView(view) {
+    viewScore.classList.remove("active");
+    viewGps.classList.remove("active");
+    viewStats.classList.remove("active");
+    document.getElementById("view-etalonnage").classList.remove("active");
+
+    if (view === "score") viewScore.classList.add("active");
+    if (view === "gps") {
+      viewGps.classList.add("active");
+      setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+    }
+    if (view === "stats") viewStats.classList.add("active");
+    if (view === "etalonnage") {
+      document.getElementById("view-etalonnage").classList.add("active");
+      renderEtalonnageTabs();
+      renderClubsTable(players[0].trigram);
+      renderComfortDistance(players[0].trigram);
+    }
+
+    navBtns.forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.view === view);
+    });
+  }
+
+
+  navBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      showView(view);
+    });
+  });
+
+  // Swipe gauche/droite pour changer de trou
+  let touchStartX = 0;
+  let touchEndX = 0;
+    document.addEventListener("touchstart", e => {
+    if (e.target.closest('#mapContainer')) return;
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  document.addEventListener("touchend", e => {
+    if (e.target.closest('#mapContainer')) return;
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  });
+
+
+  function handleSwipe() {
+    const delta = touchEndX - touchStartX;
+    if (Math.abs(delta) < 60) return;
+    const course = getCurrentCourse();
+    if (delta < 0 && currentHoleIndex < course.holes.length - 1) {
+      currentHoleIndex++;
+      renderHole();
+    } else if (delta > 0 && currentHoleIndex > 0) {
+      currentHoleIndex--;
+      renderHole();
+    }
+  }
+
+  // --- GPS / watchPosition (reprendre ta logique v12) ---
+
+  function distanceInMeters(lat1, lon1, lat2, lon2) {
+    // utiliser ta fonction haversine existante
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+   function computeDistancesToMarks(lat, lon) {
+    const hole = getCurrentHole();
+    const key = getHoleKey(currentCourseKey, hole.number);
+    const ref = holeImageRefs[key];
+
+    if (!ref || !Array.isArray(ref.marks) || ref.marks.length === 0) {
+      return [];
+    }
+
+    const playerHole = getCurrentPlayerHole();
+    if (playerHole.score != null) {
+      return [];
+    }
+
+    return ref.marks
+      .filter(mark => isMarkStillRelevant(lat, lon, mark, hole))
+      .map(mark => ({
+        label: mark.label,
+        distance: Math.round(distanceInMeters(lat, lon, mark.lat, mark.lon))
+      }));
+  }
+
+  function isMarkStillRelevant(lat, lon, mark, hole) {
+    const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
+    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
+
+    // Le repère reste affiché seulement s'il :
+    // - est encore à moins de 400 m
+    // - n'est pas quasiment atteint
+    // - n'est pas "dépassé" par rapport au green, avec marge GPS
+    return (
+    distToMark < 400 &&
+    distToMark > 5 &&
+    distToGreen > markToGreen - 20
+  );
+  }
+
+  function renderMarksDistances(lat, lon) {
+    const marksDistances = computeDistancesToMarks(lat, lon);
+    if (marksDistances.length === 0) {
+      gpsMarksDistancesEl.textContent = "";
+      return;
+    }
+
+    gpsMarksDistancesEl.innerHTML = marksDistances
+      .map(m => `${m.label} : ${m.distance} m`)
+      .join("<br>");
+  }
+
+  function getHoleKey(courseKey, holeNumber) {
+    return String(courseKey).trim().toLowerCase() + "-" + holeNumber;
+  }
+
+  function getTargetForHole(hole) {
+    const key = getHoleKey(currentCourseKey, hole.number);
+    const ref = holeImageRefs[key];
+    if (!ref || !Array.isArray(ref.marks) || ref.marks.length === 0) {
+      return null;
+    }
+
+    // 1) On cherche d'abord un repère "Repère 135"
+    let target = ref.marks.find(m => m.label && m.label.includes("Repère 135"));
+
+    // 2) Sinon, on prend le premier mark comme cible par défaut
+    if (!target) {
+      target = ref.marks[0];
+    }
+
+    return target;
+  }
+
+  function initMap() {
+  if (map) map.remove();
+  map = null;
+  playerMarkerLeaflet = null;
+  greenMarkerLeaflet = null;
+  targetMarkerLeaflet = null;
+  marksMarkersLeaflet = [];
+
+  const hole = getCurrentHole();
+  initTargetForCurrentHole();
+
+  map = L.map("mapContainer", {
+    zoomControl: false,
+    tap: false,
+    rotate: true,
+    touchRotate: false
+  }).setView([hole.greenLat, hole.greenLon], 17);
+
+  setTimeout(() => map.invalidateSize(), 100);
+  map.on("dragstart zoomstart", () => userInteracting = true);
+
+  let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "OpenStreetMap",
+    maxZoom: 19
+  }).addTo(map);
+
+  map.currentTileLayer = currentTileLayer;
+  map.isSatellite = false;
+
+  greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+    icon: L.divIcon({
+      className: "",
+      html: `<div style="font-size:20px;">⛳</div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 20]
+    })
+  }).addTo(map).bindPopup("Green");
+
+  targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
+    draggable: true,
+    icon: L.divIcon({
+      className: "",
+      html: `<div style="font-size:22px;">🎯</div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 22]
+    })
+  }).addTo(map).bindPopup("Cible mobile");
+
+  targetMarkerLeaflet.on("dragstart", () => {
+    userInteracting = true;
+  });
+
+  targetMarkerLeaflet.on("dragend", (e) => {
+    const latlng = e.target.getLatLng();
+    currentTarget.lat = latlng.lat;
+    currentTarget.lon = latlng.lng;
+
+    if (lastGpsPosition) {
+      refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
+    }
+  });
+
+  const key = getHoleKey(currentCourseKey, hole.number);
+  const ref = holeImageRefs[key];
+
+  if (ref && Array.isArray(ref.marks)) {
+    ref.marks.forEach(mark => {
+      const m = L.circleMarker([mark.lat, mark.lon], {
+        radius: 6,
+        fillColor: "#f59e0b",
+        color: "#ffffff",
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(map).bindTooltip(mark.label, {
+        permanent: true,
+        direction: "right",
+        className: "mark-tooltip"
+      });
+
+      marksMarkersLeaflet.push(m);
+    });
+  }
+}
+
+    function updateMapPosition(lat, lon) {
+      if (!map) initMap();
+
+      if (playerMarkerLeaflet) {
+        playerMarkerLeaflet.setLatLng([lat, lon]);
+      } else {
+        playerMarkerLeaflet = L.circleMarker([lat, lon], {
+          radius: 8,
+          fillColor: "#ef4444",
+          color: "#ffffff",
+          weight: 2,
+          fillOpacity: 1
+        }).addTo(map).bindPopup("Vous êtes ici");
+      }
+
+      const hole = getCurrentHole();
+      const key = getHoleKey(currentCourseKey, hole.number);
+      const ref = holeImageRefs[key];
+
+      if (ref && Array.isArray(ref.marks)) {
+        ref.marks.forEach((mark, i) => {
+          const m = marksMarkersLeaflet[i];
+          if (!m) return;
+
+          const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
+          const visible = isMarkStillRelevant(lat, lon, mark, hole);
+
+          if (visible) {
+            m.setStyle({ fillOpacity: 1, opacity: 1 });
+            m.setTooltipContent(`${Math.round(distToMark)} m`);
+            m.openTooltip();
+          } else {
+            m.setStyle({ fillOpacity: 0, opacity: 0 });
+            m.closeTooltip();
+          }
+        });
+      }
+
+      if (!userInteracting) {
+        map.setView([lat, lon], 17);
+      }
+    }
+
+  function getClubAdviceForShot(trigram, distToGreen) {
+    const { above, below } = getRecommendedClubs(trigram, distToGreen);
+
+    if (above && below) {
+      return `Club conseillé : ${above.nom} ou ${below.nom} pour ${distToGreen} m`;
+    }
+    if (above) {
+      return `Club conseillé : ${above.nom} pour ${distToGreen} m`;
+    }
+    if (below) {
+      return `Club conseillé : ${below.nom} pour ${distToGreen} m`;
+    }
+    return "";
+  }
+
+  function refreshTargetDisplayFromPosition(playerLat, playerLon) {
+    const hole = getCurrentHole();
+    const clubEl = document.getElementById("gpsClubRecommande");
+
+    if (!currentTarget) {
+      gpsDistanceValueEl.textContent = "—";
+      if (clubEl) clubEl.textContent = "";
+      return;
+    }
+
+    const distPlayerToTarget = distanceInMeters(
+      playerLat,
+      playerLon,
+      currentTarget.lat,
+      currentTarget.lon
+    );
+
+    gpsDistanceValueEl.textContent = Math.round(distPlayerToTarget);
+
+    let distTargetToGreen = null;
+    if (hole.greenLat && hole.greenLon) {
+      distTargetToGreen = distanceInMeters(
+        currentTarget.lat,
+        currentTarget.lon,
+        hole.greenLat,
+        hole.greenLon
+      );
+    }
+
+    if (clubEl) {
+      const player = getCurrentPlayer();
+      const advice = getClubAdviceForShot(player.trigram, Math.round(distPlayerToTarget));
+
+      if (distTargetToGreen != null) {
+        clubEl.innerHTML = `
+          <div>Distance joueur → cible : ${Math.round(distPlayerToTarget)} m</div>
+          <div>Distance cible → green : ${Math.round(distTargetToGreen)} m</div>
+          <div>${advice}</div>
+        `;
+      } else {
+        clubEl.innerHTML = `
+          <div>Distance joueur → cible : ${Math.round(distPlayerToTarget)} m</div>
+          <div>${advice}</div>
+        `;
+      }
+    }
+  }
+
+  function handleGpsSuccess(pos) {
+  const { latitude, longitude, accuracy } = pos.coords;
+
+  gpsCoordsTextEl.textContent =
+    `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
+  gpsStatusEl.textContent = "GPS OK";
+
+  const previousGpsPosition = lastGpsPosition
+    ? { ...lastGpsPosition }
+    : null;
+
+  lastGpsPosition = { lat: latitude, lon: longitude };
+
+  renderMarksDistances(latitude, longitude);
+  refreshTargetDisplayFromPosition(latitude, longitude);
+  updateMapPosition(latitude, longitude);
+
+  if (accuracy < 15) {
+    const now = Date.now();
+
+    if (!lastTraceTime || now - lastTraceTime > 5000) {
+      if (tracePoints.length === 0) {
+        tracePoints.push([latitude, longitude]);
+        lastTraceTime = now;
+      } else {
+        const lastPoint = tracePoints[tracePoints.length - 1];
+        const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
+        if (d > 15) {
+          tracePoints.push([latitude, longitude]);
+          lastTraceTime = now;
+        }
+      }
+    }
+  }
+
+  if (accuracy < 15 && previousGpsPosition) {
+    const d = distanceInMeters(
+      previousGpsPosition.lat,
+      previousGpsPosition.lon,
+      latitude,
+      longitude
+    );
+
+    if (d > 15 && d < 50) {
+      totalDistanceWalked += d;
+      updateHealthStats();
+    }
+  }
+}
+
+
+  function handleGpsError(err) {
+    gpsStatusEl.textContent = "Erreur GPS : " + err.message;
+    gpsDistanceValueEl.textContent = "‑‑‑";
+  }
+
+
+  function startGps() {
+    if (!navigator.geolocation) {
+      gpsStatusEl.textContent = "GPS non disponible";
+      return;
+    }
+    if (watchId !== null) return;
+
+    gpsStatusEl.textContent = "Recherche du signal…";
+    gpsActive = true;
+    toggleGpsBtn.textContent = "Arrêter GPS live";
+
+    watchId = navigator.geolocation.watchPosition(
+      handleGpsSuccess,
+      handleGpsError,
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  function stopGps() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  gpsActive = false;
+  toggleGpsBtn.textContent = "Activer GPS live";
+  gpsStatusEl.textContent = "GPS inactif";
+  gpsDistanceValueEl.textContent = "‑‑‑";
+  gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
+  gpsMarksDistancesEl.textContent = "";
+  const clubEl = document.getElementById("gpsClubRecommande");
+  if (clubEl) clubEl.textContent = "";
+}
+
+
+
+  toggleGpsBtn.addEventListener("click", () => {
+    if (gpsActive) stopGps();
+    else startGps();
+  });
+
+ 
+  function computeRanking() {
+    return players
+      .map(player => {
+        let total = 0;
+        let parTotal = 0;
+        let holesPlayed = 0;
+        player.holes.forEach(h => {
+          if (h.score !== null) {
+            total += h.score;
+            parTotal += h.par;
+            holesPlayed++;
+          }
+        });
+        const diff = total - parTotal;
+        const diffText = holesPlayed === 0
+          ? "—"
+          : (diff === 0 ? "E" : (diff > 0 ? "+" + diff : diff.toString()));
+        return {
+          trigram: player.trigram,
+          score: total,
+          diffText: diffText,
+          holesPlayed: holesPlayed
+        };
+      })
+      .sort((a, b) => a.score - b.score);
+  }
+
+
+  function renderRankingBand() {
+    if (players.length <= 1) {
+      rankingBandEl.style.display = "none";
+      return;
+    }
+
+    const ranking = computeRanking();
+    rankingBandEl.style.display = "flex";
+    rankingBandEl.innerHTML = "";
+
+    ranking.forEach((p, index) => {
+      const item = document.createElement("div");
+      item.className = "ranking-item";
+
+      // Couleur selon départ du joueur
+      const player = players.find(pl => pl.trigram === p.trigram);
+      const isYellow = player && player.teeColor === "yellow";
+
+      item.style.color = isYellow ? "#fcd34d" : "#f9fafb";
+      if (index === 0) {
+        item.style.fontWeight = "700"; // leader en gras
+      }
+
+      item.innerHTML = `${p.trigram} <strong>${p.score > 0 ? p.score : "—"}</strong> (${p.diffText})`;
+      rankingBandEl.appendChild(item);
+    });
+  }
+
+
+
+  function renderRankingDetail() {
+    const ranking = computeRanking();
+    rankingDetailEl.innerHTML = "";
+
+    ranking.forEach((p, index) => {
+      const row = document.createElement("div");
+      row.className = "ranking-row" + (index === 0 ? " leader" : "");
+      row.innerHTML = `
+        <div class="ranking-pos">${index + 1}</div>
+        <div class="ranking-trigram">${p.trigram}</div>
+        <div class="ranking-score">${p.score > 0 ? p.score + " (" + p.diffText + ")" : "—"}</div>
+      `;
+      rankingDetailEl.appendChild(row);
+    });
+  }
+
+
+  rankingBandEl.addEventListener("click", () => {
+    renderRankingDetail();
+    rankingModal.style.display = "block";
+  });
+
+  closeRankingBtn.addEventListener("click", () => {
+    rankingModal.style.display = "none";
+  });
+
+  rankingModal.addEventListener("click", (e) => {
+    if (e.target === rankingModal) {
+      rankingModal.style.display = "none";
+    }
+  });
+
+
+    // Toast humour
+    function showHumourToast() {
+      const key = `${currentCourseKey}-${getCurrentHole().number}`;
+      const tip = holeTips[key];
+      if (!tip || !tip.humour) return;
+
+      const toast = document.getElementById("holeToast");
+      toast.textContent = `😄 ${tip.humour}`;
+      toast.style.display = "block";
+
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 12000); // disparaît après 4 secondes
+    }
+
+   // --- Bouton Nouvelle partie ---
+  document.getElementById("btnNewGame").addEventListener("click", () => {
+    const ppvUrl = sessionStorage.getItem("ppvUrl");
+    sessionStorage.clear();
+    if (ppvUrl) {
+      window.location.href = ppvUrl;
+    } else {
+      window.location.href = "ppv.html";
+    }
+  });
+
+  // --- Bouton plein écran carte ---
+  document.getElementById("fullscreenMapBtn").addEventListener("click", () => {
+    const container = document.getElementById("mapContainer");
+    const closeBtn = document.getElementById("closeFullscreenBtn");
+
+    if (container.style.height === "100vh") {
+      container.style.height = "300px";
+      container.style.position = "relative";
+      container.style.top = "";
+      container.style.left = "";
+      container.style.zIndex = "1";
+      container.style.width = "100%";
+      closeBtn.style.display = "none";
+      document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
+    } else {
+      container.style.height = "100vh";
+      container.style.position = "fixed";
+      container.style.top = "0";
+      container.style.left = "0";
+      container.style.zIndex = "9999";
+      container.style.width = "100%";
+      closeBtn.style.display = "block";
+      document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
+    }
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+  });
+
+  // --- Bouton fermeture plein écran ---
+  document.getElementById("closeFullscreenBtn").addEventListener("click", () => {
+    const container = document.getElementById("mapContainer");
+    container.style.height = "300px";
+    container.style.position = "relative";
+    container.style.top = "";
+    container.style.left = "";
+    container.style.zIndex = "1";
+    container.style.width = "100%";
+    document.getElementById("closeFullscreenBtn").style.display = "none";
+    document.getElementById("fullscreenMapBtn").textContent = "Plein écran";
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+  });
+
+  document.getElementById("centerMapBtn").addEventListener("click", () => {
+    if (!map || !playerMarkerLeaflet) return;
+    userInteracting = false; // reprend le suivi auto
+    map.setView(playerMarkerLeaflet.getLatLng(), 17);
+  });
+
+  // --- Boussole globale ---
+  function activerBoussole() {
+    window.addEventListener('deviceorientation', (e) => {
+      if (!map || userInteracting) return;
+      if (e.webkitCompassHeading !== null && e.webkitCompassHeading !== undefined) {
+        map.setBearing(-e.webkitCompassHeading); // AJOUT du -
+      }
+    });
+  }
+
+
+  document.getElementById("compassBtn").addEventListener("click", () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(response => {
+          if (response === 'granted') {
+            activerBoussole();
+            document.getElementById("compassBtn").textContent = "🧭✅";
+          } else {
+            document.getElementById("compassBtn").textContent = "🧭❌";
+          }
+        });
+    } else {
+      activerBoussole();
+      document.getElementById("compassBtn").textContent = "🧭✅";
+    }
+
+  });
+
+  // --- Onglets vue Stats ---
+  function showStatsView(view) {
+    document.getElementById("statsViewResume").style.display = view === "resume" ? "block" : "none";
+    document.getElementById("statsViewAnalyse").style.display = view === "analyse" ? "block" : "none";
+    document.getElementById("statsViewTrous").style.display = view === "trous" ? "block" : "none";
+
+    document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.statsview === view);
+    });
+
+  }
+
+  document.querySelectorAll("#statsViewTabs .player-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showStatsView(btn.dataset.statsview);
+      if (btn.dataset.statsview === "analyse") {
+        updateStatsAnalysis(); // AJOUT
+      }
+    });
+  });
+
+  document.getElementById("satelliteBtn").addEventListener("click", () => {
+    if (!map) return;
+
+    if (map._currentTileLayer) {
+      map.removeLayer(map._currentTileLayer);
+    }
+
+    map._isSatellite = !map._isSatellite;
+
+    if (map._isSatellite) {
+      map._currentTileLayer = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { attribution: '© Esri', maxZoom: 19 }
+      ).addTo(map);
+      document.getElementById("satelliteBtn").textContent = "🗺️";
+    } else {
+      map._currentTileLayer = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { attribution: '© OpenStreetMap', maxZoom: 19 }
+      ).addTo(map);
+      document.getElementById("satelliteBtn").textContent = "🛰️";
+    }
+  });
+
+
+  // --- Étalonnage ---
+  // --- Étalonnage ---
+  // --- Étalonnage ---
+    document.getElementById("saveClubsBtn").addEventListener("click", () => {
+      const trigram = getCurrentEtalonnagePlayer();
+
+      const comfortInput = document.getElementById("comfortDistanceInput");
+      const comfortRange = parseComfortRange(comfortInput.value);
+
+      if (comfortRange) {
+        playersComfort[trigram] = comfortRange;
+        savePlayerComfort(trigram, comfortRange);
+      } else {
+        alert("Format zone confort invalide. Utilise par exemple : 95-85");
+        return;
+      }
+
+      savePlayerClubs(trigram, playersClubs[trigram]);
+
+      alert(`Distances de ${trigram} sauvegardées !`);
+    });
+
+    document.getElementById("resetClubsBtn").addEventListener("click", () => {
+      const trigram = getCurrentEtalonnagePlayer();
+      if (confirm(`Réinitialiser les distances de ${trigram} aux valeurs par défaut ?`)) {
+        playersClubs[trigram] = JSON.parse(JSON.stringify(defaultClubs));
+        renderClubsTable(trigram);
+      }
+    });
+
+  // --- Chargement données ---
+  Promise.all([
+    fetch('courses.json').then(r => r.json()),
+    fetch('tips.json').then(r => r.json())
+  ])
+  .then(([coursesData, tipsData]) => {
+    // Chargement courses
+    courses = coursesData;
+    holeImageRefs = coursesData.holeImageRefs;
+    delete courses.holeImageRefs;
+
+    // Chargement tips
+    const category = golfSetup.tipsCategory || "decouverte";
+    holeTips = {};
+    if (tipsData.humour && tipsData.humour[category]) {
+      Object.keys(tipsData.humour[category]).forEach(key => {
+        holeTips[key] = {
+          humour: tipsData.humour[category][key],
+          conseil: tipsData.conseils ? tipsData.conseils[key] : ""
+        };
+      });
+    }
+
+    // Init
+    const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
+    if (teeRadioInit) teeRadioInit.checked = true;
+
+    initPlayersClubs();
+    initPlayersComfort();
+    initCourseTotals();
+    renderHole();
+    showView("score");
+    showHumourToast();
+  })
+  .catch(err => console.error("Erreur chargement données :", err));
+
+</script>
+
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v35</div>
+</body>
+</html>
