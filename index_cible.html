@@ -1048,19 +1048,24 @@
 
     if (currentTarget && currentTarget.holeKey === key) return;
 
+    // Cible par défaut : premier repère si disponible, sinon le green
+    let targetLat = hole.greenLat;
+    let targetLon = hole.greenLon;
+
     if (ref && Array.isArray(ref.marks) && ref.marks.length > 0) {
-      currentTarget = {
-        holeKey: key,
-        lat: ref.marks[0].lat,
-        lon: ref.marks[0].lon
-      };
-    } else {
-      currentTarget = {
-        holeKey: key,
-        lat: hole.greenLat,
-        lon: hole.greenLon
-      };
+      targetLat = ref.marks[0].lat;
+      targetLon = ref.marks[0].lon;
     }
+
+    // On met à jour currentTarget ET hole.targetLat/targetLon en même temps
+    currentTarget = {
+      holeKey: key,
+      lat: targetLat,
+      lon: targetLon
+    };
+
+    hole.targetLat = targetLat;
+    hole.targetLon = targetLon;
   }
 
   function getCurrentCourse() {
