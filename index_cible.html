@@ -1913,28 +1913,40 @@ function renderEtalonnageTabs() {
     const hole = getCurrentHole();
     const clubEl = document.getElementById("gpsClubRecommande");
 
+    // Si pas de cible définie, on affiche au moins la distance au green
     if (!currentTarget) {
-      gpsDistanceValueEl.textContent = "—";
-      if (clubEl) clubEl.textContent = "";
+      if (hole.greenLat && hole.greenLon) {
+        const distToGreen = distanceInMeters(playerLat, playerLon, hole.greenLat, hole.greenLon);
+        gpsDistanceValueEl.textContent = Math.round(distToGreen);
+        if (clubEl) {
+          const player = getCurrentPlayer();
+          const advice = getClubAdviceForShot(player.trigram, Math.round(distToGreen));
+          clubEl.innerHTML = `
+            <div>Distance joueur → green : ${Math.round(distToGreen)} m</div>
+            <div>${advice}</div>
+          `;
+        }
+      } else {
+        gpsDistanceValueEl.textContent = "—";
+        if (clubEl) clubEl.textContent = "";
+      }
       return;
     }
 
+    // Cible définie : distance joueur → cible
     const distPlayerToTarget = distanceInMeters(
-      playerLat,
-      playerLon,
-      currentTarget.lat,
-      currentTarget.lon
+      playerLat, playerLon,
+      currentTarget.lat, currentTarget.lon
     );
 
     gpsDistanceValueEl.textContent = Math.round(distPlayerToTarget);
 
+    // Distance cible → green
     let distTargetToGreen = null;
     if (hole.greenLat && hole.greenLon) {
       distTargetToGreen = distanceInMeters(
-        currentTarget.lat,
-        currentTarget.lon,
-        hole.greenLat,
-        hole.greenLon
+        currentTarget.lat, currentTarget.lon,
+        hole.greenLat, hole.greenLon
       );
     }
 
