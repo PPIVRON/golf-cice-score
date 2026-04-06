@@ -2355,9 +2355,12 @@ function renderEtalonnageTabs() {
     initPlayersComfort();
     initCourseTotals();
     renderHole();
+    initTargetForCurrentHole();
+    initMap();
     showView("score");
     showHumourToast();
   })
+  
   .catch(err => console.error("Erreur chargement données :", err));
 
 </script>
