@@ -513,6 +513,124 @@
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   }
+
+  .target-crosshair-icon {
+  background: transparent;
+  border: none;
+}
+
+.target-crosshair-wrap {
+  position: relative;
+  width: 120px;
+  height: 60px;
+  overflow: visible;
+}
+
+.target-crosshair {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+}
+
+.target-crosshair .ring {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #111827;
+}
+
+.target-crosshair .ring-top {
+  left: 19px;
+  top: 0;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+  width: 22px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.target-crosshair .ring-bottom {
+  left: 19px;
+  bottom: 0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  width: 22px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.target-crosshair .ring-left {
+  left: 0;
+  top: 19px;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  height: 22px;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+}
+
+.target-crosshair .ring-right {
+  right: 0;
+  top: 19px;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  height: 22px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.target-crosshair .line {
+  position: absolute;
+  background: #111827;
+}
+
+.target-crosshair .line-v {
+  left: 29px;
+  top: 6px;
+  width: 2px;
+  height: 48px;
+}
+
+.target-crosshair .line-h {
+  left: 6px;
+  top: 29px;
+  width: 48px;
+  height: 2px;
+}
+
+.target-crosshair .dot {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+}
+
+.target-crosshair-label {
+  position: absolute;
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 44px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  color: #111827;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
     
 
   </style>
@@ -1026,6 +1144,7 @@
   let totalDistanceWalked = 0;
   let linePlayerToTarget = null;
   let lineTargetToGreen = null;
+  let autoFollowSuspendedUntil = 0;
 
 
   const statsTotalScoreEl = document.getElementById("statsTotalScore");
@@ -1750,86 +1869,122 @@ function renderEtalonnageTabs() {
   }
 
     function initMap() {
-      if (map) map.remove();
-      map = null;
-      playerMarkerLeaflet = null;
-      greenMarkerLeaflet = null;
-      targetMarkerLeaflet = null;
-      marksMarkersLeaflet = [];
-      linePlayerToTarget = null;
-      lineTargetToGreen = null;
+  const hole = getCurrentHole();
+  initTargetForCurrentHole();
 
-      const hole = getCurrentHole();
-      initTargetForCurrentHole();
+  // Création de la carte une seule fois
+  if (!map) {
+    map = L.map("mapContainer", {
+      zoomControl: false,
+      tap: false,
+      rotate: true,
+      touchRotate: false
+    }).setView([hole.greenLat, hole.greenLon], 17);
 
-      map = L.map("mapContainer", {
-        zoomControl: false,
-        tap: false,
-        rotate: true,
-        touchRotate: false
-      }).setView([hole.greenLat, hole.greenLon], 17);
+    setTimeout(() => map.invalidateSize(), 100);
 
-      setTimeout(() => map.invalidateSize(), 100);
+    map.on("dragstart zoomstart", () => {
+      userInteracting = true;
+      autoFollowSuspendedUntil = Date.now() + 4000;
+    });
 
-      // L'utilisateur prend la main sur la carte
-      map.on("dragstart zoomstart", () => {
-        userInteracting = true;
-      });
+    map.on("dragend zoomend", () => {
+      setTimeout(() => {
+        userInteracting = false;
+      }, 300);
+    });
 
-      // On lui rend la boussole après le mouvement
-      map.on("dragend zoomend", () => {
-        setTimeout(() => {
-          userInteracting = false;
-        }, 300);
-      });
-
-      let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const currentTileLayer = L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
         attribution: "OpenStreetMap",
         maxZoom: 19
-      }).addTo(map);
+      }
+    ).addTo(map);
 
-      map.currentTileLayer = currentTileLayer;
-      map.isSatellite = false;
+    map.currentTileLayer = currentTileLayer;
+    map.isSatellite = false;
+  }
 
-      greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
-        icon: L.divIcon({
-          className: "",
-          html: `<div style="font-size:20px;">⛳</div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 20]
-        })
-      }).addTo(map).bindPopup("Green");
+  // Nettoyage des anciens éléments uniquement
+  if (greenMarkerLeaflet) map.removeLayer(greenMarkerLeaflet);
+  if (targetMarkerLeaflet) map.removeLayer(targetMarkerLeaflet);
+  if (playerMarkerLeaflet) map.removeLayer(playerMarkerLeaflet);
+  if (linePlayerToTarget) map.removeLayer(linePlayerToTarget);
+  if (lineTargetToGreen) map.removeLayer(lineTargetToGreen);
 
-      targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
-        draggable: true,
-        icon: L.divIcon({
-          className: "",
-          html: `<div style="font-size:22px;">🎯</div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 22]
-        })
-      }).addTo(map).bindPopup("Cible mobile");
+  marksMarkersLeaflet.forEach(m => map.removeLayer(m));
+  marksMarkersLeaflet = [];
 
-      targetMarkerLeaflet.on("dragstart", () => {
-        userInteracting = true;
-      });
+  greenMarkerLeaflet = null;
+  targetMarkerLeaflet = null;
+  playerMarkerLeaflet = null;
+  linePlayerToTarget = null;
+  lineTargetToGreen = null;
 
-      targetMarkerLeaflet.on("dragend", (e) => {
-        const latlng = e.target.getLatLng();
-        currentTarget.lat = latlng.lat;
-        currentTarget.lon = latlng.lng;
+  // Recentrer sur le trou courant sans casser le zoom utilisateur
+  if (!userInteracting) {
+    map.setView([hole.greenLat, hole.greenLon], map.getZoom());
+  }
 
-        const hole = getCurrentHole();
-        hole.targetLat = latlng.lat;
-        hole.targetLon = latlng.lng;
+  setTimeout(() => map.invalidateSize(), 100);
 
-        updateTargetLines();
+  greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
+    icon: L.divIcon({
+      className: "",
+      html: `<div style="font-size:20px;">⛳</div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 20]
+    })
+  }).addTo(map).bindPopup("Green");
 
-        if (lastGpsPosition) {
-          refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
-        }
-      });
+  targetMarkerLeaflet = L.marker([currentTarget.lat, currentTarget.lon], {
+    draggable: true,
+    icon: L.divIcon({
+      className: "target-crosshair-icon",
+      html: `
+        <div class="target-crosshair-wrap">
+          <div class="target-crosshair">
+            <span class="ring ring-top"></span>
+            <span class="ring ring-right"></span>
+            <span class="ring ring-bottom"></span>
+            <span class="ring ring-left"></span>
+            <span class="line line-v"></span>
+            <span class="line line-h"></span>
+            <span class="dot"></span>
+          </div>
+          <div class="target-crosshair-label" id="targetDistanceInline">--</div>
+        </div>
+      `,
+      iconSize: [120, 60],
+      iconAnchor: [30, 30]
+    })
+  }).addTo(map).bindPopup("Cible mobile");
+
+  targetMarkerLeaflet.on("dragstart", () => {
+    userInteracting = true;
+  });
+
+  targetMarkerLeaflet.on("dragend", (e) => {
+    const latlng = e.target.getLatLng();
+    currentTarget.lat = latlng.lat;
+    currentTarget.lon = latlng.lng;
+
+    const hole = getCurrentHole();
+    hole.targetLat = latlng.lat;
+    hole.targetLon = latlng.lng;
+
+    updateTargetLines();
+
+    if (lastGpsPosition) {
+      refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
     }
+
+    setTimeout(() => {
+      userInteracting = false;
+    }, 300);
+  });
+}
 
     function updateMapPosition(lat, lon) {
       if (!map) initMap();
@@ -1849,7 +2004,7 @@ function renderEtalonnageTabs() {
       updateTargetLines();
 
       if (!userInteracting) {
-        map.setView([lat, lon], 17);
+        map.panTo([lat, lon], { animate: true, duration: 0.4 });
       }
     }
 
@@ -1906,45 +2061,60 @@ function renderEtalonnageTabs() {
     }
   }
 
+  function updateTargetInlineDistanceLabel(playerToTarget, targetToGreen) {
+    const el = document.getElementById("targetDistanceInline");
+    if (!el) return;
+
+    if (playerToTarget == null) {
+      el.textContent = "--";
+      return;
+    }
+
+    if (targetToGreen != null) {
+      el.textContent = `${Math.round(playerToTarget)}-${Math.round(targetToGreen)}`;
+    } else {
+      el.textContent = `${Math.round(playerToTarget)}`;
+    }
+  }
+
  function refreshTargetDisplayFromPosition(playerLat, playerLon) {
   const hole = getCurrentHole();
   const clubEl = document.getElementById("gpsClubRecommande");
 
-  // Si pas de cible définie, on affiche au moins la distance au green
   if (!currentTarget) {
     if (hole.greenLat && hole.greenLon) {
       const distToGreen = distanceInMeters(playerLat, playerLon, hole.greenLat, hole.greenLon);
       gpsDistanceValueEl.textContent = Math.round(distToGreen);
+      updateTargetInlineDistanceLabel(distToGreen, null);
+
       if (clubEl) {
         const player = getCurrentPlayer();
         const advice = getClubAdviceForShot(player.trigram, Math.round(distToGreen));
         clubEl.innerHTML = `
           <div style="font-size:22px;font-weight:800;line-height:1.1;">
-            ${Math.round(distToGreen)} m
+            ${Math.round(distToGreen)}
           </div>
           <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-            joueur → green
+            joueur-green
           </div>
           <div style="margin-top:6px;">${advice}</div>
         `;
       }
     } else {
       gpsDistanceValueEl.textContent = "—";
+      updateTargetInlineDistanceLabel(null, null);
       if (clubEl) clubEl.textContent = "";
     }
     return;
   }
 
-  // Cible définie : distance joueur → cible
   const distPlayerToTarget = distanceInMeters(
     playerLat, playerLon,
     currentTarget.lat, currentTarget.lon
   );
 
   gpsDistanceValueEl.textContent = Math.round(distPlayerToTarget);
-  updateTargetLines();
 
-  // Distance cible → green
   let distTargetToGreen = null;
   if (hole.greenLat && hole.greenLon) {
     distTargetToGreen = distanceInMeters(
@@ -1953,27 +2123,29 @@ function renderEtalonnageTabs() {
     );
   }
 
+  updateTargetInlineDistanceLabel(distPlayerToTarget, distTargetToGreen);
+
   if (clubEl) {
     const player = getCurrentPlayer();
     const advice = getClubAdviceForShot(player.trigram, Math.round(distPlayerToTarget));
 
-    if (distTargetToGreen !== null) {
+    if (distTargetToGreen != null) {
       clubEl.innerHTML = `
         <div style="font-size:22px;font-weight:800;line-height:1.1;">
-          ${Math.round(distPlayerToTarget)} m → ${Math.round(distTargetToGreen)} m
+          ${Math.round(distPlayerToTarget)}-${Math.round(distTargetToGreen)}
         </div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-          joueur → cible / cible → green
+          joueur-cible / cible-green
         </div>
         <div style="margin-top:6px;">${advice}</div>
       `;
     } else {
       clubEl.innerHTML = `
         <div style="font-size:22px;font-weight:800;line-height:1.1;">
-          ${Math.round(distPlayerToTarget)} m
+          ${Math.round(distPlayerToTarget)}
         </div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-          joueur → cible
+          joueur-cible
         </div>
         <div style="margin-top:6px;">${advice}</div>
       `;
@@ -2069,6 +2241,9 @@ function renderEtalonnageTabs() {
   gpsMarksDistancesEl.textContent = "";
   const clubEl = document.getElementById("gpsClubRecommande");
   if (clubEl) clubEl.textContent = "";
+
+  updateTargetInlineDistanceLabel(null, null);
+
 }
 
 
