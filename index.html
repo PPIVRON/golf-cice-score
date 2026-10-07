@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Golf – Score & GPS</title>
-  <meta name="version" content="v26">  <!-- ICI -->
+  <meta name="version" content="v37">  <!-- ICI -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -816,8 +816,10 @@
 
     // Lecture config partie depuis setup.html
     const golfSetup = JSON.parse(sessionStorage.getItem("golfSetup"));
+    const appMode = golfSetup?.appMode || "standard";
     if (!golfSetup) {
       window.location.href = "setup.html";
+      throw new Error("Configuration de partie absente : retour au setup.");
     }
 
     // Initialisation des joueurs
@@ -922,6 +924,8 @@
         renderStatsDetail();
         updateTotals();
         renderHeader();
+        updateStatsAnalysis();
+        refreshGpsDisplay();
       });
       tabsEl.appendChild(tab);
     });
@@ -959,6 +963,10 @@
       renderStatsDetail();
       updateTotals();
       updateStatsAnalysis(); // AJOUT
+      renderHeader();
+      renderHoleScore();
+      renderHolesTable();
+      refreshGpsDisplay();
     });
       tabsEl.appendChild(tab);
     });
@@ -990,6 +998,8 @@
   let currentHoleIndex = 0;
   let watchId = null;
   let gpsActive = false;
+  let latestGpsFix = null;
+  let gpsRefreshTimer = null;
 
   const courseNameEl = document.getElementById("courseName");
   const holeNumberEl = document.getElementById("holeNumber");
@@ -1032,7 +1042,8 @@
   const teeRadios = document.querySelectorAll('input[name="teeColor"]');
   teeRadios.forEach(radio => {
     radio.addEventListener("change", (e) => {
-      currentTeeColor = e.target.value; // "white" ou "yellow"
+      currentTeeColor = e.target.value;
+      getCurrentPlayer().teeColor = currentTeeColor;
       renderHeader();
     });
   });
@@ -1442,6 +1453,8 @@ function renderEtalonnageTabs() {
         }
         renderHolesTable();
         renderStatsDetail();
+        updateStatsAnalysis();
+        renderRankingBand();
       });
     });
   }
@@ -1492,6 +1505,7 @@ function renderEtalonnageTabs() {
   updateTotals();
   updateStatsAnalysis(); // AJOUT
   updateGpsHoleImage();
+  refreshGpsDisplay();
   renderRankingBand(); // MANQUANT
 
   // Toast humour sur vue Score uniquement
@@ -1519,6 +1533,7 @@ function renderEtalonnageTabs() {
     renderHolesTable();
     renderStatsDetail();
     renderRankingBand(); // AJOUT
+    updateStatsAnalysis();
   });
 
   decreaseScoreBtn.addEventListener("click", () => {
@@ -1532,6 +1547,7 @@ function renderEtalonnageTabs() {
       renderHolesTable();
       renderStatsDetail();
       renderRankingBand(); // AJOUT
+    updateStatsAnalysis();
     }
   });
 
@@ -1544,6 +1560,7 @@ function renderEtalonnageTabs() {
     updateTotals();
     renderStatsDetail();
     renderRankingBand(); // AJOUT
+    updateStatsAnalysis();
   });
 
   decreasePuttsBtn.addEventListener("click", () => {
@@ -1556,6 +1573,7 @@ function renderEtalonnageTabs() {
       updateTotals();
       renderStatsDetail();
       renderRankingBand(); // AJOUT
+    updateStatsAnalysis();
     }
   });
 
@@ -1641,26 +1659,15 @@ function renderEtalonnageTabs() {
     return R * c;
   }
 
-  function setDebugText(text) {
-    const el = document.getElementById("gpsStatus");
-    if (el) el.textContent = text;
-  }
-
    function computeDistancesToMarks(lat, lon) {
     const hole = getCurrentHole();
     const key = getHoleKey(currentCourseKey, hole.number);
     const ref = holeImageRefs[key];
 
-    setDebugText(`Trou ${hole.number} | clé ${key} | marks ${ref?.marks?.length || 0}`);
-
     if (!ref || !Array.isArray(ref.marks) || ref.marks.length === 0) {
       return [];
     }
 
-    const playerHole = getCurrentPlayerHole();
-    if (playerHole.score != null) {
-      return [];
-    }
 
     return ref.marks
       .filter(mark => isMarkStillRelevant(lat, lon, mark, hole))
@@ -1679,33 +1686,11 @@ function renderEtalonnageTabs() {
     // - est encore à moins de 400 m
     // - n'est pas quasiment atteint
     // - n'est pas "dépassé" par rapport au green, avec marge GPS
-    return distToMark < 400 && distToMark > 12 && distToGreen > (markToGreen + 8);
-  }
-
-  function isMarkStillRelevant(lat, lon, mark, hole) {
-    const distToMark = distanceInMeters(lat, lon, mark.lat, mark.lon);
-    const distToGreen = distanceInMeters(lat, lon, hole.greenLat, hole.greenLon);
-    const markToGreen = distanceInMeters(mark.lat, mark.lon, hole.greenLat, hole.greenLon);
-
-    const visible =
-      distToMark < 400 &&
-      distToMark > 12 &&
-      distToGreen > markToGreen + 8;
-
-    const debugEl = document.getElementById("gpsClubRecommande");
-    if (debugEl) {
-      debugEl.innerHTML = `
-        <div style="font-size:12px; line-height:1.4;">
-          ${mark.label}<br>
-          repère: ${Math.round(distToMark)} m<br>
-          green: ${Math.round(distToGreen)} m<br>
-          repère→green: ${Math.round(markToGreen)} m<br>
-          visible: ${visible ? "OUI" : "NON"}
-        </div>
-      `;
-    }
-
-    return visible;
+    return (
+    distToMark < 400 &&
+    distToMark > 5 &&
+    distToGreen > markToGreen - 20
+  );
   }
 
   function renderMarksDistances(lat, lon) {
@@ -1726,34 +1711,26 @@ function renderEtalonnageTabs() {
 
 
   function initMap() {
-    if (map) {
-      map.remove();
-      map = null;
-    }
-
-    playerMarkerLeaflet = null;
-    greenMarkerLeaflet = null;
-    marksMarkersLeaflet = [];
-
     const hole = getCurrentHole();
-
-    map = L.map("mapContainer", {
-      zoomControl: false,
-      tap: false,
-      rotate: true,
-      touchRotate: false
-    }).setView([hole.greenLat, hole.greenLon], 17);
-
-    setTimeout(() => map.invalidateSize(), 100);
-    map.on("dragstart zoomstart", () => { userInteracting = true; });
-
-    let currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "OpenStreetMap",
-      maxZoom: 19
-    }).addTo(map);
-
-    map.currentTileLayer = currentTileLayer;
-    map.isSatellite = false;
+    if (!Number.isFinite(hole.greenLat) || !Number.isFinite(hole.greenLon)) {
+      throw new Error("Coordonnées du green invalides");
+    }
+    if (!map) {
+      map = L.map("mapContainer", {
+        zoomControl: false, tap: false, rotate: true, touchRotate: false
+      }).setView([hole.greenLat, hole.greenLon], 17);
+      map.on("dragstart", () => { userInteracting = true; });
+      map._currentTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap", maxZoom: 19
+      }).addTo(map);
+      map._isSatellite = false;
+    }
+    if (greenMarkerLeaflet) map.removeLayer(greenMarkerLeaflet);
+    marksMarkersLeaflet.forEach(marker => map.removeLayer(marker));
+    marksMarkersLeaflet = [];
+    userInteracting = false;
+    map.setView([hole.greenLat, hole.greenLon], map.getZoom());
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
 
     greenMarkerLeaflet = L.marker([hole.greenLat, hole.greenLon], {
       icon: L.divIcon({
@@ -1825,7 +1802,7 @@ function renderEtalonnageTabs() {
       }
 
       if (!userInteracting) {
-        map.setView([lat, lon], 17);
+        map.setView([lat, lon], map.getZoom());
       }
     }
 
@@ -1846,14 +1823,21 @@ function renderEtalonnageTabs() {
 
 
   function handleGpsSuccess(pos) {
+    if (!getCurrentCourse()) return;
     const { latitude, longitude, accuracy } = pos.coords;
+    if (![latitude, longitude, accuracy].every(Number.isFinite)) return;
+    latestGpsFix = { coords: { latitude, longitude, accuracy }, timestamp: pos.timestamp || Date.now() };
     gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-    gpsStatusEl.textContent = "GPS OK";
+    const age = Math.max(0, Date.now() - latestGpsFix.timestamp);
+    gpsStatusEl.textContent = age > 30000
+      ? `Position ancienne (${Math.floor(age / 1000)} s) — distance indicative`
+      : accuracy > 25 ? `GPS approximatif (±${Math.round(accuracy)} m)`
+      : `GPS OK (±${Math.round(accuracy)} m)`;
 
     const hole = getCurrentHole();
     let distToGreen = null;
 
-    if (hole.greenLat && hole.greenLon) {
+    if (Number.isFinite(hole.greenLat) && Number.isFinite(hole.greenLon)) {
       distToGreen = distanceInMeters(latitude, longitude, hole.greenLat, hole.greenLon);
       gpsDistanceValueEl.textContent = Math.round(distToGreen);
     } else {
@@ -1863,8 +1847,8 @@ function renderEtalonnageTabs() {
     renderMarksDistances(latitude, longitude);
 
     const player = getCurrentPlayer();
-
     const clubEl = document.getElementById("gpsClubRecommande");
+
     if (clubEl && distToGreen != null) {
       const d = Math.round(distToGreen);
       const comfort = playersComfort[player.trigram];
@@ -1874,48 +1858,26 @@ function renderEtalonnageTabs() {
       if (d > comfortMax) {
         const layupAdvice = getLayupToComfortAdvice(player.trigram, d);
         clubEl.innerHTML = layupAdvice ? `<div>${layupAdvice.text}</div>` : "";
-      } else if (d > comfortMin) {
-        clubEl.innerHTML = `<div>${getClubAdviceForShot(player.trigram, d)}</div>`;
+      } else if (d >= comfortMin) {
+        clubEl.innerHTML = `
+          <div>Tu es dans ta zone de confort (${comfortMax}-${comfortMin} m)</div>
+          <div>${getClubAdviceForShot(player.trigram, d)}</div>
+        `;
       } else {
         clubEl.textContent = "";
       }
+    } else if (clubEl) {
+      clubEl.textContent = "";
     }
 
     updateMapPosition(latitude, longitude);
 
-    if (accuracy < 15) {
-      const now = Date.now();
-      if (!lastTraceTime || now - lastTraceTime > 5000) {
-        if (tracePoints.length === 0) {
-          tracePoints.push([latitude, longitude]);
-          lastTraceTime = now;
-        } else {
-          const lastPoint = tracePoints[tracePoints.length - 1];
-          const d = distanceInMeters(lastPoint[0], lastPoint[1], latitude, longitude);
-          if (d > 15) {
-            tracePoints.push([latitude, longitude]);
-            lastTraceTime = now;
-          }
-        }
-      }
-    }
-
-    if (accuracy < 15 && lastGpsPosition) {
-      const d = distanceInMeters(
-        lastGpsPosition.lat, lastGpsPosition.lon,
-        latitude, longitude
-      );
-      if (d > 15 && d < 50) {
-        totalDistanceWalked += d;
-        updateHealthStats();
-      }
-    }
-
-    if (accuracy < 15) {
-      lastGpsPosition = { lat: latitude, lon: longitude };
-    }
   }
 
+
+  function refreshGpsDisplay() {
+    if (gpsActive && latestGpsFix) handleGpsSuccess(latestGpsFix);
+  }
 
   function handleGpsError(err) {
     gpsStatusEl.textContent = "Erreur GPS : " + err.message;
@@ -1931,6 +1893,8 @@ function renderEtalonnageTabs() {
     if (watchId !== null) return;
 
     gpsStatusEl.textContent = "Recherche du signal…";
+    if (gpsRefreshTimer) clearInterval(gpsRefreshTimer);
+    gpsRefreshTimer = setInterval(refreshGpsDisplay, 5000);
     gpsActive = true;
     toggleGpsBtn.textContent = "Arrêter GPS live";
 
@@ -1947,6 +1911,9 @@ function renderEtalonnageTabs() {
     watchId = null;
   }
   gpsActive = false;
+  latestGpsFix = null;
+  clearInterval(gpsRefreshTimer);
+  gpsRefreshTimer = null;
   toggleGpsBtn.textContent = "Activer GPS live";
   gpsStatusEl.textContent = "GPS inactif";
   gpsDistanceValueEl.textContent = "‑‑‑";
@@ -2236,13 +2203,14 @@ function renderEtalonnageTabs() {
 
   // --- Chargement données ---
   Promise.all([
-    fetch('courses.json').then(r => r.json()),
-    fetch('tips.json').then(r => r.json())
+    fetch('courses.json', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('courses.json : HTTP ' + r.status); return r.json(); }),
+    fetch('tips.json').then(r => { if (!r.ok) throw new Error('tips.json : HTTP ' + r.status); return r.json(); }).catch(err => { console.warn('Conseils indisponibles', err); return {}; })
   ])
   .then(([coursesData, tipsData]) => {
     // Chargement courses
     courses = coursesData;
-    holeImageRefs = coursesData.holeImageRefs;
+    holeImageRefs = coursesData.holeImageRefs || {};
+    if (!coursesData[currentCourseKey]?.holes?.length) throw new Error("Parcours absent ou vide");
     delete courses.holeImageRefs;
 
     // Chargement tips
@@ -2268,10 +2236,14 @@ function renderEtalonnageTabs() {
     showView("score");
     showHumourToast();
   })
-  .catch(err => console.error("Erreur chargement données :", err));
+  .catch(err => {
+    console.error("Erreur chargement données :", err);
+    gpsStatusEl.textContent = "Chargement impossible : " + err.message;
+    alert("Impossible de charger la partie : " + err.message);
+  });
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v35test</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v37</div>
 </body>
 </html>
