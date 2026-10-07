@@ -84,7 +84,7 @@
     },
     "cice-6": {
       "marks": [
-        { "label": "Haut bunker droite avant green", "lat": 48.033176, "lon": -1.76205, "img": { "x": 0.587, "y": 0.405 } }
+        { "label": "Haut bunker droite avant green", "lat": 48.03176, "lon": -1.76203, "img": { "x": 0.587, "y": 0.405 } }
       ],
       "green": { "lat": 48.03160, "lon": -1.76195, "img": { "x": 0.483, "y": 0.222 } }
     },
