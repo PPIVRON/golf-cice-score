@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Golf – Score & GPS</title>
-  <meta name="version" content="cible-v4">  <!-- ICI -->
+  <meta name="version" content="cible-v5">  <!-- ICI -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -1794,9 +1794,11 @@ function renderEtalonnageTabs() {
     const course = getCurrentCourse();
     if (delta < 0 && currentHoleIndex < course.holes.length - 1) {
       currentHoleIndex++;
+      if(viewScore.classList.contains("active")) resetTargetAtPlayerForScoreChange();
       renderHole();
     } else if (delta > 0 && currentHoleIndex > 0) {
       currentHoleIndex--;
+      if(viewScore.classList.contains("active")) resetTargetAtPlayerForScoreChange();
       renderHole();
     }
   }
@@ -1869,51 +1871,42 @@ function renderEtalonnageTabs() {
   }
 
 
-  // Sélection indicative : pas de passage systématique par les bunkers.
-  const ciceRouteMarks = {
-    1:[0], 2:[0,2], 3:[], 4:[0], 5:[0], 6:[],
-    7:[0,2], 8:[0], 9:[1], 10:[0,1], 11:[], 12:[0],
-    13:[2], 14:[], 15:[0], 16:[1], 17:[1], 18:[1]
-  };
-  let idealRouteLayer = null;
-
-  function getRoutePoints() {
-    const hole = getCurrentHole();
-    const ref = holeImageRefs[getHoleKey(currentCourseKey, hole.number)];
-    const indices = currentCourseKey === 'cice' ? (ciceRouteMarks[hole.number] || []) : [];
-    const points = indices.map(i => ref?.marks?.[i])
-      .filter(p => p && Number.isFinite(p.lat) && Number.isFinite(p.lon))
-      .map(p => [p.lat,p.lon]);
-    points.push([hole.greenLat,hole.greenLon]);
-    return points;
+  const ciceRouteMarks={1:[0],2:[0,2],3:[],4:[0],5:[0],6:[],7:[0,2],8:[0],9:[1],10:[0,1],11:[],12:[0],13:[2],14:[],15:[0],16:[1],17:[1],18:[1]};
+  let idealRouteLayer=null;
+  function getRoutePoints(){
+    const h=getCurrentHole(),r=holeImageRefs[getHoleKey(currentCourseKey,h.number)];
+    const indices=currentCourseKey==='cice'?(ciceRouteMarks[h.number]||[]):[];
+    return [...indices.map(i=>r?.marks?.[i]).filter(p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)).map(p=>[p.lat,p.lon]),[h.greenLat,h.greenLon]];
   }
-
-  function remainingViaRoute(lat, lon) {
-    const points = getRoutePoints();
-    if (points.length < 2) return { distance: distanceInMeters(lat,lon,...points[0]), path:[[lat,lon],...points] };
-    const scaleX = 111195 * Math.cos(lat * Math.PI / 180), scaleY = 111195;
-    let best = null;
-    for (let i=0;i<points.length-1;i++) {
-      const a=points[i], b=points[i+1];
-      const ax=(a[1]-lon)*scaleX, ay=(a[0]-lat)*scaleY;
-      const dx=(b[1]-a[1])*scaleX, dy=(b[0]-a[0])*scaleY;
-      const denom=dx*dx+dy*dy;
-      const t=denom ? Math.max(0,Math.min(1,-(ax*dx+ay*dy)/denom)) : 0;
-      const projection=[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])];
-      const gap=distanceInMeters(lat,lon,...projection);
-      let distance=gap+distanceInMeters(...projection,...b);
-      for(let j=i+1;j<points.length-1;j++) distance+=distanceInMeters(...points[j],...points[j+1]);
-      if (!best || gap < best.gap) best={gap,distance,path:[[lat,lon],projection,...points.slice(i+1)]};
+  function remainingViaRoute(lat,lon){
+    const pts=getRoutePoints();
+    if(pts.length<2)return {distance:distanceInMeters(lat,lon,...pts[0]),path:[[lat,lon],...pts]};
+    const sx=111195*Math.cos(lat*Math.PI/180),sy=111195;
+    let best=null;
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1],ax=(a[1]-lon)*sx,ay=(a[0]-lat)*sy,dx=(b[1]-a[1])*sx,dy=(b[0]-a[0])*sy;
+      const den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/den)):0;
+      const p=[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])],gap=distanceInMeters(lat,lon,...p);
+      let distance=gap+distanceInMeters(...p,...b);
+      for(let j=i+1;j<pts.length-1;j++)distance+=distanceInMeters(...pts[j],...pts[j+1]);
+      if(!best||gap<best.gap)best={gap,distance,path:[[lat,lon],p,...pts.slice(i+1)]};
     }
     return best;
   }
-
-  function drawIdealRoute() {
-    if (!map) return;
-    if (idealRouteLayer) map.removeLayer(idealRouteLayer);
-    const points=getRoutePoints();
-    idealRouteLayer=points.length>1 ? L.polyline(points,{color:'#3b82f6',weight:3,dashArray:'3,7'})
-      .addTo(map).bindTooltip('Ligne indicative via repères — à valider') : null;
+  function drawIdealRoute(){
+    if(!map)return;
+    if(idealRouteLayer)map.removeLayer(idealRouteLayer);
+    const pts=getRoutePoints();
+    idealRouteLayer=pts.length>1?L.polyline(pts,{color:'#3b82f6',weight:3,dashArray:'3,7'}).addTo(map).bindTooltip('Ligne indicative via repères — à valider'):null;
+  }
+  function resetTargetAtPlayerForScoreChange(){
+    const h=getCurrentHole();
+    const age=latestGpsFix?Date.now()-latestGpsFix.timestamp:Infinity;
+    const coords=latestGpsFix?.coords;
+    const fresh=gpsActive && coords && age>=0 && age<=30000 && Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude);
+    h.targetLat=fresh?coords.latitude:h.greenLat;
+    h.targetLon=fresh?coords.longitude:h.greenLon;
+    currentTarget=null;
   }
 
   function getTargetForHole(hole) {
@@ -2126,7 +2119,7 @@ function renderEtalonnageTabs() {
     if (currentTarget && hole.greenLat && hole.greenLon) {
       const targetCoords = [currentTarget.lat, currentTarget.lon];
       const greenCoords = [hole.greenLat, hole.greenLon];
-      const routePath = remainingViaRoute(currentTarget.lat, currentTarget.lon).path;
+      const routePath=remainingViaRoute(currentTarget.lat,currentTarget.lon).path;
 
       if (lineTargetToGreen) {
         lineTargetToGreen.setLatLngs(routePath);
@@ -2156,24 +2149,20 @@ function renderEtalonnageTabs() {
     }
   }
 
- function refreshTargetDisplayFromPosition(playerLat, playerLon) {
-    const hole=getCurrentHole();
-    const target=currentTarget || {lat:hole.greenLat,lon:hole.greenLon};
-    const directGreen=distanceInMeters(playerLat,playerLon,hole.greenLat,hole.greenLon);
-    const remaining=remainingViaRoute(playerLat,playerLon);
-    const shot=distanceInMeters(playerLat,playerLon,target.lat,target.lon);
-    const directAfter=distanceInMeters(target.lat,target.lon,hole.greenLat,hole.greenLon);
-    const after=remainingViaRoute(target.lat,target.lon).distance;
+ function refreshTargetDisplayFromPosition(playerLat,playerLon){
+    const h=getCurrentHole(),target=currentTarget||{lat:h.greenLat,lon:h.greenLon};
+    const directGreen=distanceInMeters(playerLat,playerLon,h.greenLat,h.greenLon),remaining=remainingViaRoute(playerLat,playerLon);
+    const shot=distanceInMeters(playerLat,playerLon,target.lat,target.lon),directAfter=distanceInMeters(target.lat,target.lon,h.greenLat,h.greenLon),after=remainingViaRoute(target.lat,target.lon).distance;
     gpsDistanceValueEl.textContent=Math.round(remaining.distance);
     updateTargetInlineDistanceLabel(shot,after);
-    const clubEl=document.getElementById('gpsClubRecommande');
-    if(clubEl) {
-      const advice=shot<5 ? 'Cible atteinte : déplace-la vers le prochain coup.' : getClubAdviceForShot(getCurrentPlayer().trigram,Math.round(shot));
-      clubEl.innerHTML=`<div style="font-size:18px;font-weight:700">Coup vers la cible : ${Math.round(shot)} m</div>
-        <div>Après cible → green via repères : ≈ ${Math.round(after)} m</div>
-        <div style="font-size:12px;color:#6b7280">Direct joueur → green : ${Math.round(directGreen)} m · direct cible → green : ${Math.round(directAfter)} m</div>
-        <div style="margin-top:6px">${advice}</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:5px">Tracé indicatif, sans coordonnées de départ. Bleu : repères ; rouge : coup direct.</div>`;
+    const el=document.getElementById('gpsClubRecommande');
+    if(el){
+      const advice=shot<5?'Cible à votre position : déplacez-la vers le prochain coup.':getClubAdviceForShot(getCurrentPlayer().trigram,Math.round(shot));
+      el.innerHTML=`<div style="font-size:18px;font-weight:700">Coup vers la cible : ${Math.round(shot)} m</div>
+      <div>Après cible → green via repères : ≈ ${Math.round(after)} m</div>
+      <div style="font-size:12px;color:#6b7280">Direct joueur → green : ${Math.round(directGreen)} m · direct cible → green : ${Math.round(directAfter)} m</div>
+      <div style="margin-top:6px">${advice}</div>
+      <div style="font-size:11px;color:#6b7280">Tracé indicatif, sans coordonnées de départ. Bleu : repères ; rouge : coup direct.</div>`;
     }
   }
 
@@ -2570,6 +2559,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v4_cible</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v5_cible</div>
 </body>
 </html>
