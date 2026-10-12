@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Golf – Score & GPS</title>
-  <meta name="version" content="cible-v5">  <!-- ICI -->
+  <meta name="version" content="cible-v6">  <!-- ICI -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -735,13 +735,13 @@
     <section id="view-gps" class="view">
       <div class="gps-main">
         <div class="gps-distance">
-          <div class="label">Green · via repères (estimée)</div>
+          <div class="label">Cible → green · via repères (estimée)</div>
           <div>
             <span class="value" id="gpsDistanceValue">‑‑‑</span><span class="unit">m</span>
           </div>
         </div>
         <div class="gps-status">
-          <span id="gpsStatus">GPS inactif</span>
+          <span id="gpsStatus">Mode cible · sans géolocalisation</span>
         </div>
 
         <div class="gps-card">
@@ -764,13 +764,11 @@
           ">✕ Réduire</button>
 
           <div class="gps-actions">
-            <button class="btn-primary" id="toggleGpsBtn">Activer GPS live</button>
             <button class="btn-secondary" id="fullscreenMapBtn">Plein écran</button>
-            <button class="btn-secondary" id="centerMapBtn">📍</button>
+            <button class="btn-secondary" id="centerMapBtn" title="Recentrer sur la cible">🎯</button>
             <button class="btn-secondary" id="compassBtn">🧭</button>
             <button class="btn-secondary" id="satelliteBtn">🛰️</button>
           </div>
-          <div class="gps-status-line" id="gpsCoordsText">Lat: ‑‑, Lon: ‑‑</div>
           <div class="gps-status-line" id="gpsMarksDistances"></div>
           <div class="gps-status-line" id="gpsClubRecommande" style="font-weight:600; color:#111827;"></div>
         </div>
@@ -910,7 +908,7 @@
     <span>Score</span>
   </button>
   <button class="nav-btn" data-view="gps" id="btnNavGps">
-    <span>GPS / Carte</span>
+    <span>Cible / Carte</span>
   </button>
   <button class="nav-btn" data-view="stats" id="btnNavStats">
     <span>Stats</span>
@@ -1113,8 +1111,8 @@
   // Variables d’état global (course sélectionnée, index du trou, etc.)
   // let currentCourseKey = "cice"; // par ex.
   let currentHoleIndex = 0;
-  let watchId = null;
-  let gpsActive = false;
+
+
 
   const courseNameEl = document.getElementById("courseName");
   const holeNumberEl = document.getElementById("holeNumber");
@@ -1145,9 +1143,9 @@
   let userInteracting = false;
   let targetMarkerLeaflet = null;
   let currentTarget = null;
-  let lastGpsPosition = null;
-  let latestGpsFix = null;
-  let gpsRefreshTimer = null;
+
+
+
   let lastTraceTime = null;
   let tracePoints = [];
   let totalDistanceWalked = 0;
@@ -1176,32 +1174,11 @@
 
   // --- Fonctions utilitaires (à adapter avec ton code existant) ---
 
-  function initTargetForCurrentHole() {
-    const hole = getCurrentHole();
-    const key = getHoleKey(currentCourseKey, hole.number);
-    const ref = holeImageRefs[key];
-
-    if (currentTarget && currentTarget.holeKey === key) return;
-
-    // Cible par défaut : premier repère si disponible, sinon le green
-    let targetLat = hole.greenLat;
-    let targetLon = hole.greenLon;
-
-
-    if (Number.isFinite(hole.targetLat) && Number.isFinite(hole.targetLon)) {
-      targetLat = hole.targetLat;
-      targetLon = hole.targetLon;
-    }
-
-    // Conserver la cible déplacée pour ce trou pendant la partie.
-    currentTarget = {
-      holeKey: key,
-      lat: targetLat,
-      lon: targetLon
-    };
-
-    hole.targetLat = targetLat;
-    hole.targetLon = targetLon;
+  function initTargetForCurrentHole(){
+    const h=getCurrentHole(),key=getHoleKey(currentCourseKey,h.number);
+    if(currentTarget?.holeKey===key)return;
+    currentTarget={holeKey:key,lat:Number.isFinite(h.targetLat)?h.targetLat:h.greenLat,lon:Number.isFinite(h.targetLon)?h.targetLon:h.greenLon};
+    h.targetLat=currentTarget.lat;h.targetLon=currentTarget.lon;
   }
 
   function getCurrentCourse() {
@@ -1660,7 +1637,7 @@ function renderEtalonnageTabs() {
   updateStatsAnalysis(); // AJOUT
   updateGpsHoleImage();
   refreshGpsDisplay();
-  if (gpsActive && lastGpsPosition) updateMapPosition(lastGpsPosition.lat, lastGpsPosition.lon);
+
   updateTargetLines();
   renderRankingBand(); // MANQUANT
 
@@ -1794,11 +1771,9 @@ function renderEtalonnageTabs() {
     const course = getCurrentCourse();
     if (delta < 0 && currentHoleIndex < course.holes.length - 1) {
       currentHoleIndex++;
-      if(viewScore.classList.contains("active")) resetTargetAtPlayerForScoreChange();
       renderHole();
     } else if (delta > 0 && currentHoleIndex > 0) {
       currentHoleIndex--;
-      if(viewScore.classList.contains("active")) resetTargetAtPlayerForScoreChange();
       renderHole();
     }
   }
@@ -1874,39 +1849,49 @@ function renderEtalonnageTabs() {
   const ciceRouteMarks={1:[0],2:[0,2],3:[],4:[0],5:[0],6:[],7:[0,2],8:[0],9:[1],10:[0,1],11:[],12:[0],13:[2],14:[],15:[0],16:[1],17:[1],18:[1]};
   let idealRouteLayer=null;
   function getRoutePoints(){
-    const h=getCurrentHole(),r=holeImageRefs[getHoleKey(currentCourseKey,h.number)];
-    const indices=currentCourseKey==='cice'?(ciceRouteMarks[h.number]||[]):[];
-    return [...indices.map(i=>r?.marks?.[i]).filter(p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)).map(p=>[p.lat,p.lon]),[h.greenLat,h.greenLon]];
+    const h=getCurrentHole(),r=holeImageRefs[getHoleKey(currentCourseKey,h.number)],ids=currentCourseKey==='cice'?(ciceRouteMarks[h.number]||[]):[];
+    return [...ids.map(i=>r?.marks?.[i]).filter(p=>p&&Number.isFinite(p.lat)&&Number.isFinite(p.lon)).map(p=>[p.lat,p.lon]),[h.greenLat,h.greenLon]];
   }
   function remainingViaRoute(lat,lon){
     const pts=getRoutePoints();
     if(pts.length<2)return {distance:distanceInMeters(lat,lon,...pts[0]),path:[[lat,lon],...pts]};
-    const sx=111195*Math.cos(lat*Math.PI/180),sy=111195;
-    let best=null;
+    const sx=111195*Math.cos(lat*Math.PI/180),sy=111195;let best=null;
     for(let i=0;i<pts.length-1;i++){
-      const a=pts[i],b=pts[i+1],ax=(a[1]-lon)*sx,ay=(a[0]-lat)*sy,dx=(b[1]-a[1])*sx,dy=(b[0]-a[0])*sy;
-      const den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/den)):0;
-      const p=[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])],gap=distanceInMeters(lat,lon,...p);
+      const a=pts[i],b=pts[i+1],ax=(a[1]-lon)*sx,ay=(a[0]-lat)*sy,dx=(b[1]-a[1])*sx,dy=(b[0]-a[0])*sy,den=dx*dx+dy*dy;
+      const t=den?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/den)):0,p=[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])],gap=distanceInMeters(lat,lon,...p);
       let distance=gap+distanceInMeters(...p,...b);
       for(let j=i+1;j<pts.length-1;j++)distance+=distanceInMeters(...pts[j],...pts[j+1]);
       if(!best||gap<best.gap)best={gap,distance,path:[[lat,lon],p,...pts.slice(i+1)]};
-    }
-    return best;
+    }return best;
   }
   function drawIdealRoute(){
-    if(!map)return;
-    if(idealRouteLayer)map.removeLayer(idealRouteLayer);
-    const pts=getRoutePoints();
-    idealRouteLayer=pts.length>1?L.polyline(pts,{color:'#3b82f6',weight:3,dashArray:'3,7'}).addTo(map).bindTooltip('Ligne indicative via repères — à valider'):null;
+    if(!map)return;if(idealRouteLayer)map.removeLayer(idealRouteLayer);
+    const pts=getRoutePoints();idealRouteLayer=pts.length>1?L.polyline(pts,{color:'#3b82f6',weight:3,dashArray:'3,7'}).addTo(map).bindTooltip('Ligne indicative via repères'):null;
   }
-  function resetTargetAtPlayerForScoreChange(){
-    const h=getCurrentHole();
-    const age=latestGpsFix?Date.now()-latestGpsFix.timestamp:Infinity;
-    const coords=latestGpsFix?.coords;
-    const fresh=gpsActive && coords && age>=0 && age<=30000 && Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude);
-    h.targetLat=fresh?coords.latitude:h.greenLat;
-    h.targetLon=fresh?coords.longitude:h.greenLon;
-    currentTarget=null;
+  function simulationClubAdvice(trigram,distance){
+    const raw=playersClubs[trigram]||defaultClubs;
+    const clubs=raw.filter(c=>Number.isFinite(Number(c.distance))&&Number(c.distance)>0).map(c=>({nom:c.nom,distance:Number(c.distance)})).sort((a,b)=>b.distance-a.distance);
+    if(!clubs.length)return 'Aucun club valide : renseignez vos distances dans Clubs.';
+    if(distance<5)return 'Cible sur le green : aucun club conseillé.';
+    const label=c=>`${c.nom} (${c.distance} m)`;
+    if(distance>clubs[0].distance)return `Club conseillé : ${label(clubs[0])}. Distance supérieure à votre portée maximale — parcours à jouer en plusieurs coups.`;
+    const exact=clubs.find(c=>Math.abs(c.distance-distance)<0.5);if(exact)return `Club conseillé : ${label(exact)}`;
+    const above=[...clubs].reverse().find(c=>c.distance>=distance),below=clubs.find(c=>c.distance<distance);
+    return `Club conseillé : ${[above,below].filter(Boolean).map(label).join(' ou ')} pour ≈ ${Math.round(distance)} m`;
+  }
+  function refreshSimulation(){
+    if(!getCurrentCourse()||!currentTarget)return;
+    const h=getCurrentHole(),t=currentTarget,r=remainingViaRoute(t.lat,t.lon),direct=distanceInMeters(t.lat,t.lon,h.greenLat,h.greenLon);
+    gpsDistanceValueEl.textContent=Math.round(r.distance);
+    gpsStatusEl.textContent='Simulation V6 · déplacez la cible à la position de la balle · sans GPS';
+    const inline=document.getElementById('targetDistanceInline');if(inline)inline.textContent=`≈ ${Math.round(r.distance)} m`;
+    renderMarksDistances(t.lat,t.lon);
+    const el=document.getElementById('gpsClubRecommande');
+    if(el){el.replaceChildren();
+      for(const text of [`Cible → green via repères : ≈ ${Math.round(r.distance)} m`,`Distance directe : ${Math.round(direct)} m`,simulationClubAdvice(getCurrentPlayer().trigram,r.distance),'Conseil basé sur la distance via repères et vos clubs. Tracé indicatif : ne garantit pas un coup direct sans obstacle.']){
+        const div=document.createElement('div');div.textContent=text;div.style.marginTop='6px';el.appendChild(div);
+      }
+    }updateTargetLines();
   }
 
   function getTargetForHole(hole) {
@@ -2022,62 +2007,18 @@ function renderEtalonnageTabs() {
     })
   }).addTo(map).bindPopup("Cible mobile");
 
-  targetMarkerLeaflet.on("dragstart", () => {
-    userInteracting = true;
-    autoFollowSuspendedUntil = Date.now() + 4000;
+  targetMarkerLeaflet.on("dragstart",()=>{userInteracting=true;});
+  targetMarkerLeaflet.on("drag dragend",e=>{
+    const p=e.target.getLatLng(),h=getCurrentHole();
+    currentTarget.lat=p.lat;currentTarget.lon=p.lng;
+    h.targetLat=p.lat;h.targetLon=p.lng;
+    refreshSimulation();
+    if(e.type==='dragend')userInteracting=false;
   });
 
-  targetMarkerLeaflet.on("drag", (e) => {
-    const p = e.target.getLatLng();
-    currentTarget.lat = p.lat;
-    currentTarget.lon = p.lng;
-    updateTargetLines();
-    if (gpsActive && lastGpsPosition) refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
-  });
-
-  targetMarkerLeaflet.on("dragend", (e) => {
-    const latlng = e.target.getLatLng();
-    currentTarget.lat = latlng.lat;
-    currentTarget.lon = latlng.lng;
-
-    const hole = getCurrentHole();
-    hole.targetLat = latlng.lat;
-    hole.targetLon = latlng.lng;
-
-    updateTargetLines();
-
-    autoFollowSuspendedUntil = Date.now() + 4000;
-    if (gpsActive && lastGpsPosition) {
-      refreshTargetDisplayFromPosition(lastGpsPosition.lat, lastGpsPosition.lon);
-    }
-
-    setTimeout(() => {
-      userInteracting = false;
-    }, 300);
-  });
 }
 
-    function updateMapPosition(lat, lon) {
-      if (!map) initMap();
-
-      if (playerMarkerLeaflet) {
-        playerMarkerLeaflet.setLatLng([lat, lon]);
-      } else {
-        playerMarkerLeaflet = L.circleMarker([lat, lon], {
-          radius: 8,
-          fillColor: "#ef4444",
-          color: "#ffffff",
-          weight: 2,
-          fillOpacity: 1
-        }).addTo(map).bindPopup("Vous êtes ici");
-      }
-
-      updateTargetLines();
-
-      if (!userInteracting && Date.now() >= autoFollowSuspendedUntil) {
-        map.panTo([lat, lon], { animate: true, duration: 0.4 });
-      }
-    }
+    
 
   function getClubAdviceForShot(trigram, distToGreen) {
     const { above, below } = getRecommendedClubs(trigram, distToGreen);
@@ -2094,43 +2035,11 @@ function renderEtalonnageTabs() {
     return "";
   }
 
-  function updateTargetLines() {
-    if (!map) return;
-
-    const hole = getCurrentHole();
-
-    // Ligne joueur → cible
-    if (lastGpsPosition && currentTarget) {
-      const playerCoords = [lastGpsPosition.lat, lastGpsPosition.lon];
-      const targetCoords = [currentTarget.lat, currentTarget.lon];
-
-      if (linePlayerToTarget) {
-        linePlayerToTarget.setLatLngs([playerCoords, targetCoords]);
-      } else {
-        linePlayerToTarget = L.polyline([playerCoords, targetCoords], {
-          color: "#ef4444",
-          weight: 2,
-          dashArray: "6, 6"
-        }).addTo(map);
-      }
-    }
-
-    // Ligne cible → green
-    if (currentTarget && hole.greenLat && hole.greenLon) {
-      const targetCoords = [currentTarget.lat, currentTarget.lon];
-      const greenCoords = [hole.greenLat, hole.greenLon];
-      const routePath=remainingViaRoute(currentTarget.lat,currentTarget.lon).path;
-
-      if (lineTargetToGreen) {
-        lineTargetToGreen.setLatLngs(routePath);
-      } else {
-        lineTargetToGreen = L.polyline(routePath, {
-          color: "#22c55e",
-          weight: 2,
-          dashArray: "6, 6"
-        }).addTo(map);
-      }
-    }
+  function updateTargetLines(){
+    if(!map||!currentTarget)return;
+    const path=remainingViaRoute(currentTarget.lat,currentTarget.lon).path;
+    if(lineTargetToGreen)lineTargetToGreen.setLatLngs(path);
+    else lineTargetToGreen=L.polyline(path,{color:'#22c55e',weight:2,dashArray:'6,6'}).addTo(map);
   }
 
   function updateTargetInlineDistanceLabel(playerToTarget, targetToGreen) {
@@ -2143,111 +2052,16 @@ function renderEtalonnageTabs() {
     }
 
     if (targetToGreen != null) {
-      el.textContent = `${Math.round(playerToTarget)} m / ≈${Math.round(targetToGreen)} m`;
+      el.textContent = `${Math.round(playerToTarget)}-${Math.round(targetToGreen)}`;
     } else {
       el.textContent = `${Math.round(playerToTarget)}`;
     }
   }
 
- function refreshTargetDisplayFromPosition(playerLat,playerLon){
-    const h=getCurrentHole(),target=currentTarget||{lat:h.greenLat,lon:h.greenLon};
-    const directGreen=distanceInMeters(playerLat,playerLon,h.greenLat,h.greenLon),remaining=remainingViaRoute(playerLat,playerLon);
-    const shot=distanceInMeters(playerLat,playerLon,target.lat,target.lon),directAfter=distanceInMeters(target.lat,target.lon,h.greenLat,h.greenLon),after=remainingViaRoute(target.lat,target.lon).distance;
-    gpsDistanceValueEl.textContent=Math.round(remaining.distance);
-    updateTargetInlineDistanceLabel(shot,after);
-    const el=document.getElementById('gpsClubRecommande');
-    if(el){
-      const advice=shot<5?'Cible à votre position : déplacez-la vers le prochain coup.':getClubAdviceForShot(getCurrentPlayer().trigram,Math.round(shot));
-      el.innerHTML=`<div style="font-size:18px;font-weight:700">Coup vers la cible : ${Math.round(shot)} m</div>
-      <div>Après cible → green via repères : ≈ ${Math.round(after)} m</div>
-      <div style="font-size:12px;color:#6b7280">Direct joueur → green : ${Math.round(directGreen)} m · direct cible → green : ${Math.round(directAfter)} m</div>
-      <div style="margin-top:6px">${advice}</div>
-      <div style="font-size:11px;color:#6b7280">Tracé indicatif, sans coordonnées de départ. Bleu : repères ; rouge : coup direct.</div>`;
-    }
-  }
-
-  function refreshGpsDisplay() {
-    if (!gpsActive || !latestGpsFix || !getCurrentCourse()) return;
-    const { latitude, longitude, accuracy } = latestGpsFix.coords;
-    const age = Math.max(0, Date.now() - latestGpsFix.timestamp);
-    gpsCoordsTextEl.textContent = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)} (±${Math.round(accuracy)} m)`;
-    gpsStatusEl.textContent = age > 30000
-      ? `Position ancienne (${Math.floor(age / 1000)} s) — distances indicatives`
-      : accuracy > 25 ? `GPS approximatif (±${Math.round(accuracy)} m)`
-      : `GPS OK (±${Math.round(accuracy)} m)`;
-    renderMarksDistances(latitude, longitude);
-    refreshTargetDisplayFromPosition(latitude, longitude);
-    updateTargetLines();
-  }
-
-  function handleGpsSuccess(pos) {
-    if (!getCurrentCourse()) return;
-    const { latitude, longitude, accuracy } = pos.coords;
-    if (![latitude, longitude, accuracy].every(Number.isFinite)) return;
-    latestGpsFix = { coords: { latitude, longitude, accuracy }, timestamp: pos.timestamp || Date.now() };
-    lastGpsPosition = { lat: latitude, lon: longitude };
-    refreshGpsDisplay();
-    updateMapPosition(latitude, longitude);
-  }
-
-  function handleGpsError(err) {
-    gpsStatusEl.textContent = "Erreur GPS : " + err.message;
-    gpsDistanceValueEl.textContent = "‑‑‑";
-  }
-
-
-  function startGps() {
-    if (!navigator.geolocation) {
-      gpsStatusEl.textContent = "GPS non disponible";
-      return;
-    }
-    if (watchId !== null) return;
-
-    gpsStatusEl.textContent = "Recherche du signal…";
-    clearInterval(gpsRefreshTimer);
-    gpsRefreshTimer = setInterval(refreshGpsDisplay, 5000);
-    gpsActive = true;
-    toggleGpsBtn.textContent = "Arrêter GPS live";
-
-    watchId = navigator.geolocation.watchPosition(
-      handleGpsSuccess,
-      handleGpsError,
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }
-
-  function stopGps() {
-  if (watchId !== null) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-  }
-  gpsActive = false;
-  latestGpsFix = null;
-  lastGpsPosition = null;
-  clearInterval(gpsRefreshTimer);
-  gpsRefreshTimer = null;
-  if (linePlayerToTarget && map) map.removeLayer(linePlayerToTarget);
-  linePlayerToTarget = null;
-  toggleGpsBtn.textContent = "Activer GPS live";
-  gpsStatusEl.textContent = "GPS inactif";
-  gpsDistanceValueEl.textContent = "‑‑‑";
-  gpsCoordsTextEl.textContent = "Lat: ‑‑, Lon: ‑‑";
-  gpsMarksDistancesEl.textContent = "";
-  const clubEl = document.getElementById("gpsClubRecommande");
-  if (clubEl) clubEl.textContent = "";
-
-  updateTargetInlineDistanceLabel(null, null);
-
-}
-
-
-
-  toggleGpsBtn.addEventListener("click", () => {
-    if (gpsActive) stopGps();
-    else startGps();
-  });
-
  
+
+  function refreshGpsDisplay() { refreshSimulation(); }
+
   function computeRanking() {
     return players
       .map(player => {
@@ -2407,10 +2221,7 @@ function renderEtalonnageTabs() {
   });
 
   document.getElementById("centerMapBtn").addEventListener("click", () => {
-    if (!map || !playerMarkerLeaflet) return;
-    userInteracting = false; // reprend le suivi auto
-    autoFollowSuspendedUntil = 0;
-    map.setView(playerMarkerLeaflet.getLatLng(), 17);
+    if(map && currentTarget) map.setView([currentTarget.lat,currentTarget.lon],map.getZoom());
   });
 
   // --- Boussole globale ---
@@ -2507,6 +2318,7 @@ function renderEtalonnageTabs() {
       }
 
       savePlayerClubs(trigram, playersClubs[trigram]);
+      refreshSimulation();
 
       refreshGpsDisplay();
       alert(`Distances de ${trigram} sauvegardées !`);
@@ -2517,6 +2329,7 @@ function renderEtalonnageTabs() {
       if (confirm(`Réinitialiser les distances de ${trigram} aux valeurs par défaut ?`)) {
         playersClubs[trigram] = JSON.parse(JSON.stringify(defaultClubs));
         renderClubsTable(trigram);
+        refreshSimulation();
       }
     });
 
@@ -2559,6 +2372,6 @@ function renderEtalonnageTabs() {
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v5_cible</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v6_cible</div>
 </body>
 </html>
