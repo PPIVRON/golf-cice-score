@@ -2302,6 +2302,7 @@ function renderEtalonnageTabs() {
 
     // Toast humour
     function showHumourToast() {
+      if (golfSetup.messagesEnabled === false) return;
       const key = `${currentCourseKey}-${getCurrentHole().number}`;
       const tip = holeTips[key];
       if (!tip || !tip.humour) return;
@@ -2494,15 +2495,13 @@ function renderEtalonnageTabs() {
 
     // Chargement tips
     const category = golfSetup.tipsCategory || "decouverte";
+    const messagesEnabled = golfSetup.messagesEnabled !== false;
+    const humour = messagesEnabled ? (tipsData.humour?.[category] || {}) : {};
+    const conseils = tipsData.conseils || {};
     holeTips = {};
-    if (tipsData.humour && tipsData.humour[category]) {
-      Object.keys(tipsData.humour[category]).forEach(key => {
-        holeTips[key] = {
-          humour: tipsData.humour[category][key],
-          conseil: tipsData.conseils ? tipsData.conseils[key] : ""
-        };
-      });
-    }
+    new Set([...Object.keys(conseils), ...Object.keys(humour)]).forEach(key => {
+      holeTips[key] = { conseil: conseils[key] || "", humour: humour[key] || "" };
+    });
 
     // Init
     const teeRadioInit = document.querySelector(`input[name="teeColor"][value="${currentTeeColor}"]`);
@@ -2513,12 +2512,11 @@ function renderEtalonnageTabs() {
     initCourseTotals();
     renderHole();
     showView("score");
-    showHumourToast();
   })
   .catch(err => { console.error("Erreur chargement données :", err); alert("Impossible de charger la partie : " + err.message); });
 
 </script>
 
-  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v7_cible</div>
+  <div style="text-align:center; font-size:10px; color:#9ca3af; padding:4px 0 8px;">v8_cible</div>
 </body>
 </html>
